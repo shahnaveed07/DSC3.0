@@ -8,25 +8,6 @@ function isExternal(target) {
   return /^https?:\/\//.test(String(target || ''))
 }
 
-const THEME_STORAGE_KEY = 'dscThemePreferenceV2'
-
-function resolveInitialTheme() {
-  if (typeof document === 'undefined') return 'light'
-  try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY)
-    if (saved === 'light' || saved === 'dark') {
-      return saved
-    }
-  } catch {
-    // Ignore localStorage access errors.
-  }
-  const currentAttr = document.documentElement.getAttribute('data-theme')
-  if (currentAttr === 'light' || currentAttr === 'dark') {
-    return currentAttr
-  }
-  return 'light'
-}
-
 export function SiteHeader({ session, systemStatus, onLogout, compact = false, wide = false }) {
   const location = useLocation()
   const menuRef = useRef(null)
@@ -34,8 +15,6 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
   const [verifiedOwner, setVerifiedOwner] = useState(false)
 
   const isOwner = Boolean(session?.isOwner || verifiedOwner)
-
-  const [theme, setThemeState] = useState(resolveInitialTheme)
 
   // Check and keep owner permission updated for admin sessions
   useEffect(() => {
@@ -73,17 +52,6 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
   }, [location.pathname, session, isOwner, onLogout])
 
   useEffect(() => {
-    const validTheme = theme === 'light' ? 'light' : 'dark'
-    document.documentElement.setAttribute('data-theme', validTheme)
-    document.documentElement.style.colorScheme = validTheme
-
-    const metaTheme = document.querySelector('meta[name="theme-color"]')
-    if (metaTheme) {
-      metaTheme.setAttribute('content', validTheme === 'light' ? '#F8FAFC' : '#0B1220')
-    }
-  }, [theme])
-
-  useEffect(() => {
     function handleDocumentClick(event) {
       if (!menuRef.current?.contains(event.target)) {
         setMenuOpen(false)
@@ -102,18 +70,6 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
       document.removeEventListener('keydown', handleEscape)
     }
   }, [])
-
-  function toggleTheme() {
-    setThemeState((currentTheme) => {
-      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
-      try {
-        localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-      } catch {
-        // Ignore localStorage access errors.
-      }
-      return nextTheme
-    })
-  }
 
   return (
     <header
@@ -140,16 +96,6 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
         {currentPageLabel ? (
           <span className="current-page-label">{currentPageLabel}</span>
         ) : null}
-
-        <button
-          type="button"
-          className="button button-secondary theme-toggle"
-          aria-label={`Switch to ${theme === 'dark' ? 'light mode' : 'dark mode'}`}
-          onClick={toggleTheme}
-        >
-          <span className="theme-toggle-full">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-          <span className="theme-toggle-compact">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-        </button>
 
         {systemStatus?.showHomeDownloadBtn || systemStatus?.ShowHomeDownloadBtn ? (
           <NavLink

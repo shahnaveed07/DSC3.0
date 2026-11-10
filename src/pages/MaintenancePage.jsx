@@ -32,7 +32,7 @@ export function MaintenancePage({ systemStatus, onRetry }) {
           width="42"
           height="42"
           fill="none"
-          stroke="#ffffff"
+          stroke="currentColor"
           strokeWidth="2.5"
           viewBox="0 0 24 24"
           aria-hidden="true"

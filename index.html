@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" style="color-scheme: light;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -12,7 +12,7 @@
     <meta name="keywords" content="Android App Development, Android Application Development, Game Development, Mobile Game Development, Custom Website Development, Website Design, Software Development Studio, Dark Skull Corporation, DSC, Naveed Mushtaq" />
     <meta name="author" content="Naveed Mushtaq — Founder &amp; Lead Developer, Dark Skull Corporation" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#F8FAFC" />
+    <meta name="theme-color" content="#0B0B0B" />
     <meta name="google-site-verification" content="Hw79fkwrion-b4AozRAnpjjcOAv9kHsCs40eEAq00c4" />
     <link rel="canonical" href="https://dscweb.me/" />
 
@@ -108,26 +108,6 @@
           }
         ]
       }
-    </script>
-
-    <script>
-      (() => {
-        let resolvedTheme = 'light'
-        try {
-          const savedTheme = localStorage.getItem('dscThemePreferenceV2')
-          if (savedTheme === 'light' || savedTheme === 'dark') {
-            resolvedTheme = savedTheme
-          }
-        } catch {
-          // Ignore localStorage access errors; default remains light.
-        }
-        document.documentElement.setAttribute('data-theme', resolvedTheme)
-        document.documentElement.style.colorScheme = resolvedTheme
-        const metaTheme = document.querySelector('meta[name="theme-color"]')
-        if (metaTheme) {
-          metaTheme.setAttribute('content', resolvedTheme === 'light' ? '#F8FAFC' : '#0B1220')
-        }
-      })()
     </script>
   </head>
   <body>
