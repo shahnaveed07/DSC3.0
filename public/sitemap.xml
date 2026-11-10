@@ -4,13 +4,34 @@
     <loc>https://dscweb.me/</loc>
   </url>
   <url>
+    <loc>https://dscweb.me/products</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/products/in-production</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/products/own-products</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/products/built-by-dsc</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/services</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/services/websites</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/services/android-applications</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/services/game-development</loc>
+  </url>
+  <url>
+    <loc>https://dscweb.me/team</loc>
+  </url>
+  <url>
     <loc>https://dscweb.me/pages/apps</loc>
-  </url>
-  <url>
-    <loc>https://dscweb.me/pages/websites</loc>
-  </url>
-  <url>
-    <loc>https://dscweb.me/pages/products</loc>
   </url>
   <url>
     <loc>https://dscweb.me/pages/downloads</loc>

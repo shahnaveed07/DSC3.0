@@ -244,20 +244,20 @@ describe('Page Content & AdSense Remediation Tests', () => {
     expect(localStorage.getItem('siteTheme')).toBeNull()
   })
 
-  it('supports opening Menu, toggling Products submenu, Escape key closing, and displays Android Applications / Websites page labels', () => {
+  it('supports opening Menu, toggling Products and Services submenus, Escape key closing, and displays accurate page labels', () => {
     const { container, unmount } = render(
-      <MemoryRouter initialEntries={['/pages/apps']}>
+      <MemoryRouter initialEntries={['/products/in-production']}>
         <Routes>
           <Route element={<SiteLayout session={null} systemStatus={null} onLogout={() => {}} />}>
-            <Route path="/pages/apps" element={<div>Apps Content</div>} />
+            <Route path="/products/in-production" element={<div>In Production Content</div>} />
           </Route>
         </Routes>
       </MemoryRouter>
     )
 
-    // Current page label for /pages/apps is "Android Applications"
+    // Current page label for /products/in-production is "In Production"
     const pageLabel = container.querySelector('.current-page-label')
-    expect(pageLabel?.textContent).toBe('Android Applications')
+    expect(pageLabel?.textContent).toBe('In Production')
 
     // Menu starts hidden
     const menuBtn = screen.getByRole('button', { name: /^Menu$/i })
@@ -267,17 +267,17 @@ describe('Page Content & AdSense Remediation Tests', () => {
     fireEvent.click(menuBtn)
     expect(menuBtn.getAttribute('aria-expanded')).toBe('true')
 
-    // Products submenu is open and exposes Android Applications and Websites
-    const submenuToggle = screen.getByRole('button', { name: /Toggle Products submenu/i })
-    expect(submenuToggle.getAttribute('aria-expanded')).toBe('true')
-    expect(screen.getByRole('link', { name: /Android Applications/i }).getAttribute('href')).toBe('/pages/apps')
-    expect(screen.getByRole('link', { name: /Websites/i }).getAttribute('href')).toBe('/pages/websites')
+    // Products and Services submenus are open
+    const productsSubmenuToggle = screen.getByRole('button', { name: /Toggle Products submenu/i })
+    const servicesSubmenuToggle = screen.getByRole('button', { name: /Toggle Services submenu/i })
+    expect(productsSubmenuToggle.getAttribute('aria-expanded')).toBe('true')
+    expect(servicesSubmenuToggle.getAttribute('aria-expanded')).toBe('true')
 
     // Toggle Products submenu closed and open
-    fireEvent.click(submenuToggle)
-    expect(submenuToggle.getAttribute('aria-expanded')).toBe('false')
-    fireEvent.click(submenuToggle)
-    expect(submenuToggle.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(productsSubmenuToggle)
+    expect(productsSubmenuToggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(productsSubmenuToggle)
+    expect(productsSubmenuToggle.getAttribute('aria-expanded')).toBe('true')
 
     // Escape key closes Menu
     fireEvent.keyDown(document, { key: 'Escape' })

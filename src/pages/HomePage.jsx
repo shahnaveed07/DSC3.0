@@ -37,10 +37,10 @@ export function HomePage({ systemStatus }) {
             <NavLink to="/pages/apps" className="button button-primary button-lg">
               Explore Our Apps &amp; Games
             </NavLink>
-            <NavLink to="/pages/products" className="button button-secondary button-lg">
+            <NavLink to="/products" className="button button-secondary button-lg">
               View Our Products
             </NavLink>
-            <NavLink to="/pages/contact" className="button button-ghost button-lg">
+            <NavLink to="/contact" className="button button-ghost button-lg">
               Request a Website
             </NavLink>
           </div>

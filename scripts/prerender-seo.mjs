@@ -131,10 +131,21 @@ function runPrerender() {
     const relativeRoute = route.routePath.replace(/^\/+/, '')
     const routeHtml = injectRouteSeoIntoHtml(templateHtml, route)
 
-    // Emit dist/pages/<slug>/index.html for directory-style static resolution
+    // Emit dist/<route>/index.html for directory-style static resolution
     const dirTarget = path.join(distDir, relativeRoute, 'index.html')
     fs.mkdirSync(path.dirname(dirTarget), { recursive: true })
     fs.writeFileSync(dirTarget, routeHtml, 'utf8')
+  }
+
+  // Emit static shells for /about and /contact clean route aliases
+  for (const [aliasDir, seoRoute] of [
+    ['about', SEO_ROUTES.about],
+    ['contact', SEO_ROUTES.contact],
+  ]) {
+    const aliasHtml = injectRouteSeoIntoHtml(templateHtml, seoRoute)
+    const aliasTarget = path.join(distDir, aliasDir, 'index.html')
+    fs.mkdirSync(path.dirname(aliasTarget), { recursive: true })
+    fs.writeFileSync(aliasTarget, aliasHtml, 'utf8')
   }
 
   // Emit dist/404.html for static hosts

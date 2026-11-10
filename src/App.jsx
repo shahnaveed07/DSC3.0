@@ -14,17 +14,24 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage })))
 const AdminWorkspacePage = lazy(() => import('./pages/AdminWorkspacePage').then((m) => ({ default: m.AdminWorkspacePage })))
 const AppsPage = lazy(() => import('./pages/AppsPage').then((m) => ({ default: m.AppsPage })))
+const BuiltByDscPage = lazy(() => import('./pages/BuiltByDscPage').then((m) => ({ default: m.BuiltByDscPage })))
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage').then((m) => ({ default: m.ChangePasswordPage })))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })))
 const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })))
 const DownloadsPage = lazy(() => import('./pages/DownloadsPage').then((m) => ({ default: m.DownloadsPage })))
 const FreePanelPage = lazy(() => import('./pages/FreePanelPage').then((m) => ({ default: m.FreePanelPage })))
 const GenerateKeyPage = lazy(() => import('./pages/GenerateKeyPage').then((m) => ({ default: m.GenerateKeyPage })))
+const InProductionPage = lazy(() => import('./pages/InProductionPage').then((m) => ({ default: m.InProductionPage })))
 const LegacyProductsCatalogPage = lazy(() => import('./pages/LegacyProductsCatalogPage').then((m) => ({ default: m.LegacyProductsCatalogPage })))
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })))
+const OwnProductsPage = lazy(() => import('./pages/OwnProductsPage').then((m) => ({ default: m.OwnProductsPage })))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })))
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })))
+const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage').then((m) => ({ default: m.ServiceDetailPage })))
+const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage').then((m) => ({ default: m.ServicesOverviewPage })))
 const StatusPage = lazy(() => import('./pages/StatusPage').then((m) => ({ default: m.StatusPage })))
+const StudioProductsPage = lazy(() => import('./pages/StudioProductsPage').then((m) => ({ default: m.StudioProductsPage })))
+const TeamPage = lazy(() => import('./pages/TeamPage').then((m) => ({ default: m.TeamPage })))
 const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })))
 const UserDashboardPage = lazy(() => import('./pages/UserDashboardPage').then((m) => ({ default: m.UserDashboardPage })))
 const UserLoginPage = lazy(() => import('./pages/UserLoginPage').then((m) => ({ default: m.UserLoginPage })))
@@ -154,187 +161,212 @@ export default function App() {
             <Route path="/pages/status" element={<StatusPage />} />
             <Route path="/pages/status.html" element={<Navigate replace to="/pages/status" />} />
 
-          <Route
-            element={
-              <SiteLayout
-                onLogout={handleLogout}
-                session={session}
-                systemStatus={systemStatus}
+            <Route
+              element={
+                <SiteLayout
+                  onLogout={handleLogout}
+                  session={session}
+                  systemStatus={systemStatus}
+                />
+              }
+            >
+              <Route index element={<HomePage systemStatus={systemStatus} />} />
+              <Route path="/index.html" element={<Navigate replace to="/" />} />
+
+              {/* Software Studio Public Routes */}
+              <Route path="/products" element={<StudioProductsPage />} />
+              <Route path="/products/in-production" element={<InProductionPage />} />
+              <Route path="/products/own-products" element={<OwnProductsPage />} />
+              <Route path="/products/built-by-dsc" element={<BuiltByDscPage />} />
+
+              <Route path="/services" element={<ServicesOverviewPage />} />
+              <Route
+                path="/services/websites"
+                element={<ServiceDetailPage serviceSlug="websites" />}
               />
-            }
-          >
-            <Route index element={<HomePage systemStatus={systemStatus} />} />
-            <Route path="/index.html" element={<Navigate replace to="/" />} />
+              <Route
+                path="/services/android-applications"
+                element={<ServiceDetailPage serviceSlug="android-applications" />}
+              />
+              <Route
+                path="/services/game-development"
+                element={<ServiceDetailPage serviceSlug="game-development" />}
+              />
 
-            <Route path="/pages/apps" element={<AppsPage />} />
-            <Route path="/pages/apps.html" element={<Navigate replace to="/pages/apps" />} />
+              <Route path="/team" element={<TeamPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
 
-            <Route path="/pages/websites" element={<WebsitesPage />} />
-            <Route path="/pages/websites.html" element={<Navigate replace to="/pages/websites" />} />
+              {/* Preserved Existing & Legacy Routes */}
+              <Route path="/pages/apps" element={<AppsPage />} />
+              <Route path="/pages/apps.html" element={<Navigate replace to="/pages/apps" />} />
 
-            <Route path="/pages/products" element={<ProductsPage />} />
-            <Route path="/pages/products.html" element={<Navigate replace to="/pages/products" />} />
+              <Route path="/pages/websites" element={<WebsitesPage />} />
+              <Route path="/pages/websites.html" element={<Navigate replace to="/pages/websites" />} />
 
-            <Route path="/pages/catalog" element={<LegacyProductsCatalogPage />} />
-            <Route path="/pages/catalog.html" element={<Navigate replace to="/pages/catalog" />} />
+              <Route path="/pages/products" element={<ProductsPage />} />
+              <Route path="/pages/products.html" element={<Navigate replace to="/pages/products" />} />
 
-            <Route
-              path="/pages/downloads"
-              element={<DownloadsPage systemStatus={systemStatus} />}
-            />
-            <Route
-              path="/pages/downloads.html"
-              element={<Navigate replace to="/pages/downloads" />}
-            />
+              <Route path="/pages/catalog" element={<LegacyProductsCatalogPage />} />
+              <Route path="/pages/catalog.html" element={<Navigate replace to="/pages/catalog" />} />
 
-            <Route path="/pages/about" element={<AboutPage />} />
-            <Route path="/pages/about.html" element={<Navigate replace to="/pages/about" />} />
+              <Route
+                path="/pages/downloads"
+                element={<DownloadsPage systemStatus={systemStatus} />}
+              />
+              <Route
+                path="/pages/downloads.html"
+                element={<Navigate replace to="/pages/downloads" />}
+              />
 
-            <Route path="/pages/contact" element={<ContactPage />} />
-            <Route path="/pages/contact.html" element={<Navigate replace to="/pages/contact" />} />
+              <Route path="/pages/about" element={<AboutPage />} />
+              <Route path="/pages/about.html" element={<Navigate replace to="/pages/about" />} />
 
-            <Route
-              path="/pages/privacy-policy"
-              element={<PrivacyPolicyPage />}
-            />
-            <Route
-              path="/pages/privacy-policy.html"
-              element={<Navigate replace to="/pages/privacy-policy" />}
-            />
-            <Route
-              path="/pages/policy.html"
-              element={<Navigate replace to="/pages/privacy-policy" />}
-            />
+              <Route path="/pages/contact" element={<ContactPage />} />
+              <Route path="/pages/contact.html" element={<Navigate replace to="/pages/contact" />} />
 
-            <Route path="/pages/terms" element={<TermsPage />} />
-            <Route path="/pages/terms.html" element={<Navigate replace to="/pages/terms" />} />
+              <Route
+                path="/pages/privacy-policy"
+                element={<PrivacyPolicyPage />}
+              />
+              <Route
+                path="/pages/privacy-policy.html"
+                element={<Navigate replace to="/pages/privacy-policy" />}
+              />
+              <Route
+                path="/pages/policy.html"
+                element={<Navigate replace to="/pages/privacy-policy" />}
+              />
 
-            <Route
-              path="/pages/ulogin"
-              element={
-                <UserLoginPage
-                  onSessionChange={handleSessionChange}
-                  session={session}
-                />
-              }
-            />
-            <Route
-              path="/pages/Ulogin.html"
-              element={<Navigate replace to="/pages/ulogin" />}
-            />
+              <Route path="/pages/terms" element={<TermsPage />} />
+              <Route path="/pages/terms.html" element={<Navigate replace to="/pages/terms" />} />
 
-            <Route
-              path="/pages/alogin"
-              element={
-                <AdminLoginPage
-                  onSessionChange={handleSessionChange}
-                  session={session}
-                />
-              }
-            />
-            <Route
-              path="/pages/Alogin.html"
-              element={<Navigate replace to="/pages/alogin" />}
-            />
-
-            <Route path="/pages/freepanel" element={<FreePanelPage />} />
-            <Route
-              path="/pages/freepanel.html"
-              element={<Navigate replace to="/pages/freepanel" />}
-            />
-
-            <Route path="/pages/checkout" element={<CheckoutPage />} />
-            <Route
-              path="/pages/checkout.html"
-              element={<Navigate replace to="/pages/checkout" />}
-            />
-
-            <Route
-              path="/pages/udash"
-              element={
-                <RoleGate role="User" session={session}>
-                  <UserDashboardPage
-                    onSessionInvalid={handleLogout}
+              <Route
+                path="/pages/ulogin"
+                element={
+                  <UserLoginPage
+                    onSessionChange={handleSessionChange}
                     session={session}
                   />
-                </RoleGate>
-              }
-            />
-            <Route
-              path="/pages/Udash.html"
-              element={<Navigate replace to="/pages/udash" />}
-            />
+                }
+              />
+              <Route
+                path="/pages/Ulogin.html"
+                element={<Navigate replace to="/pages/ulogin" />}
+              />
 
-            <Route
-              path="/pages/change"
-              element={
-                <RoleGate allowMustChange role="User" session={session}>
-                  <ChangePasswordPage
-                    onSessionInvalid={handleLogout}
-                    onSessionUpdate={handleSessionChange}
+              <Route
+                path="/pages/alogin"
+                element={
+                  <AdminLoginPage
+                    onSessionChange={handleSessionChange}
                     session={session}
                   />
-                </RoleGate>
-              }
-            />
-            <Route
-              path="/pages/change.html"
-              element={<Navigate replace to="/pages/change" />}
-            />
+                }
+              />
+              <Route
+                path="/pages/Alogin.html"
+                element={<Navigate replace to="/pages/alogin" />}
+              />
 
-            <Route
-              path="/pages/adash"
-              element={
-                <RoleGate role="Admin" session={session}>
-                  <AdminDashboardPage
-                    onSessionInvalid={handleLogout}
-                    session={session}
-                    systemStatus={systemStatus}
-                  />
-                </RoleGate>
-              }
-            />
-            <Route
-              path="/pages/Adash.html"
-              element={<Navigate replace to="/pages/adash" />}
-            />
+              <Route path="/pages/freepanel" element={<FreePanelPage />} />
+              <Route
+                path="/pages/freepanel.html"
+                element={<Navigate replace to="/pages/freepanel" />}
+              />
 
-            <Route
-              path="/pages/ownerdb"
-              element={
-                <RoleGate role="Admin" session={session}>
-                  <OwnerGate session={session}>
-                    <AdminWorkspacePage onSessionInvalid={handleLogout} session={session} />
-                  </OwnerGate>
-                </RoleGate>
-              }
-            />
-            <Route
-              path="/pages/OwnerDB.html"
-              element={<Navigate replace to="/pages/ownerdb" />}
-            />
+              <Route path="/pages/checkout" element={<CheckoutPage />} />
+              <Route
+                path="/pages/checkout.html"
+                element={<Navigate replace to="/pages/checkout" />}
+              />
 
-            <Route
-              path="/pages/generatekey"
-              element={
-                <RoleGate role="Admin" session={session}>
-                  <GenerateKeyPage onSessionInvalid={handleLogout} session={session} />
-                </RoleGate>
-              }
-            />
-            <Route
-              path="/pages/generateKey.html"
-              element={<Navigate replace to="/pages/generatekey" />}
-            />
+              <Route
+                path="/pages/udash"
+                element={
+                  <RoleGate role="User" session={session}>
+                    <UserDashboardPage
+                      onSessionInvalid={handleLogout}
+                      session={session}
+                    />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/pages/Udash.html"
+                element={<Navigate replace to="/pages/udash" />}
+              />
 
-            <Route path="/pages/404" element={<NotFoundPage />} />
-            <Route path="/pages/404.html" element={<NotFoundPage />} />
+              <Route
+                path="/pages/change"
+                element={
+                  <RoleGate allowMustChange role="User" session={session}>
+                    <ChangePasswordPage
+                      onSessionInvalid={handleLogout}
+                      onSessionUpdate={handleSessionChange}
+                      session={session}
+                    />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/pages/change.html"
+                element={<Navigate replace to="/pages/change" />}
+              />
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </Suspense>
-    </MaintenanceGate>
-  </ErrorBoundary>
+              <Route
+                path="/pages/adash"
+                element={
+                  <RoleGate role="Admin" session={session}>
+                    <AdminDashboardPage
+                      onSessionInvalid={handleLogout}
+                      session={session}
+                      systemStatus={systemStatus}
+                    />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/pages/Adash.html"
+                element={<Navigate replace to="/pages/adash" />}
+              />
+
+              <Route
+                path="/pages/ownerdb"
+                element={
+                  <RoleGate role="Admin" session={session}>
+                    <OwnerGate session={session}>
+                      <AdminWorkspacePage onSessionInvalid={handleLogout} session={session} />
+                    </OwnerGate>
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/pages/OwnerDB.html"
+                element={<Navigate replace to="/pages/ownerdb" />}
+              />
+
+              <Route
+                path="/pages/generatekey"
+                element={
+                  <RoleGate role="Admin" session={session}>
+                    <GenerateKeyPage onSessionInvalid={handleLogout} session={session} />
+                  </RoleGate>
+                }
+              />
+              <Route
+                path="/pages/generateKey.html"
+                element={<Navigate replace to="/pages/generatekey" />}
+              />
+
+              <Route path="/pages/404" element={<NotFoundPage />} />
+              <Route path="/pages/404.html" element={<NotFoundPage />} />
+
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </MaintenanceGate>
+    </ErrorBoundary>
   )
 }

@@ -6,8 +6,13 @@ import { AboutPage } from '../pages/AboutPage'
 import { AppsPage } from '../pages/AppsPage'
 import { DownloadsPage } from '../pages/DownloadsPage'
 import { ProductsPage } from '../pages/ProductsPage'
-import { WebsitesPage } from '../pages/WebsitesPage'
-import { LegacyProductsCatalogPage } from '../pages/LegacyProductsCatalogPage'
+import { StudioProductsPage } from '../pages/StudioProductsPage'
+import { InProductionPage } from '../pages/InProductionPage'
+import { OwnProductsPage } from '../pages/OwnProductsPage'
+import { BuiltByDscPage } from '../pages/BuiltByDscPage'
+import { ServicesOverviewPage } from '../pages/ServicesOverviewPage'
+import { ServiceDetailPage } from '../pages/ServiceDetailPage'
+import { TeamPage } from '../pages/TeamPage'
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage'
 import { TermsPage } from '../pages/TermsPage'
 import { ContactPage } from '../pages/ContactPage'
@@ -72,43 +77,94 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
     expect(screen.queryByText(/Calculator/i)).toBeNull()
   })
 
-  it('ProductsPage presents the two primary categories (Android Applications and Websites) with clear navigation actions', () => {
+  it('StudioProductsPage (/products) presents the three portfolio classifications (In Production, Own Products, Built by DSC)', () => {
+    render(
+      <MemoryRouter>
+        <StudioProductsPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('heading', { level: 1, name: /Products & Portfolio/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /^In Production$/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /^Own Products$/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /^Built by DSC$/i })).toBeTruthy()
+
+    expect(screen.getByRole('link', { name: /Explore In Production/i }).getAttribute('href')).toBe(
+      '/products/in-production',
+    )
+    expect(screen.getByRole('link', { name: /Explore Own Products/i }).getAttribute('href')).toBe(
+      '/products/own-products',
+    )
+    expect(screen.getByRole('link', { name: /Explore Built by DSC/i }).getAttribute('href')).toBe(
+      '/products/built-by-dsc',
+    )
+  })
+
+  it('InProductionPage, OwnProductsPage, BuiltByDscPage, ServicesOverviewPage, ServiceDetailPage, and TeamPage render verified structure without invented entries', () => {
+    const { unmount: unmountInProd } = render(
+      <MemoryRouter>
+        <InProductionPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /^In Production$/i })).toBeTruthy()
+    expect(screen.getByText(/QR Scanner \| Generator/i)).toBeTruthy()
+    expect(screen.getByText(/Mind Matrix/i)).toBeTruthy()
+    expect(screen.getByText(/No Additional Websites Listed Yet/i)).toBeTruthy()
+    unmountInProd()
+
+    const { unmount: unmountOwn } = render(
+      <MemoryRouter>
+        <OwnProductsPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /^Own Products$/i })).toBeTruthy()
+    expect(screen.getByText(/Own Products Portfolio Structure Ready/i)).toBeTruthy()
+    unmountOwn()
+
+    const { unmount: unmountBuilt } = render(
+      <MemoryRouter>
+        <BuiltByDscPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /^Built by DSC$/i })).toBeTruthy()
+    expect(screen.getByText(/No Approved Client Showcase Entries Listed Yet/i)).toBeTruthy()
+    unmountBuilt()
+
+    const { unmount: unmountServices } = render(
+      <MemoryRouter>
+        <ServicesOverviewPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /Software Development Services/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /Website Development/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /Android Application Development/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /Game Development/i })).toBeTruthy()
+    unmountServices()
+
+    const { unmount: unmountGameService } = render(
+      <MemoryRouter>
+        <ServiceDetailPage serviceSlug="game-development" />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /^Game Development$/i })).toBeTruthy()
+    expect(screen.getByText(/Core Engineering & Focus Areas/i)).toBeTruthy()
+    unmountGameService()
+
+    const { unmount: unmountTeam } = render(
+      <MemoryRouter>
+        <TeamPage />
+      </MemoryRouter>
+    )
+    expect(screen.getByRole('heading', { level: 1, name: /^Our Team$/i })).toBeTruthy()
+    expect(screen.getByText(/Naveed Mushtaq — Founder & Lead Developer/i)).toBeTruthy()
+    expect(screen.getByText(/Additional Team Member Profiles Pending/i)).toBeTruthy()
+    unmountTeam()
+  })
+
+  it('ProductsPage (/pages/products) preserves all legacy software catalogue entries, category filters, and setup guides', () => {
     render(
       <MemoryRouter>
         <ProductsPage />
-      </MemoryRouter>
-    )
-
-    expect(screen.getByRole('heading', { level: 1, name: /^Products$/i })).toBeTruthy()
-    expect(
-      screen.getByText(/Explore software and digital products developed by Dark Skull Corporation\./i)
-    ).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 2, name: /Android Applications/i })).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 2, name: /Websites/i })).toBeTruthy()
-
-    const appsLink = screen.getByRole('link', { name: /Explore Android Applications/i })
-    const websitesLink = screen.getByRole('link', { name: /Explore Websites/i })
-    expect(appsLink.getAttribute('href')).toBe('/pages/apps')
-    expect(websitesLink.getAttribute('href')).toBe('/pages/websites')
-  })
-
-  it('WebsitesPage renders the Websites category with a clean verified empty state and no dummy projects', () => {
-    render(
-      <MemoryRouter>
-        <WebsitesPage />
-      </MemoryRouter>
-    )
-
-    expect(screen.getByRole('heading', { level: 1, name: /^Websites$/i })).toBeTruthy()
-    expect(screen.getByText(/Website Portfolio Directory/i)).toBeTruthy()
-    expect(screen.getByRole('link', { name: /Request a Website/i }).getAttribute('href')).toBe('/pages/contact')
-    expect(screen.getByRole('link', { name: /Back to Products/i }).getAttribute('href')).toBe('/pages/products')
-  })
-
-  it('LegacyProductsCatalogPage preserves all software catalogue entries, category filters, and setup guides', () => {
-    render(
-      <MemoryRouter>
-        <LegacyProductsCatalogPage />
       </MemoryRouter>
     )
 

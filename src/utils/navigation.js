@@ -1,49 +1,106 @@
 /**
- * Centralized contextual navigation logic for DSC3.0.
+ * Centralized contextual navigation logic for DSC3.0 Software Studio.
  * Evaluates current route, user role, and owner permissions
- * to return structured navigation groups with Products organized into:
- * 1. Android Applications (/pages/apps)
- * 2. Websites (/pages/websites)
+ * to return structured navigation groups with:
+ * - Products (In Production, Own Products, Built by DSC)
+ * - Services (Website Development, Android Application Development, Game Development)
+ * - Our Team, About, Contact, and role-specific User/Admin controls.
  */
 
 function normalizePath(pathname = '') {
-  const clean = String(pathname || '').toLowerCase().replace(/\/index\.html$/, '/')
-  return clean.endsWith('.html') ? clean.replace(/\.html$/, '') : clean
+  const clean = String(pathname || '')
+    .toLowerCase()
+    .replace(/\/index\.html$/, '/')
+    .replace(/\/+$/, '')
+  const withoutHtml = clean.endsWith('.html') ? clean.replace(/\.html$/, '') : clean
+  return withoutHtml || '/'
 }
 
-function buildProductsNavItem(path) {
-  const isProductsOverview = path === '/pages/products'
-  const isAndroidApps = path === '/pages/apps'
-  const isWebsites = path === '/pages/websites'
-  const isParentActive = isProductsOverview || isAndroidApps || isWebsites
+export function buildProductsNavItem(path) {
+  const isProductsOverview = path === '/products'
+  const isInProduction = path === '/products/in-production'
+  const isOwnProducts = path === '/products/own-products'
+  const isBuiltByDsc = path === '/products/built-by-dsc'
+  const isLegacyApps = path === '/pages/apps' || path === '/pages/websites'
+
+  const isParentActive =
+    isProductsOverview ||
+    isInProduction ||
+    isOwnProducts ||
+    isBuiltByDsc ||
+    isLegacyApps
 
   return {
     label: 'Products',
-    to: '/pages/products',
+    to: '/products',
     isCurrent: isProductsOverview,
     isParentActive,
     children: [
       {
-        label: 'Android Applications',
-        to: '/pages/apps',
-        isCurrent: isAndroidApps,
+        label: 'In Production',
+        to: '/products/in-production',
+        isCurrent: isInProduction,
       },
       {
-        label: 'Websites',
-        to: '/pages/websites',
-        isCurrent: isWebsites,
+        label: 'Own Products',
+        to: '/products/own-products',
+        isCurrent: isOwnProducts,
+      },
+      {
+        label: 'Built by DSC',
+        to: '/products/built-by-dsc',
+        isCurrent: isBuiltByDsc,
       },
     ],
   }
 }
 
-function buildPublicNavigationItems(path) {
+export function buildServicesNavItem(path) {
+  const isServicesOverview = path === '/services'
+  const isWebsites = path === '/services/websites'
+  const isAndroidApps = path === '/services/android-applications'
+  const isGameDev = path === '/services/game-development'
+
+  const isParentActive =
+    isServicesOverview || isWebsites || isAndroidApps || isGameDev
+
+  return {
+    label: 'Services',
+    to: '/services',
+    isCurrent: isServicesOverview,
+    isParentActive,
+    children: [
+      {
+        label: 'Website Development',
+        to: '/services/websites',
+        isCurrent: isWebsites,
+      },
+      {
+        label: 'Android Application Development',
+        to: '/services/android-applications',
+        isCurrent: isAndroidApps,
+      },
+      {
+        label: 'Game Development',
+        to: '/services/game-development',
+        isCurrent: isGameDev,
+      },
+    ],
+  }
+}
+
+export function buildPublicNavigationItems(path) {
+  const isAbout = path === '/about' || path === '/pages/about'
+  const isContact = path === '/contact' || path === '/pages/contact'
+
   return [
     { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
     buildProductsNavItem(path),
+    buildServicesNavItem(path),
+    { label: 'Our Team', to: '/team', isCurrent: path === '/team' },
+    { label: 'About', to: '/about', isCurrent: isAbout },
+    { label: 'Contact', to: '/contact', isCurrent: isContact },
     { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
-    { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
-    { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
     { label: 'Status', to: '/pages/status', isCurrent: path === '/pages/status' },
   ]
 }
@@ -86,12 +143,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     if (!isAdminTool) {
       groups.push({
         title: 'Public Site',
-        items: [
-          { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
-          buildProductsNavItem(path),
-          { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
-          { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       })
     }
 
@@ -117,7 +169,11 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     const userItems = [
       { label: 'Dashboard', to: '/pages/udash', isCurrent: path === '/pages/udash' },
       { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
-      { label: 'Products / Store', to: '/pages/catalog', isCurrent: path === '/pages/catalog' },
+      {
+        label: 'Products / Store',
+        to: '/pages/products',
+        isCurrent: path === '/pages/products' || path === '/pages/catalog',
+      },
       { label: 'Change Password', to: '/pages/change', isCurrent: path === '/pages/change' },
     ]
 
@@ -127,22 +183,12 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     if (path === '/pages/udash' || path === '/pages/change') {
       groups.push({
         title: 'Explore',
-        items: [
-          { label: 'Home', to: '/' },
-          buildProductsNavItem(path),
-          { label: 'About', to: '/pages/about' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       })
     } else {
       groups.push({
         title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
-          buildProductsNavItem(path),
-          { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
-          { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       })
     }
 
@@ -172,7 +218,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
         title: 'Checkout Navigation',
         items: [
           { label: 'Checkout', to: '/pages/checkout', isCurrent: true },
-          { label: 'Software Catalog', to: '/pages/catalog' },
+          { label: 'Software Catalog', to: '/pages/products' },
           { label: 'Free Panel', to: '/pages/freepanel' },
         ],
       },
@@ -187,13 +233,13 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     ]
   }
 
-  // LEGACY SOFTWARE CATALOG (/pages/catalog)
-  if (path === '/pages/catalog') {
+  // LEGACY SOFTWARE CATALOG (/pages/products or /pages/catalog)
+  if (path === '/pages/products' || path === '/pages/catalog') {
     return [
       {
         title: 'Store & Catalog',
         items: [
-          { label: 'Software Catalog', to: '/pages/catalog', isCurrent: true },
+          { label: 'Software Catalog', to: '/pages/products', isCurrent: true },
           { label: 'Checkout', to: '/pages/checkout' },
           { label: 'Free Panel', to: '/pages/freepanel' },
         ],
@@ -216,7 +262,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
         title: 'Evaluation',
         items: [
           { label: 'Free Panel', to: '/pages/freepanel', isCurrent: true },
-          { label: 'Software Catalog', to: '/pages/catalog' },
+          { label: 'Software Catalog', to: '/pages/products' },
         ],
       },
       {
@@ -283,11 +329,18 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     ]
   }
 
-  // STANDARD PUBLIC PAGES (/, /pages/products, /pages/apps, /pages/websites, /pages/downloads, /pages/about, /pages/contact, /pages/status)
+  // STANDARD PUBLIC PAGES
   return [
     {
       title: 'Navigation',
       items: buildPublicNavigationItems(path),
+    },
+    {
+      title: 'Resources & Catalog',
+      items: [
+        { label: 'Android Apps & Games', to: '/pages/apps', isCurrent: path === '/pages/apps' },
+        { label: 'Software Catalog', to: '/pages/products' },
+      ],
     },
     {
       title: 'Community',
@@ -308,6 +361,17 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
  */
 export const FOOTER_PAGES = new Set([
   '/',
+  '/products',
+  '/products/in-production',
+  '/products/own-products',
+  '/products/built-by-dsc',
+  '/services',
+  '/services/websites',
+  '/services/android-applications',
+  '/services/game-development',
+  '/team',
+  '/about',
+  '/contact',
   '/pages/apps',
   '/pages/websites',
   '/pages/products',

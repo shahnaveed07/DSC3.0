@@ -2,30 +2,68 @@ export const primaryNavItems = [
   { label: 'Home', to: '/' },
   {
     label: 'Products',
-    to: '/pages/products',
+    to: '/products',
     children: [
-      { label: 'Android Applications', to: '/pages/apps' },
-      { label: 'Websites', to: '/pages/websites' },
+      {
+        label: 'In Production',
+        to: '/products/in-production',
+        description: 'Released Android applications, websites, and games in production.',
+      },
+      {
+        label: 'Own Products',
+        to: '/products/own-products',
+        description: 'Proprietary software and products owned and developed by DSC.',
+      },
+      {
+        label: 'Built by DSC',
+        to: '/products/built-by-dsc',
+        description: 'Websites, applications, and games built by DSC for clients and partners.',
+      },
     ],
   },
-  { label: 'Downloads', to: '/pages/downloads' },
-  { label: 'About', to: '/pages/about' },
-  { label: 'Contact', to: '/pages/contact' },
   {
-    label: 'Discord',
-    href: 'https://discord.gg/XB2Zjmsb7K',
+    label: 'Services',
+    to: '/services',
+    children: [
+      {
+        label: 'Website Development',
+        to: '/services/websites',
+        description: 'Custom responsive websites and web applications engineered for performance.',
+      },
+      {
+        label: 'Android Application Development',
+        to: '/services/android-applications',
+        description: 'Native Android utilities and applications built for reliability and privacy.',
+      },
+      {
+        label: 'Game Development',
+        to: '/services/game-development',
+        description: 'Interactive games, puzzle mechanics, and offline-ready gameplay.',
+      },
+    ],
   },
+  { label: 'Our Team', to: '/team' },
+  { label: 'About', to: '/about' },
+  { label: 'Contact', to: '/contact' },
 ]
 
 export const pageLabels = [
   { label: 'Home', paths: ['/', '/index.html'] },
+  { label: 'Products', paths: ['/products'] },
+  { label: 'In Production', paths: ['/products/in-production'] },
+  { label: 'Own Products', paths: ['/products/own-products'] },
+  { label: 'Built by DSC', paths: ['/products/built-by-dsc'] },
+  { label: 'Services', paths: ['/services'] },
+  { label: 'Website Development', paths: ['/services/websites'] },
+  { label: 'Android App Development', paths: ['/services/android-applications'] },
+  { label: 'Game Development', paths: ['/services/game-development'] },
+  { label: 'Our Team', paths: ['/team'] },
+  { label: 'About', paths: ['/about', '/pages/about', '/pages/about.html'] },
+  { label: 'Contact', paths: ['/contact', '/pages/contact', '/pages/contact.html'] },
   { label: 'Android Applications', paths: ['/pages/apps', '/pages/apps.html'] },
   { label: 'Websites', paths: ['/pages/websites', '/pages/websites.html'] },
-  { label: 'Products', paths: ['/pages/products', '/pages/products.html'] },
-  { label: 'Software Catalog', paths: ['/pages/catalog', '/pages/catalog.html'] },
+  { label: 'Software Catalog', paths: ['/pages/products', '/pages/products.html', '/pages/catalog', '/pages/catalog.html'] },
   { label: 'Downloads', paths: ['/pages/downloads', '/pages/downloads.html'] },
-  { label: 'About', paths: ['/pages/about', '/pages/about.html'] },
-  { label: 'Contact', paths: ['/pages/contact', '/pages/contact.html'] },
   { label: 'Status', paths: ['/pages/status', '/pages/status.html'] },
   { label: 'Privacy Policy', paths: ['/pages/privacy-policy', '/pages/privacy-policy.html', '/pages/policy.html'] },
   { label: 'Terms', paths: ['/pages/terms', '/pages/terms.html'] },
@@ -38,6 +76,327 @@ export const pageLabels = [
   { label: 'Admin Dashboard', paths: ['/pages/adash', '/pages/Adash.html'] },
   { label: 'Owner Workspace', paths: ['/pages/ownerdb', '/pages/OwnerDB.html'] },
   { label: 'Key Generation', paths: ['/pages/generatekey', '/pages/generateKey.html'] },
+]
+
+export const studioProductCategories = [
+  {
+    id: 'in-production',
+    categoryLabel: 'Classification A',
+    badge: 'Live & Deployed',
+    title: 'In Production',
+    description:
+      'Applications, websites, and games that are released, deployed, or actively available in production across supported platforms.',
+    metaItems: ['Android Applications', 'Websites', 'Games'],
+    highlights: [
+      'Android Applications — Live production utilities and mobile software',
+      'Websites — Deployed web platforms and public web properties',
+      'Games — Released mobile and interactive game titles',
+    ],
+    action: {
+      label: 'Explore In Production',
+      to: '/products/in-production',
+    },
+  },
+  {
+    id: 'own-products',
+    categoryLabel: 'Classification B',
+    badge: 'Studio Proprietary',
+    title: 'Own Products',
+    description:
+      'Proprietary products, applications, and internal intellectual property conceived, owned, and developed directly by Dark Skull Corporation.',
+    metaItems: ['DSC-Owned IP', 'Internal Roadmaps', 'First-Party Releases'],
+    highlights: [
+      'Conceived, engineered, and maintained in-house by DSC',
+      'Dedicated product lifecycle, updates, and direct studio governance',
+      'Separated from client work and external commissions',
+    ],
+    action: {
+      label: 'Explore Own Products',
+      to: '/products/own-products',
+    },
+  },
+  {
+    id: 'built-by-dsc',
+    categoryLabel: 'Classification C',
+    badge: 'Client & Partner Work',
+    title: 'Built by DSC',
+    description:
+      'Websites, Android applications, and games engineered by Dark Skull Corporation for external clients, organizations, and commissioned projects.',
+    metaItems: ['Client Websites', 'Custom Apps', 'Commissioned Games'],
+    highlights: [
+      'Custom software and websites delivered for external clients',
+      'Distinct portfolio classification separate from DSC-owned products',
+      'Published only when verified client showcase approval is granted',
+    ],
+    action: {
+      label: 'Explore Built by DSC',
+      to: '/products/built-by-dsc',
+    },
+  },
+]
+
+export const inProductionStreams = [
+  {
+    id: 'android-applications',
+    label: 'Stream 01',
+    badge: 'Android Applications',
+    title: 'Android Applications',
+    description:
+      'Production Android applications published and maintained by Dark Skull Corporation.',
+    verifiedReleases: [
+      {
+        name: 'QR Scanner | Generator',
+        type: 'Android Utility Application',
+        status: 'In Production — Google Play',
+        summary:
+          'High-speed autofocus camera barcode/QR scanner and offline custom QR code generator for Android devices.',
+        externalHref: 'https://play.google.com/store/apps/details?id=com.dsc.qrscanner',
+        externalLabel: 'View on Google Play ↗',
+        internalTo: '/pages/apps',
+        internalLabel: 'View App Details',
+      },
+    ],
+  },
+  {
+    id: 'websites',
+    label: 'Stream 02',
+    badge: 'Websites',
+    title: 'Websites',
+    description:
+      'Production websites and web platforms deployed by Dark Skull Corporation.',
+    verifiedReleases: [],
+    emptyMessage:
+      'No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase.',
+  },
+  {
+    id: 'games',
+    label: 'Stream 03',
+    badge: 'Games',
+    title: 'Games',
+    description:
+      'Production games and interactive experiences released by Dark Skull Corporation.',
+    verifiedReleases: [
+      {
+        name: 'Mind Matrix',
+        type: 'Mobile Logic & Puzzle Game',
+        status: 'In Production — Google Play',
+        summary:
+          'Cognitive puzzle game with progressive logic, memory sequence recall, pattern recognition, and reaction drills playable offline.',
+        externalHref: 'https://play.google.com/store/apps/details?id=com.dsc.mindmatrix',
+        externalLabel: 'View on Google Play ↗',
+        internalTo: '/pages/apps',
+        internalLabel: 'View Game Details',
+      },
+    ],
+  },
+]
+
+export const studioServiceCategories = [
+  {
+    id: 'website-development',
+    slug: 'websites',
+    categoryLabel: 'Service 01',
+    badge: 'Web Engineering',
+    title: 'Website Development',
+    description:
+      'Custom responsive websites and web applications designed and engineered by Dark Skull Corporation for individuals, startups, businesses, and organizations.',
+    metaItems: ['Responsive UI', 'Modern Web Stack', 'SEO & Performance'],
+    highlights: [
+      'Custom frontend architecture tailored to brand and operational goals',
+      'Responsive layouts across desktop, tablet, and mobile viewports',
+      'Clean semantic structure, accessibility, and technical SEO foundations',
+    ],
+    action: {
+      label: 'Website Development Architecture',
+      to: '/services/websites',
+    },
+  },
+  {
+    id: 'android-application-development',
+    slug: 'android-applications',
+    categoryLabel: 'Service 02',
+    badge: 'Mobile Engineering',
+    title: 'Android Application Development',
+    description:
+      'Native Android application design and development focused on intuitive user interfaces, offline capability, scoped permissions, and dependable device performance.',
+    metaItems: ['Native Android', 'Offline-Ready', 'Privacy-First'],
+    highlights: [
+      'User-centered mobile workflows engineered for everyday utility',
+      'Strict permission scoping and local-first data handling where applicable',
+      'End-to-end build preparation for Google Play distribution',
+    ],
+    action: {
+      label: 'Android Development Architecture',
+      to: '/services/android-applications',
+    },
+  },
+  {
+    id: 'game-development',
+    slug: 'game-development',
+    categoryLabel: 'Service 03',
+    badge: 'Interactive Systems',
+    title: 'Game Development',
+    description:
+      'Design and engineering of engaging mobile and interactive games featuring responsive controls, structured progression systems, and polished visual feedback.',
+    metaItems: ['Gameplay Systems', 'Puzzle & Logic', '60 FPS Polish'],
+    highlights: [
+      'Core gameplay loop engineering, level progression, and state architecture',
+      'Responsive touch and input handling tuned for smooth frame pacing',
+      'Offline-playable game design without intrusive dark patterns',
+    ],
+    action: {
+      label: 'Game Development Architecture',
+      to: '/services/game-development',
+    },
+  },
+]
+
+export const serviceBlueprints = {
+  websites: {
+    seoKey: 'serviceWebsites',
+    eyebrow: 'DSC Studio Services · Web Engineering',
+    title: 'Website Development',
+    subtitle:
+      'Custom website design and web application development for individuals, startups, businesses, and companies.',
+    overview:
+      'Dark Skull Corporation designs and develops responsive, standards-compliant websites and web interfaces. Every project is structured around clear information architecture, readable typography, accessible navigation, and reliable performance across modern browsers.',
+    scopeAreas: [
+      {
+        title: 'Information Architecture & UI Design',
+        description:
+          'Structuring pages, navigation flows, and responsive layouts aligned with your organization or personal brand.',
+      },
+      {
+        title: 'Frontend & Application Engineering',
+        description:
+          'Implementing clean, maintainable web interfaces using modern JavaScript, React, HTML5, and modular CSS systems.',
+      },
+      {
+        title: 'Technical SEO & Performance',
+        description:
+          'Configuring semantic metadata, structured data, fast asset delivery, and mobile-friendly viewport behavior.',
+      },
+    ],
+    deliverablesFramework: [
+      'Responsive multi-viewport web interface (Desktop, Tablet, Mobile)',
+      'Structured navigation, page hierarchy, and accessible UI components',
+      'Technical SEO metadata, sitemap, and search engine readiness',
+      'Deployment-ready production build and handover documentation',
+    ],
+    deploymentNote:
+      'Deployment options (such as static cloud hosting, custom domain routing, or client-managed infrastructure) are aligned during project scoping.',
+  },
+  'android-applications': {
+    seoKey: 'serviceAndroid',
+    eyebrow: 'DSC Studio Services · Mobile Engineering',
+    title: 'Android Application Development',
+    subtitle:
+      'Native Android application engineering focused on practical utility, clean interfaces, and dependable mobile performance.',
+    overview:
+      'Dark Skull Corporation builds Android applications with a focus on fast startup times, clear touch interactions, offline resilience, and transparent permission boundaries.',
+    scopeAreas: [
+      {
+        title: 'Mobile UI & Interaction Design',
+        description:
+          'Crafting intuitive screens, accessible touch targets, and coherent navigation flows for Android devices.',
+      },
+      {
+        title: 'Core Feature & Offline Engineering',
+        description:
+          'Building reliable local processing, device hardware integration, and responsive application state management.',
+      },
+      {
+        title: 'Privacy & Permission Scoping',
+        description:
+          'Ensuring device permissions are requested strictly for user-invoked features with zero unnecessary background telemetry.',
+      },
+    ],
+    deliverablesFramework: [
+      'Native Android application package engineered for target Android API levels',
+      'Scoped permission declarations and user-facing privacy disclosures',
+      'Offline-capable or API-connected workflows according to project scope',
+      'Release-ready build artifacts prepared for store or enterprise distribution',
+    ],
+    deploymentNote:
+      'Distribution targets (Google Play Store publishing or direct signed APK/AAB delivery) are defined according to client requirements.',
+  },
+  'game-development': {
+    seoKey: 'serviceGames',
+    eyebrow: 'DSC Studio Services · Interactive Systems',
+    title: 'Game Development',
+    subtitle:
+      'Interactive game design and engineering for puzzle, logic, casual, and mobile gaming experiences.',
+    overview:
+      'Dark Skull Corporation develops interactive games that combine clear rules, progressive challenge curves, tactile feedback, and stable frame rates on target devices.',
+    scopeAreas: [
+      {
+        title: 'Gameplay Mechanics & Rules Engine',
+        description:
+          'Designing deterministic game loops, scoring logic, difficulty progression, and interactive puzzle or arcade systems.',
+      },
+      {
+        title: 'HUD, Menus & Visual Polish',
+        description:
+          'Creating readable in-game HUDs, level selectors, pause/summary screens, and cohesive visual themes.',
+      },
+      {
+        title: 'Performance & Offline Playability',
+        description:
+          'Optimizing rendering, input latency, and local state persistence for smooth offline and mobile play sessions.',
+      },
+    ],
+    deliverablesFramework: [
+      'Complete playable game loop with structured progression and state management',
+      'Responsive touch/keyboard controls and cohesive UI/HUD screens',
+      'Local progress persistence and performance-tuned assets',
+      'Production build packaged for target mobile or web platforms',
+    ],
+    deploymentNote:
+      'Platform packaging and release workflows (Android Google Play or web-based interactive builds) are coordinated per project.',
+  },
+}
+
+/**
+ * Centralized Social Media & Official External Links Configuration.
+ * Do not invent URLs or use fake "#" destinations for unconfigured platforms.
+ */
+export const socialLinksConfig = [
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    category: 'Official Social',
+    url: '', // Official URL to be added when provided
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    category: 'Official Social',
+    url: '', // Official URL to be added when provided
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    category: 'Official Social',
+    url: '', // Official URL to be added when provided
+  },
+  {
+    id: 'discord',
+    label: 'Discord Community',
+    category: 'Community',
+    url: 'https://discord.gg/XB2Zjmsb7K',
+  },
+  {
+    id: 'github',
+    label: 'GitHub (@shahnaveed07)',
+    category: 'Engineering',
+    url: 'https://github.com/shahnaveed07',
+  },
+  {
+    id: 'portfolio',
+    label: 'Founder Portfolio',
+    category: 'Leadership',
+    url: 'https://naveedmushtaq.tech/',
+  },
 ]
 
 export const productCategories = [
@@ -503,35 +862,42 @@ export const termsSections = [
 
 export const footerGroups = [
   {
-    title: 'Explore',
+    title: 'Navigation',
     links: [
       { label: 'Home', to: '/' },
-      { label: 'Products', to: '/pages/products' },
-      { label: 'Android Applications', to: '/pages/apps' },
-      { label: 'Websites', to: '/pages/websites' },
+      { label: 'Our Team', to: '/team' },
+      { label: 'About Studio', to: '/about' },
+      { label: 'Contact', to: '/contact' },
       { label: 'Download Center', to: '/pages/downloads' },
-      { label: 'About Studio', to: '/pages/about' },
-      { label: 'Contact Support', to: '/pages/contact' },
+      { label: 'Client Login', to: '/pages/ulogin' },
     ],
   },
   {
-    title: 'Platform & Legal',
+    title: 'Products',
     links: [
-      { label: 'Free Panel Access', to: '/pages/freepanel' },
+      { label: 'Products Overview', to: '/products' },
+      { label: 'In Production', to: '/products/in-production' },
+      { label: 'Own Products', to: '/products/own-products' },
+      { label: 'Built by DSC', to: '/products/built-by-dsc' },
+      { label: 'Android Applications', to: '/pages/apps' },
+    ],
+  },
+  {
+    title: 'Services',
+    links: [
+      { label: 'Services Overview', to: '/services' },
+      { label: 'Website Development', to: '/services/websites' },
+      { label: 'Android App Development', to: '/services/android-applications' },
+      { label: 'Game Development', to: '/services/game-development' },
+    ],
+  },
+  {
+    title: 'Contact & Legal',
+    links: [
+      { label: 'darkskullcorporation@gmail.com', href: 'mailto:darkskullcorporation@gmail.com' },
       { label: 'System Status', to: '/pages/status' },
       { label: 'Privacy Policy', to: '/pages/privacy-policy' },
       { label: 'Terms of Service', to: '/pages/terms' },
-      { label: 'Client Login', to: '/pages/ulogin' },
-      { label: 'Checkout', to: '/pages/checkout' },
-    ],
-  },
-  {
-    title: 'Community & Connect',
-    links: [
-      { label: 'Discord Community', href: 'https://discord.gg/XB2Zjmsb7K' },
-      { label: 'GitHub Organization', href: 'https://github.com/shahnaveed07' },
-      { label: 'Developer Portfolio', href: 'https://naveedmushtaq.tech/' },
-      { label: 'Email Support', href: 'mailto:darkskullcorporation@gmail.com' },
     ],
   },
 ]

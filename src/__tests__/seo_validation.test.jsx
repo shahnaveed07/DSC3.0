@@ -11,6 +11,13 @@ import {
   buildRouteStructuredData,
 } from '../content/seoConfig'
 import { HomePage } from '../pages/HomePage'
+import { StudioProductsPage } from '../pages/StudioProductsPage'
+import { InProductionPage } from '../pages/InProductionPage'
+import { OwnProductsPage } from '../pages/OwnProductsPage'
+import { BuiltByDscPage } from '../pages/BuiltByDscPage'
+import { ServicesOverviewPage } from '../pages/ServicesOverviewPage'
+import { ServiceDetailPage } from '../pages/ServiceDetailPage'
+import { TeamPage } from '../pages/TeamPage'
 import { AppsPage } from '../pages/AppsPage'
 import { WebsitesPage } from '../pages/WebsitesPage'
 import { ProductsPage } from '../pages/ProductsPage'
@@ -46,7 +53,7 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
     expect(xml).not.toContain('<lastmod>')
 
     const locMatches = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim())
-    expect(locMatches.length).toBe(11)
+    expect(locMatches.length).toBe(INDEXABLE_PUBLIC_ROUTES.length)
 
     // Uniqueness check
     const uniqueLocs = new Set(locMatches)
@@ -62,12 +69,13 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
       }
     }
 
-    // All 11 indexable public routes must be in sitemap.xml
+    // All indexable public routes must be in sitemap.xml
     const expectedUrls = INDEXABLE_PUBLIC_ROUTES.map((r) => r.canonical)
     expect(locMatches.sort()).toEqual(expectedUrls.sort())
 
     // Non-indexable routes must NEVER appear in sitemap.xml
     const forbiddenSubstrings = [
+      '/pages/products',
       '/pages/catalog',
       '/pages/checkout',
       '/pages/ulogin',
@@ -175,9 +183,16 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
   it('renders each public page with a single H1 and dynamically updates head title, description, canonical, Open Graph, Twitter, and JSON-LD without duplicate tags', () => {
     const publicPageMatrix = [
       { key: 'home', element: <HomePage systemStatus={{ isMaintenanceMode: false }} /> },
+      { key: 'studioProducts', element: <StudioProductsPage /> },
+      { key: 'inProduction', element: <InProductionPage /> },
+      { key: 'ownProducts', element: <OwnProductsPage /> },
+      { key: 'builtByDsc', element: <BuiltByDscPage /> },
+      { key: 'services', element: <ServicesOverviewPage /> },
+      { key: 'serviceWebsites', element: <ServiceDetailPage serviceSlug="websites" /> },
+      { key: 'serviceAndroid', element: <ServiceDetailPage serviceSlug="android-applications" /> },
+      { key: 'serviceGames', element: <ServiceDetailPage serviceSlug="game-development" /> },
+      { key: 'team', element: <TeamPage /> },
       { key: 'apps', element: <AppsPage /> },
-      { key: 'websites', element: <WebsitesPage /> },
-      { key: 'products', element: <ProductsPage /> },
       { key: 'downloads', element: <DownloadsPage systemStatus={{}} /> },
       { key: 'freepanel', element: <FreePanelPage /> },
       { key: 'about', element: <AboutPage /> },
@@ -241,7 +256,7 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
       const ldJson = JSON.parse(ldScript.textContent)
       expect(Array.isArray(ldJson['@graph'])).toBe(true)
 
-      if (item.key === 'apps') {
+      if (item.key === 'apps' || item.key === 'inProduction') {
         const softwareNodes = ldJson['@graph'].filter(
           (node) => node['@type'] === 'SoftwareApplication',
         )
@@ -256,8 +271,10 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
     }
   })
 
-  it('sets robots="noindex, nofollow" on Checkout, Login, Password, Key Generation, Maintenance, and 404 pages', () => {
+  it('sets robots="noindex, nofollow" on Legacy Products, Websites, Checkout, Login, Password, Key Generation, Maintenance, and 404 pages', () => {
     const noindexPages = [
+      { key: 'products', path: '/pages/products', element: <ProductsPage /> },
+      { key: 'websites', path: '/pages/websites', element: <WebsitesPage /> },
       { key: 'catalog', path: '/pages/catalog', element: <LegacyProductsCatalogPage /> },
       { key: 'checkout', path: '/pages/checkout?panel=streamer', element: <CheckoutPage /> },
       { key: 'ulogin', path: '/pages/ulogin', element: <UserLoginPage session={null} /> },

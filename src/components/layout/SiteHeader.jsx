@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { pageLabels } from '../../content/siteContent'
+import { pageLabels, primaryNavItems } from '../../content/siteContent'
 import { checkOwnerAccess } from '../../services/dscApi'
 import { getContextualMenu } from '../../utils/navigation'
 
@@ -10,10 +10,12 @@ function isExternal(target) {
 
 export function SiteHeader({ session, systemStatus, onLogout, compact = false, wide = false }) {
   const location = useLocation()
+  const headerRef = useRef(null)
   const menuRef = useRef(null)
   const menuToggleBtnRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [openSubmenus, setOpenSubmenus] = useState({ Products: true })
+  const [desktopDropdown, setDesktopDropdown] = useState(null)
+  const [openSubmenus, setOpenSubmenus] = useState({ Products: true, Services: true })
   const [verifiedOwner, setVerifiedOwner] = useState(false)
 
   const isOwner = Boolean(session?.isOwner || verifiedOwner)
@@ -35,14 +37,19 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
     }
   }, [session])
 
+  const normalizedPath = useMemo(() => {
+    const raw = location.pathname.toLowerCase().replace(/\.html$/i, '').replace(/\/+$/, '')
+    return raw || '/'
+  }, [location.pathname])
+
   const currentPageLabel = useMemo(() => {
     const currentPath = location.pathname.toLowerCase()
     const match = pageLabels.find((item) =>
-      item.paths.some((path) => path.toLowerCase() === currentPath),
+      item.paths.some((path) => path.toLowerCase() === currentPath || path.toLowerCase() === normalizedPath),
     )
 
     return match?.label || ''
-  }, [location.pathname])
+  }, [location.pathname, normalizedPath])
 
   const menuGroups = useMemo(() => {
     return getContextualMenu({
@@ -58,10 +65,14 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
       if (!menuRef.current?.contains(event.target)) {
         setMenuOpen(false)
       }
+      if (!headerRef.current?.contains(event.target)) {
+        setDesktopDropdown(null)
+      }
     }
 
     function handleEscape(event) {
       if (event.key === 'Escape') {
+        setDesktopDropdown(null)
         setMenuOpen((wasOpen) => {
           if (wasOpen) {
             menuToggleBtnRef.current?.focus()
@@ -85,6 +96,22 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
       ...prev,
       [label]: !prev[label],
     }))
+  }
+
+  function isDesktopParentActive(item) {
+    if (item.label === 'Products') {
+      return normalizedPath === '/products' || normalizedPath.startsWith('/products/')
+    }
+    if (item.label === 'Services') {
+      return normalizedPath === '/services' || normalizedPath.startsWith('/services/')
+    }
+    if (item.label === 'About') {
+      return normalizedPath === '/about' || normalizedPath === '/pages/about'
+    }
+    if (item.label === 'Contact') {
+      return normalizedPath === '/contact' || normalizedPath === '/pages/contact'
+    }
+    return normalizedPath === item.to
   }
 
   function handleMenuKeyDown(event) {
@@ -114,11 +141,22 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
     }
   }
 
+  const accountRoute = session?.role === 'Admin' ? '/pages/adash' : '/pages/udash'
+
   return (
     <header
+      ref={headerRef}
       className={`site-header ${compact ? 'site-header-compact' : ''} ${wide ? 'site-header-wide' : ''}`.trim()}
     >
-      <NavLink className="logo-mark" to="/" aria-label="Dark Skull Corporation Home">
+      <NavLink
+        className="logo-mark"
+        to="/"
+        aria-label="Dark Skull Corporation Home"
+        onClick={() => {
+          setDesktopDropdown(null)
+          setMenuOpen(false)
+        }}
+      >
         <picture>
           <source srcSet="/images/dsclogo.webp" type="image/webp" />
           <img
@@ -134,6 +172,109 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
           <strong className="logo-text">Dark Skull Corporation</strong>
         </span>
       </NavLink>
+
+      {/* Desktop Software Studio Primary Navigation */}
+      {!compact ? (
+        <nav className="desktop-studio-nav" aria-label="Main navigation">
+          <ul className="desktop-nav-list">
+            {primaryNavItems.map((item) => {
+              const hasChildren = Array.isArray(item.children) && item.children.length > 0
+              const parentActive = isDesktopParentActive(item)
+              const isDropdownOpen = desktopDropdown === item.label
+              const dropdownId = `desktop-dropdown-${item.label.toLowerCase().replace(/\s+/g, '-')}`
+
+              if (hasChildren) {
+                return (
+                  <li
+                    key={item.label}
+                    className={`desktop-nav-item has-dropdown ${isDropdownOpen ? 'dropdown-open' : ''}`.trim()}
+                  >
+                    <div className="desktop-nav-trigger-group">
+                      <NavLink
+                        to={item.to}
+                        end
+                        className={`desktop-nav-link ${parentActive ? 'active' : ''}`.trim()}
+                        onClick={() => setDesktopDropdown(null)}
+                      >
+                        {item.label}
+                      </NavLink>
+                      <button
+                        type="button"
+                        className={`desktop-dropdown-toggle ${parentActive || isDropdownOpen ? 'active' : ''}`.trim()}
+                        aria-expanded={isDropdownOpen}
+                        aria-haspopup="true"
+                        aria-controls={dropdownId}
+                        aria-label={`${item.label} dropdown`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDesktopDropdown((curr) => (curr === item.label ? null : item.label))
+                        }}
+                      >
+                        <span
+                          className={`desktop-dropdown-chevron ${isDropdownOpen ? 'open' : ''}`.trim()}
+                          aria-hidden="true"
+                        >
+                          ▾
+                        </span>
+                      </button>
+                    </div>
+
+                    <div
+                      id={dropdownId}
+                      className="desktop-dropdown-panel"
+                      role="region"
+                      aria-label={`${item.label} submenu`}
+                      hidden={!isDropdownOpen}
+                    >
+                      <NavLink
+                        to={item.to}
+                        end
+                        className={({ isActive }) =>
+                          `desktop-dropdown-overview ${isActive ? 'active' : ''}`.trim()
+                        }
+                        onClick={() => setDesktopDropdown(null)}
+                      >
+                        <span>All {item.label}</span>
+                        <span aria-hidden="true">→</span>
+                      </NavLink>
+                      <div className="desktop-dropdown-items">
+                        {item.children.map((child) => (
+                          <NavLink
+                            key={child.to}
+                            to={child.to}
+                            className={({ isActive }) =>
+                              `desktop-dropdown-link ${isActive ? 'active' : ''}`.trim()
+                            }
+                            onClick={() => setDesktopDropdown(null)}
+                          >
+                            <span className="desktop-dropdown-title">{child.label}</span>
+                            {child.description ? (
+                              <span className="desktop-dropdown-desc">{child.description}</span>
+                            ) : null}
+                          </NavLink>
+                        ))}
+                      </div>
+                    </div>
+                  </li>
+                )
+              }
+
+              return (
+                <li key={item.label} className="desktop-nav-item">
+                  <NavLink
+                    to={item.to}
+                    end={item.to === '/'}
+                    className={`desktop-nav-link ${parentActive ? 'active' : ''}`.trim()}
+                    onClick={() => setDesktopDropdown(null)}
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+      ) : null}
 
       <div className="header-actions">
         {currentPageLabel ? (
@@ -151,14 +292,23 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
         ) : null}
 
         {session ? (
-          <button
-            className="button button-secondary header-user-action"
-            type="button"
-            onClick={onLogout}
-            title={`Sign out (${session.username || session.role})`}
-          >
-            Logout
-          </button>
+          <>
+            <NavLink
+              to={accountRoute}
+              className="button button-secondary header-account-link hide-mobile"
+              title="Open Account Dashboard"
+            >
+              Account
+            </NavLink>
+            <button
+              className="button button-secondary header-user-action"
+              type="button"
+              onClick={onLogout}
+              title={`Sign out (${session.username || session.role})`}
+            >
+              Logout
+            </button>
+          </>
         ) : (
           <NavLink className="button button-primary header-user-action" to="/pages/ulogin">
             Login
@@ -173,7 +323,10 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
             aria-expanded={menuOpen}
             aria-haspopup="true"
             aria-controls="primary-menu"
-            onClick={() => setMenuOpen((isOpen) => !isOpen)}
+            onClick={() => {
+              setDesktopDropdown(null)
+              setMenuOpen((isOpen) => !isOpen)
+            }}
           >
             <span>Menu</span>
           </button>

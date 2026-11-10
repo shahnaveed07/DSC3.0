@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { getContextualMenu } from '../utils/navigation'
 
-describe('Contextual Navigation', () => {
-  it('generates public menu items with Products parent category and Android Applications / Websites submenu', () => {
+describe('Contextual Navigation — DSC Software Studio Architecture', () => {
+  it('generates public menu items with Products (In Production, Own Products, Built by DSC), Services (Website, Android, Game Development), Our Team, About, and Contact', () => {
     const menu = getContextualMenu({
       pathname: '/',
       session: null,
@@ -15,46 +15,59 @@ describe('Contextual Navigation', () => {
     const labels = navGroup.items.map((i) => i.label)
     expect(labels).toContain('Home')
     expect(labels).toContain('Products')
-    expect(labels).toContain('Downloads')
+    expect(labels).toContain('Services')
+    expect(labels).toContain('Our Team')
     expect(labels).toContain('About')
     expect(labels).toContain('Contact')
 
-    // Ensure Android Applications is not duplicated as a top-level item
-    expect(labels).not.toContain('Apps')
-    expect(labels).not.toContain('Android Applications')
-
     const productsItem = navGroup.items.find((i) => i.label === 'Products')
     expect(productsItem).toBeTruthy()
-    expect(productsItem.to).toBe('/pages/products')
-    expect(Array.isArray(productsItem.children)).toBe(true)
+    expect(productsItem.to).toBe('/products')
     expect(productsItem.children.map((c) => c.label)).toEqual([
-      'Android Applications',
-      'Websites',
+      'In Production',
+      'Own Products',
+      'Built by DSC',
     ])
     expect(productsItem.children.map((c) => c.to)).toEqual([
-      '/pages/apps',
-      '/pages/websites',
+      '/products/in-production',
+      '/products/own-products',
+      '/products/built-by-dsc',
+    ])
+
+    const servicesItem = navGroup.items.find((i) => i.label === 'Services')
+    expect(servicesItem).toBeTruthy()
+    expect(servicesItem.to).toBe('/services')
+    expect(servicesItem.children.map((c) => c.label)).toEqual([
+      'Website Development',
+      'Android Application Development',
+      'Game Development',
+    ])
+    expect(servicesItem.children.map((c) => c.to)).toEqual([
+      '/services/websites',
+      '/services/android-applications',
+      '/services/game-development',
     ])
   })
 
-  it('sets active state on Products parent and child items for /pages/products, /pages/apps, and /pages/websites', () => {
-    const appsMenu = getContextualMenu({ pathname: '/pages/apps', session: null })
-    const appsProducts = appsMenu
+  it('sets active state on Products and Services parent and child items accurately', () => {
+    const inProdMenu = getContextualMenu({ pathname: '/products/in-production', session: null })
+    const inProdProducts = inProdMenu
       .find((g) => g.title === 'Navigation')
       .items.find((i) => i.label === 'Products')
-    expect(appsProducts.isParentActive).toBe(true)
-    expect(appsProducts.isCurrent).toBe(false)
-    expect(appsProducts.children[0].isCurrent).toBe(true)
-    expect(appsProducts.children[1].isCurrent).toBe(false)
+    expect(inProdProducts.isParentActive).toBe(true)
+    expect(inProdProducts.isCurrent).toBe(false)
+    expect(inProdProducts.children[0].isCurrent).toBe(true)
 
-    const websitesMenu = getContextualMenu({ pathname: '/pages/websites', session: null })
-    const websitesProducts = websitesMenu
+    const gameServiceMenu = getContextualMenu({
+      pathname: '/services/game-development',
+      session: null,
+    })
+    const servicesNav = gameServiceMenu
       .find((g) => g.title === 'Navigation')
-      .items.find((i) => i.label === 'Products')
-    expect(websitesProducts.isParentActive).toBe(true)
-    expect(websitesProducts.isCurrent).toBe(false)
-    expect(websitesProducts.children[0].isCurrent).toBe(false)
-    expect(websitesProducts.children[1].isCurrent).toBe(true)
+      .items.find((i) => i.label === 'Services')
+    expect(servicesNav.isParentActive).toBe(true)
+    expect(servicesNav.isCurrent).toBe(false)
+    expect(servicesNav.children[2].isCurrent).toBe(true)
   })
 
   it('generates user account menu for authenticated user', () => {
