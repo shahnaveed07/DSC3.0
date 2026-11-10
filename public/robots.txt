@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /pages/adash
+Disallow: /pages/Adash.html
+Disallow: /pages/ownerdb
+Disallow: /pages/OwnerDB.html
+Disallow: /pages/generatekey
+Disallow: /pages/generateKey.html
+Disallow: /pages/udash
+Disallow: /pages/Udash.html
+Disallow: /pages/change
+Disallow: /pages/change.html
+Disallow: /pages/alogin
+Disallow: /pages/Alogin.html
+
+Sitemap: https://dscweb.me/sitemap.xml

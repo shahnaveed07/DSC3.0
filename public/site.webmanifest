@@ -1,0 +1,23 @@
+{
+  "name": "Dark Skull Corporation",
+  "short_name": "DSC",
+  "description": "Dark Skull Corporation is an independent software studio focused on Android applications, game development and custom websites for individuals and businesses.",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/images/dsclogo.png",
+      "sizes": "1280x1280",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/dsclogo.png",
+      "sizes": "1280x1280",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#F8FAFC",
+  "background_color": "#F8FAFC",
+  "display": "standalone"
+}

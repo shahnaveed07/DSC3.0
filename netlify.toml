@@ -1,0 +1,63 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/pages/apps.html"
+  to = "/pages/apps"
+  status = 301
+
+[[redirects]]
+  from = "/pages/products.html"
+  to = "/pages/products"
+  status = 301
+
+[[redirects]]
+  from = "/pages/downloads.html"
+  to = "/pages/downloads"
+  status = 301
+
+[[redirects]]
+  from = "/pages/freepanel.html"
+  to = "/pages/freepanel"
+  status = 301
+
+[[redirects]]
+  from = "/pages/about.html"
+  to = "/pages/about"
+  status = 301
+
+[[redirects]]
+  from = "/pages/contact.html"
+  to = "/pages/contact"
+  status = 301
+
+[[redirects]]
+  from = "/pages/privacy-policy.html"
+  to = "/pages/privacy-policy"
+  status = 301
+
+[[redirects]]
+  from = "/pages/policy.html"
+  to = "/pages/privacy-policy"
+  status = 301
+
+[[redirects]]
+  from = "/pages/terms.html"
+  to = "/pages/terms"
+  status = 301
+
+[[redirects]]
+  from = "/pages/status.html"
+  to = "/pages/status"
+  status = 301
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

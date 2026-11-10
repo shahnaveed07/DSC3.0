@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-theme="light" style="color-scheme: light;">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Skull Corporation | Android Apps &amp; Game Development</title>
+    <meta name="description" content="Dark Skull Corporation is an independent software studio focused on Android applications, game development and custom websites for individuals and businesses." />
+    <meta name="keywords" content="Android App Development, Android Application Development, Game Development, Mobile Game Development, Custom Website Development, Website Design, Software Development Studio, Dark Skull Corporation, DSC, Naveed Mushtaq" />
+    <meta name="author" content="Naveed Mushtaq — Founder &amp; Lead Developer, Dark Skull Corporation" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#F8FAFC" />
+    <meta name="google-site-verification" content="Hw79fkwrion-b4AozRAnpjjcOAv9kHsCs40eEAq00c4" />
+    <link rel="canonical" href="https://dscweb.me/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dscweb.me/" />
+    <meta property="og:title" content="Dark Skull Corporation | Android Apps &amp; Game Development" />
+    <meta property="og:description" content="Dark Skull Corporation is an independent software studio focused on Android applications, game development and custom websites for individuals and businesses." />
+    <meta property="og:site_name" content="Dark Skull Corporation" />
+    <meta property="og:image" content="https://dscweb.me/images/dsclogo.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="https://dscweb.me/" />
+    <meta name="twitter:title" content="Dark Skull Corporation | Android Apps &amp; Game Development" />
+    <meta name="twitter:description" content="Dark Skull Corporation is an independent software studio focused on Android applications, game development and custom websites for individuals and businesses." />
+    <meta name="twitter:image" content="https://dscweb.me/images/dsclogo.png" />
+
+    <!-- Schema.org JSON-LD -->
+    <script id="dsc-schema-jsonld" type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://dscweb.me/#organization",
+            "name": "Dark Skull Corporation",
+            "alternateName": "DSC",
+            "url": "https://dscweb.me/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://dscweb.me/images/dsclogo.png",
+              "width": 1280,
+              "height": 1280
+            },
+            "description": "Dark Skull Corporation (DSC) is an independent software development studio primarily focused on Android application development and game development. We also offer custom website design and development for individuals, businesses and companies on request.",
+            "founder": {
+              "@type": "Person",
+              "@id": "https://naveedmushtaq.tech/#person",
+              "name": "Naveed Mushtaq",
+              "jobTitle": "Founder & Lead Developer",
+              "url": "https://naveedmushtaq.tech/"
+            },
+            "knowsAbout": [
+              "Android Application Development",
+              "Game Development",
+              "Custom Website Development"
+            ],
+            "sameAs": [
+              "https://discord.gg/XB2Zjmsb7K",
+              "https://github.com/shahnaveed07",
+              "https://naveedmushtaq.tech/"
+            ]
+          },
+          {
+            "@type": "Person",
+            "@id": "https://naveedmushtaq.tech/#person",
+            "name": "Naveed Mushtaq",
+            "jobTitle": "Founder & Lead Developer",
+            "url": "https://naveedmushtaq.tech/",
+            "worksFor": {
+              "@id": "https://dscweb.me/#organization"
+            },
+            "sameAs": [
+              "https://naveedmushtaq.tech/",
+              "https://github.com/shahnaveed07"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://dscweb.me/#website",
+            "name": "Dark Skull Corporation",
+            "alternateName": "DSC",
+            "url": "https://dscweb.me/",
+            "inLanguage": "en",
+            "publisher": {
+              "@id": "https://dscweb.me/#organization"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://dscweb.me/#webpage",
+            "url": "https://dscweb.me/",
+            "name": "Dark Skull Corporation | Android Apps & Game Development",
+            "description": "Dark Skull Corporation is an independent software studio focused on Android applications, game development and custom websites for individuals and businesses.",
+            "inLanguage": "en",
+            "isPartOf": {
+              "@id": "https://dscweb.me/#website"
+            },
+            "about": {
+              "@id": "https://dscweb.me/#organization"
+            }
+          }
+        ]
+      }
+    </script>
+
+    <script>
+      (() => {
+        let resolvedTheme = 'light'
+        try {
+          const savedTheme = localStorage.getItem('dscThemePreferenceV2')
+          if (savedTheme === 'light' || savedTheme === 'dark') {
+            resolvedTheme = savedTheme
+          }
+        } catch {
+          // Ignore localStorage access errors; default remains light.
+        }
+        document.documentElement.setAttribute('data-theme', resolvedTheme)
+        document.documentElement.style.colorScheme = resolvedTheme
+        const metaTheme = document.querySelector('meta[name="theme-color"]')
+        if (metaTheme) {
+          metaTheme.setAttribute('content', resolvedTheme === 'light' ? '#F8FAFC' : '#0B1220')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

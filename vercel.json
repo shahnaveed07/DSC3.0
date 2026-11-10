@@ -1,0 +1,21 @@
+{
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/pages/apps.html", "destination": "/pages/apps", "permanent": true },
+    { "source": "/pages/products.html", "destination": "/pages/products", "permanent": true },
+    { "source": "/pages/downloads.html", "destination": "/pages/downloads", "permanent": true },
+    { "source": "/pages/freepanel.html", "destination": "/pages/freepanel", "permanent": true },
+    { "source": "/pages/about.html", "destination": "/pages/about", "permanent": true },
+    { "source": "/pages/contact.html", "destination": "/pages/contact", "permanent": true },
+    { "source": "/pages/privacy-policy.html", "destination": "/pages/privacy-policy", "permanent": true },
+    { "source": "/pages/policy.html", "destination": "/pages/privacy-policy", "permanent": true },
+    { "source": "/pages/terms.html", "destination": "/pages/terms", "permanent": true },
+    { "source": "/pages/status.html", "destination": "/pages/status", "permanent": true }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!sitemap\\.xml|robots\\.txt|app-ads\\.txt|site\\.webmanifest|favicon\\.ico|favicon\\.svg|icons\\.svg|images/|assets/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
