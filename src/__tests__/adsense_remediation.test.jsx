@@ -107,8 +107,8 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
       </MemoryRouter>
     )
     expect(screen.getByRole('heading', { level: 1, name: /^In Production$/i })).toBeTruthy()
-    expect(screen.getByText(/QR Scanner \| Generator/i)).toBeTruthy()
-    expect(screen.getByText(/Mind Matrix/i)).toBeTruthy()
+    expect(screen.getAllByText(/QR Scanner \| Generator/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Mind Matrix/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/No Additional Websites Listed Yet/i)).toBeTruthy()
     unmountInProd()
 
@@ -118,7 +118,9 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
       </MemoryRouter>
     )
     expect(screen.getByRole('heading', { level: 1, name: /^Own Products$/i })).toBeTruthy()
-    expect(screen.getByText(/Own Products Portfolio Structure Ready/i)).toBeTruthy()
+    expect(screen.getByText(/DSC Proprietary Applications & Games/i)).toBeTruthy()
+    expect(screen.getAllByText(/QR Scanner \| Generator/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Mind Matrix/i).length).toBeGreaterThanOrEqual(1)
     unmountOwn()
 
     const { unmount: unmountBuilt } = render(

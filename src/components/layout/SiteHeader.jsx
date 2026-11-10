@@ -100,7 +100,11 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
 
   function isDesktopParentActive(item) {
     if (item.label === 'Products') {
-      return normalizedPath === '/products' || normalizedPath.startsWith('/products/')
+      return (
+        normalizedPath === '/products' ||
+        normalizedPath.startsWith('/products/') ||
+        normalizedPath.startsWith('/projects/')
+      )
     }
     if (item.label === 'Services') {
       return normalizedPath === '/services' || normalizedPath.startsWith('/services/')
@@ -234,7 +238,7 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
                         }
                         onClick={() => setDesktopDropdown(null)}
                       >
-                        <span>All {item.label}</span>
+                        <span>{item.label} Overview</span>
                         <span aria-hidden="true">→</span>
                       </NavLink>
                       <div className="desktop-dropdown-items">

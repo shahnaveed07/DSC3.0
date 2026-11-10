@@ -21,6 +21,7 @@ export function buildProductsNavItem(path) {
   const isInProduction = path === '/products/in-production'
   const isOwnProducts = path === '/products/own-products'
   const isBuiltByDsc = path === '/products/built-by-dsc'
+  const isProjectDetail = path.startsWith('/projects/')
   const isLegacyApps = path === '/pages/apps' || path === '/pages/websites'
 
   const isParentActive =
@@ -28,6 +29,7 @@ export function buildProductsNavItem(path) {
     isInProduction ||
     isOwnProducts ||
     isBuiltByDsc ||
+    isProjectDetail ||
     isLegacyApps
 
   return {

@@ -1,7 +1,9 @@
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
 import { studioProductCategories } from '../content/siteContent'
+import { getFeaturedProjects } from '../content/projectsData'
 import {
+  ProjectCard,
   StudioCategoryCard,
   StudioCtaBanner,
   StudioPageContainer,
@@ -11,6 +13,7 @@ import {
 
 export function StudioProductsPage() {
   usePageMeta(SEO_ROUTES.studioProducts)
+  const featuredProjects = getFeaturedProjects()
 
   return (
     <StudioPageContainer>
@@ -24,7 +27,8 @@ export function StudioProductsPage() {
         ]}
         actions={[
           { label: 'In Production Releases', to: '/products/in-production', variant: 'primary' },
-          { label: 'Explore Services', to: '/services', variant: 'secondary' },
+          { label: 'Own Products', to: '/products/own-products', variant: 'secondary' },
+          { label: 'Built by DSC', to: '/products/built-by-dsc', variant: 'ghost' },
         ]}
       />
 
@@ -51,6 +55,28 @@ export function StudioProductsPage() {
           ))}
         </div>
       </section>
+
+      {/* Featured Verified Studio Projects */}
+      {featuredProjects.length > 0 ? (
+        <section className="studio-section mt-36" aria-labelledby="featured-projects-heading">
+          <StudioSectionHeader
+            eyebrow="Verified Studio Releases"
+            title="Featured Projects"
+            description="Official Android applications and mobile games conceived, engineered, and published in production by Dark Skull Corporation."
+          />
+
+          <div className="studio-two-col-grid mt-24">
+            {featuredProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                showFullDescription
+                detailActionLabel="View Project"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Classification Distinction Guide */}
       <section className="seo-section">

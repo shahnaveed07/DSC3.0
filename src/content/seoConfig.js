@@ -171,6 +171,7 @@ export const SEO_ROUTES = {
     indexable: true,
     ogType: 'website',
     schemaType: 'CollectionPage',
+    extraSchemaNodes: VERIFIED_SOFTWARE_APPLICATIONS_SCHEMA,
   },
   builtByDsc: {
     key: 'builtByDsc',
@@ -183,6 +184,32 @@ export const SEO_ROUTES = {
     indexable: true,
     ogType: 'website',
     schemaType: 'CollectionPage',
+  },
+  projectQrScanner: {
+    key: 'projectQrScanner',
+    routePath: '/projects/qr-scanner-generator',
+    title: 'QR Scanner | Generator — Android App | Dark Skull Corporation',
+    description:
+      'Official project overview for QR Scanner | Generator by Dark Skull Corporation: high-speed Android barcode scanner and offline custom QR code generator.',
+    canonical: 'https://dscweb.me/projects/qr-scanner-generator',
+    robots: 'index, follow',
+    indexable: true,
+    ogType: 'website',
+    schemaType: 'ItemPage',
+    extraSchemaNodes: [VERIFIED_SOFTWARE_APPLICATIONS_SCHEMA[0]],
+  },
+  projectMindMatrix: {
+    key: 'projectMindMatrix',
+    routePath: '/projects/mind-matrix',
+    title: 'Mind Matrix — Mobile Logic & Puzzle Game | Dark Skull Corporation',
+    description:
+      'Official project overview for Mind Matrix by Dark Skull Corporation: offline Android cognitive puzzle game with logic, memory, and pattern recognition drills.',
+    canonical: 'https://dscweb.me/projects/mind-matrix',
+    robots: 'index, follow',
+    indexable: true,
+    ogType: 'website',
+    schemaType: 'ItemPage',
+    extraSchemaNodes: [VERIFIED_SOFTWARE_APPLICATIONS_SCHEMA[1]],
   },
   services: {
     key: 'services',

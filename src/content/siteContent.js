@@ -1,3 +1,28 @@
+export {
+  PORTFOLIO_CATEGORIES,
+  PORTFOLIO_TYPE_FILTERS,
+  PROJECT_TYPES,
+  getAllProjects,
+  getFeaturedProjects,
+  getProjectBySlug,
+  getProjectsByCategory,
+  portfolioProjects,
+} from './projectsData'
+
+export {
+  DEPLOYMENT_OPTIONS,
+  QUOTATION_MODEL_STATEMENT,
+  buildServiceInquiryUrl,
+  getAllServices,
+  getDeploymentOptionById,
+  getScopeTemplateById,
+  getServiceBlueprint,
+  resolveServicePrefill,
+  serviceBlueprints,
+  studioServiceCategories,
+} from './servicesData'
+
+
 export const primaryNavItems = [
   { label: 'Home', to: '/' },
   {
@@ -53,6 +78,8 @@ export const pageLabels = [
   { label: 'In Production', paths: ['/products/in-production'] },
   { label: 'Own Products', paths: ['/products/own-products'] },
   { label: 'Built by DSC', paths: ['/products/built-by-dsc'] },
+  { label: 'QR Scanner | Generator', paths: ['/projects/qr-scanner-generator'] },
+  { label: 'Mind Matrix', paths: ['/projects/mind-matrix'] },
   { label: 'Services', paths: ['/services'] },
   { label: 'Website Development', paths: ['/services/websites'] },
   { label: 'Android App Development', paths: ['/services/android-applications'] },
@@ -191,170 +218,7 @@ export const inProductionStreams = [
   },
 ]
 
-export const studioServiceCategories = [
-  {
-    id: 'website-development',
-    slug: 'websites',
-    categoryLabel: 'Service 01',
-    badge: 'Web Engineering',
-    title: 'Website Development',
-    description:
-      'Custom responsive websites and web applications designed and engineered by Dark Skull Corporation for individuals, startups, businesses, and organizations.',
-    metaItems: ['Responsive UI', 'Modern Web Stack', 'SEO & Performance'],
-    highlights: [
-      'Custom frontend architecture tailored to brand and operational goals',
-      'Responsive layouts across desktop, tablet, and mobile viewports',
-      'Clean semantic structure, accessibility, and technical SEO foundations',
-    ],
-    action: {
-      label: 'Website Development Architecture',
-      to: '/services/websites',
-    },
-  },
-  {
-    id: 'android-application-development',
-    slug: 'android-applications',
-    categoryLabel: 'Service 02',
-    badge: 'Mobile Engineering',
-    title: 'Android Application Development',
-    description:
-      'Native Android application design and development focused on intuitive user interfaces, offline capability, scoped permissions, and dependable device performance.',
-    metaItems: ['Native Android', 'Offline-Ready', 'Privacy-First'],
-    highlights: [
-      'User-centered mobile workflows engineered for everyday utility',
-      'Strict permission scoping and local-first data handling where applicable',
-      'End-to-end build preparation for Google Play distribution',
-    ],
-    action: {
-      label: 'Android Development Architecture',
-      to: '/services/android-applications',
-    },
-  },
-  {
-    id: 'game-development',
-    slug: 'game-development',
-    categoryLabel: 'Service 03',
-    badge: 'Interactive Systems',
-    title: 'Game Development',
-    description:
-      'Design and engineering of engaging mobile and interactive games featuring responsive controls, structured progression systems, and polished visual feedback.',
-    metaItems: ['Gameplay Systems', 'Puzzle & Logic', '60 FPS Polish'],
-    highlights: [
-      'Core gameplay loop engineering, level progression, and state architecture',
-      'Responsive touch and input handling tuned for smooth frame pacing',
-      'Offline-playable game design without intrusive dark patterns',
-    ],
-    action: {
-      label: 'Game Development Architecture',
-      to: '/services/game-development',
-    },
-  },
-]
 
-export const serviceBlueprints = {
-  websites: {
-    seoKey: 'serviceWebsites',
-    eyebrow: 'DSC Studio Services · Web Engineering',
-    title: 'Website Development',
-    subtitle:
-      'Custom website design and web application development for individuals, startups, businesses, and companies.',
-    overview:
-      'Dark Skull Corporation designs and develops responsive, standards-compliant websites and web interfaces. Every project is structured around clear information architecture, readable typography, accessible navigation, and reliable performance across modern browsers.',
-    scopeAreas: [
-      {
-        title: 'Information Architecture & UI Design',
-        description:
-          'Structuring pages, navigation flows, and responsive layouts aligned with your organization or personal brand.',
-      },
-      {
-        title: 'Frontend & Application Engineering',
-        description:
-          'Implementing clean, maintainable web interfaces using modern JavaScript, React, HTML5, and modular CSS systems.',
-      },
-      {
-        title: 'Technical SEO & Performance',
-        description:
-          'Configuring semantic metadata, structured data, fast asset delivery, and mobile-friendly viewport behavior.',
-      },
-    ],
-    deliverablesFramework: [
-      'Responsive multi-viewport web interface (Desktop, Tablet, Mobile)',
-      'Structured navigation, page hierarchy, and accessible UI components',
-      'Technical SEO metadata, sitemap, and search engine readiness',
-      'Deployment-ready production build and handover documentation',
-    ],
-    deploymentNote:
-      'Deployment options (such as static cloud hosting, custom domain routing, or client-managed infrastructure) are aligned during project scoping.',
-  },
-  'android-applications': {
-    seoKey: 'serviceAndroid',
-    eyebrow: 'DSC Studio Services · Mobile Engineering',
-    title: 'Android Application Development',
-    subtitle:
-      'Native Android application engineering focused on practical utility, clean interfaces, and dependable mobile performance.',
-    overview:
-      'Dark Skull Corporation builds Android applications with a focus on fast startup times, clear touch interactions, offline resilience, and transparent permission boundaries.',
-    scopeAreas: [
-      {
-        title: 'Mobile UI & Interaction Design',
-        description:
-          'Crafting intuitive screens, accessible touch targets, and coherent navigation flows for Android devices.',
-      },
-      {
-        title: 'Core Feature & Offline Engineering',
-        description:
-          'Building reliable local processing, device hardware integration, and responsive application state management.',
-      },
-      {
-        title: 'Privacy & Permission Scoping',
-        description:
-          'Ensuring device permissions are requested strictly for user-invoked features with zero unnecessary background telemetry.',
-      },
-    ],
-    deliverablesFramework: [
-      'Native Android application package engineered for target Android API levels',
-      'Scoped permission declarations and user-facing privacy disclosures',
-      'Offline-capable or API-connected workflows according to project scope',
-      'Release-ready build artifacts prepared for store or enterprise distribution',
-    ],
-    deploymentNote:
-      'Distribution targets (Google Play Store publishing or direct signed APK/AAB delivery) are defined according to client requirements.',
-  },
-  'game-development': {
-    seoKey: 'serviceGames',
-    eyebrow: 'DSC Studio Services · Interactive Systems',
-    title: 'Game Development',
-    subtitle:
-      'Interactive game design and engineering for puzzle, logic, casual, and mobile gaming experiences.',
-    overview:
-      'Dark Skull Corporation develops interactive games that combine clear rules, progressive challenge curves, tactile feedback, and stable frame rates on target devices.',
-    scopeAreas: [
-      {
-        title: 'Gameplay Mechanics & Rules Engine',
-        description:
-          'Designing deterministic game loops, scoring logic, difficulty progression, and interactive puzzle or arcade systems.',
-      },
-      {
-        title: 'HUD, Menus & Visual Polish',
-        description:
-          'Creating readable in-game HUDs, level selectors, pause/summary screens, and cohesive visual themes.',
-      },
-      {
-        title: 'Performance & Offline Playability',
-        description:
-          'Optimizing rendering, input latency, and local state persistence for smooth offline and mobile play sessions.',
-      },
-    ],
-    deliverablesFramework: [
-      'Complete playable game loop with structured progression and state management',
-      'Responsive touch/keyboard controls and cohesive UI/HUD screens',
-      'Local progress persistence and performance-tuned assets',
-      'Production build packaged for target mobile or web platforms',
-    ],
-    deploymentNote:
-      'Platform packaging and release workflows (Android Google Play or web-based interactive builds) are coordinated per project.',
-  },
-}
 
 /**
  * Centralized Social Media & Official External Links Configuration.

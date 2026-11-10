@@ -27,6 +27,7 @@ const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) =>
 const OwnProductsPage = lazy(() => import('./pages/OwnProductsPage').then((m) => ({ default: m.OwnProductsPage })))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })))
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })))
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage').then((m) => ({ default: m.ServiceDetailPage })))
 const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage').then((m) => ({ default: m.ServicesOverviewPage })))
 const StatusPage = lazy(() => import('./pages/StatusPage').then((m) => ({ default: m.StatusPage })))
@@ -178,6 +179,7 @@ export default function App() {
               <Route path="/products/in-production" element={<InProductionPage />} />
               <Route path="/products/own-products" element={<OwnProductsPage />} />
               <Route path="/products/built-by-dsc" element={<BuiltByDscPage />} />
+              <Route path="/projects/:slug" element={<ProjectDetailPage />} />
 
               <Route path="/services" element={<ServicesOverviewPage />} />
               <Route

@@ -1,5 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import { ButtonLink } from '../layout/SiteHeader'
+import { ProjectCard } from './ProjectCard'
+
+export { ProjectCard }
 
 /**
  * Responsive page container for DSC Software Studio pages.
@@ -92,8 +95,12 @@ export function StudioSectionHeader({ eyebrow, title, description, badge }) {
   return (
     <div className="studio-section-header">
       <div className="studio-section-title-group">
-        {eyebrow ? <span className="section-eyebrow">{eyebrow}</span> : null}
-        {badge ? <span className="badge primary mb-8">{badge}</span> : null}
+        {eyebrow || badge ? (
+          <div className="studio-section-eyebrow-row">
+            {eyebrow ? <span className="section-eyebrow m-0">{eyebrow}</span> : null}
+            {badge ? <span className="badge primary">{badge}</span> : null}
+          </div>
+        ) : null}
         {title ? <h2 className="studio-section-title">{title}</h2> : null}
       </div>
       {description ? <p className="studio-section-desc">{description}</p> : null}

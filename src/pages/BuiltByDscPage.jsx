@@ -1,6 +1,13 @@
+import { useState } from 'react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
 import {
+  PORTFOLIO_CATEGORIES,
+  PORTFOLIO_TYPE_FILTERS,
+  getProjectsByCategory,
+} from '../content/projectsData'
+import {
+  ProjectCard,
   StudioCtaBanner,
   StudioEmptyState,
   StudioPageContainer,
@@ -10,6 +17,14 @@ import {
 
 export function BuiltByDscPage() {
   usePageMeta(SEO_ROUTES.builtByDsc)
+  const [selectedFilter, setSelectedFilter] = useState('all')
+
+  const matchingProjects = getProjectsByCategory(
+    PORTFOLIO_CATEGORIES.BUILT_BY_DSC,
+    selectedFilter,
+  )
+  const activeFilterObj =
+    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === selectedFilter) || PORTFOLIO_TYPE_FILTERS[0]
 
   return (
     <StudioPageContainer>
@@ -27,6 +42,48 @@ export function BuiltByDscPage() {
           { label: 'Back to Products', to: '/products', variant: 'secondary' },
         ]}
       />
+
+      {/* Project Type Filter Controls */}
+      <div
+        className="category-filter-bar mt-24"
+        role="group"
+        aria-label="Filter Built by DSC client projects by category"
+      >
+        {PORTFOLIO_TYPE_FILTERS.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className={`button ${selectedFilter === filter.id ? 'button-primary' : 'button-secondary'} button-sm category-filter-btn`}
+            aria-pressed={selectedFilter === filter.id}
+            onClick={() => setSelectedFilter(filter.id)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Client Projects Grid or Honest Empty State */}
+      <section className="studio-section mt-36" aria-live="polite">
+        {matchingProjects.length > 0 ? (
+          <div className="studio-two-col-grid">
+            {matchingProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} showFullDescription />
+            ))}
+          </div>
+        ) : (
+          <StudioEmptyState
+            badge={`CLIENT PORTFOLIO · ${activeFilterObj.label.toUpperCase()}`}
+            title="No Approved Client Showcase Entries Listed Yet"
+            description="Verified client projects, websites, applications, and games built by Dark Skull Corporation will be published in this directory only when verified project details and client showcase approvals are finalized."
+            note="Dark Skull Corporation does not publish unverified client names, fabricated case studies, or placeholder screenshots."
+            actions={[
+              { label: 'Explore Development Services', to: '/services', variant: 'primary' },
+              { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
+              { label: 'Back to Products Overview', to: '/products', variant: 'ghost' },
+            ]}
+          />
+        )}
+      </section>
 
       {/* Structural Overview of Client & Commissioned Work */}
       <section className="seo-section mt-36">
@@ -64,21 +121,6 @@ export function BuiltByDscPage() {
           </div>
         </div>
       </section>
-
-      {/* Honest Empty State */}
-      <div className="mt-36">
-        <StudioEmptyState
-          badge="CLIENT PORTFOLIO DIRECTORY"
-          title="No Approved Client Showcase Entries Listed Yet"
-          description="Verified client projects, websites, applications, and games built by Dark Skull Corporation will be published in this directory only when verified project details and client showcase approvals are finalized."
-          note="Dark Skull Corporation does not publish unverified client names, fabricated case studies, or placeholder screenshots."
-          actions={[
-            { label: 'Explore Development Services', to: '/services', variant: 'primary' },
-            { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
-            { label: 'Back to Products Overview', to: '/products', variant: 'ghost' },
-          ]}
-        />
-      </div>
 
       <StudioCtaBanner
         eyebrow="Work With Dark Skull Corporation"

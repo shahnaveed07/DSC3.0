@@ -1,6 +1,13 @@
+import { useState } from 'react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
 import {
+  PORTFOLIO_CATEGORIES,
+  PORTFOLIO_TYPE_FILTERS,
+  getProjectsByCategory,
+} from '../content/projectsData'
+import {
+  ProjectCard,
   StudioCtaBanner,
   StudioEmptyState,
   StudioPageContainer,
@@ -10,13 +17,21 @@ import {
 
 export function OwnProductsPage() {
   usePageMeta(SEO_ROUTES.ownProducts)
+  const [selectedFilter, setSelectedFilter] = useState('all')
+
+  const matchingProjects = getProjectsByCategory(
+    PORTFOLIO_CATEGORIES.OWN_PRODUCT,
+    selectedFilter,
+  )
+  const activeFilterObj =
+    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === selectedFilter) || PORTFOLIO_TYPE_FILTERS[0]
 
   return (
     <StudioPageContainer>
       <StudioPageHeader
         eyebrow="Products · Classification B"
         title="Own Products"
-        description="Proprietary software products, mobile applications, and internal intellectual property conceived, owned, and developed directly by Dark Skull Corporation."
+        description="Proprietary software products, Android applications, and games conceived, owned, and developed directly by Dark Skull Corporation."
         breadcrumbs={[
           { label: 'Home', to: '/' },
           { label: 'Products', to: '/products' },
@@ -27,6 +42,65 @@ export function OwnProductsPage() {
           { label: 'Back to Products', to: '/products', variant: 'secondary' },
         ]}
       />
+
+      {/* Project Type Filter Bar */}
+      <div
+        className="category-filter-bar mt-24"
+        role="group"
+        aria-label="Filter Own Products by project type"
+      >
+        {PORTFOLIO_TYPE_FILTERS.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            className={`button ${selectedFilter === filter.id ? 'button-primary' : 'button-secondary'} button-sm category-filter-btn`}
+            aria-pressed={selectedFilter === filter.id}
+            onClick={() => setSelectedFilter(filter.id)}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* DSC-Owned Products Grid */}
+      <section className="studio-section mt-36" aria-live="polite">
+        <StudioSectionHeader
+          eyebrow="First-Party Portfolio"
+          badge={activeFilterObj.label}
+          title={
+            selectedFilter === 'all'
+              ? 'DSC Proprietary Applications & Games'
+              : `Own Products — ${activeFilterObj.label}`
+          }
+          description="Only products whose intellectual property and studio ownership are explicitly established under Dark Skull Corporation are listed here."
+        />
+
+        {matchingProjects.length > 0 ? (
+          <div className="studio-two-col-grid mt-24">
+            {matchingProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                showFullDescription
+                showFeatures
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-24">
+            <StudioEmptyState
+              badge={`OWN PRODUCTS · ${activeFilterObj.label.toUpperCase()}`}
+              title={`No DSC-Owned ${activeFilterObj.label} Listed Yet`}
+              description={`There are currently no verified proprietary ${activeFilterObj.label.toLowerCase()} products published in this category. Select another filter to view DSC-owned Android applications and games.`}
+              note="No unverified or placeholder product entries are displayed."
+              actions={[
+                { label: 'Explore In Production', to: '/products/in-production', variant: 'primary' },
+                { label: 'Back to Products Overview', to: '/products', variant: 'secondary' },
+              ]}
+            />
+          </div>
+        )}
+      </section>
 
       {/* Structural Classification Scope */}
       <section className="seo-section mt-36">
@@ -64,21 +138,6 @@ export function OwnProductsPage() {
           </div>
         </div>
       </section>
-
-      {/* Honest Empty State for Phase 1 */}
-      <div className="mt-36">
-        <StudioEmptyState
-          badge="OWN PRODUCTS DIRECTORY"
-          title="Own Products Portfolio Structure Ready"
-          description="Dedicated product profiles and detailed proprietary project entries for DSC Own Products are not yet populated in this directory. To view currently released applications and games in production, visit our In Production directory."
-          note="No unverified or placeholder product entries are displayed."
-          actions={[
-            { label: 'Explore In Production', to: '/products/in-production', variant: 'primary' },
-            { label: 'View Android Apps & Games', to: '/pages/apps', variant: 'secondary' },
-            { label: 'Back to Products Overview', to: '/products', variant: 'ghost' },
-          ]}
-        />
-      </div>
 
       <StudioCtaBanner
         eyebrow="Dark Skull Corporation"

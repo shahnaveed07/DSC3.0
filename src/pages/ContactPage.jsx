@@ -1,18 +1,34 @@
 import { useState } from 'react'
+import { NavLink, useSearchParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { contactChannels } from '../content/siteContent'
+import {
+  QUOTATION_MODEL_STATEMENT,
+  contactChannels,
+  resolveServicePrefill,
+} from '../content/siteContent'
 
 export function ContactPage() {
   usePageMeta(SEO_ROUTES.contact)
 
-  const [form, setForm] = useState({
+  const [searchParams] = useSearchParams()
+  const serviceParam = searchParams.get('service') || ''
+  const scopeParam = searchParams.get('scope') || ''
+  const deploymentParam = searchParams.get('deployment') || ''
+
+  const prefill = resolveServicePrefill({
+    serviceSlug: serviceParam,
+    scopeId: scopeParam,
+    deploymentOption: deploymentParam,
+  })
+
+  const [form, setForm] = useState(() => ({
     name: '',
     email: '',
-    category: 'website',
-    subject: '',
-    message: '',
-  })
+    category: prefill ? prefill.category : 'website',
+    subject: prefill ? prefill.subject : '',
+    message: prefill ? prefill.message : '',
+  }))
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [copiedText, setCopiedText] = useState(false)
   const [formError, setFormError] = useState('')
@@ -121,6 +137,38 @@ ${form.message}
           <p className="mb-24">
             We welcome inquiries for <strong>Website Design &amp; Development</strong>, <strong>Android App Development</strong>, <strong>Game Development</strong>, and product or order support. Fill in the details below to send directly to our official mailbox or copy for Discord.
           </p>
+
+          {prefill ? (
+            <div className="studio-prefill-notice mb-24" data-testid="contact-service-prefill-banner">
+              <div className="studio-prefill-notice-top">
+                <div>
+                  <span className="badge primary mb-8">Selected Studio Configuration</span>
+                  <h3 className="m-0">{prefill.serviceTitle} — Quotation Request</h3>
+                </div>
+                <NavLink
+                  to={`/services/${prefill.serviceSlug}`}
+                  className="button button-secondary button-sm"
+                >
+                  Modify Scope or Deployment
+                </NavLink>
+              </div>
+              <div className="studio-selected-config-strip mt-12">
+                <div className="studio-selected-config-item">
+                  <span className="micro-label">SERVICE</span>
+                  <strong>{prefill.serviceTitle}</strong>
+                </div>
+                <div className="studio-selected-config-item">
+                  <span className="micro-label">SCOPE TEMPLATE</span>
+                  <strong>{prefill.scopeName}</strong>
+                </div>
+                <div className="studio-selected-config-item">
+                  <span className="micro-label">DEPLOYMENT PREFERENCE</span>
+                  <strong>{prefill.deploymentLabel}</strong>
+                </div>
+              </div>
+              <p className="text-muted text-sm mt-12 mb-0">{QUOTATION_MODEL_STATEMENT}</p>
+            </div>
+          ) : null}
 
           {formSubmitted ? (
             <div className="inquiry-preview-card">

@@ -15,6 +15,7 @@ import { StudioProductsPage } from '../pages/StudioProductsPage'
 import { InProductionPage } from '../pages/InProductionPage'
 import { OwnProductsPage } from '../pages/OwnProductsPage'
 import { BuiltByDscPage } from '../pages/BuiltByDscPage'
+import { ProjectDetailPage } from '../pages/ProjectDetailPage'
 import { ServicesOverviewPage } from '../pages/ServicesOverviewPage'
 import { ServiceDetailPage } from '../pages/ServiceDetailPage'
 import { TeamPage } from '../pages/TeamPage'
@@ -187,6 +188,8 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
       { key: 'inProduction', element: <InProductionPage /> },
       { key: 'ownProducts', element: <OwnProductsPage /> },
       { key: 'builtByDsc', element: <BuiltByDscPage /> },
+      { key: 'projectQrScanner', element: <ProjectDetailPage projectSlug="qr-scanner-generator" /> },
+      { key: 'projectMindMatrix', element: <ProjectDetailPage projectSlug="mind-matrix" /> },
       { key: 'services', element: <ServicesOverviewPage /> },
       { key: 'serviceWebsites', element: <ServiceDetailPage serviceSlug="websites" /> },
       { key: 'serviceAndroid', element: <ServiceDetailPage serviceSlug="android-applications" /> },

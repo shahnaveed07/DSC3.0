@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
+import { getAllProjects } from '../content/projectsData'
 
 export function AppsPage() {
   usePageMeta(SEO_ROUTES.apps)
+  const projects = getAllProjects()
 
   return (
     <div className="center-wrap">
@@ -16,103 +18,62 @@ export function AppsPage() {
         </p>
       </section>
 
-      {/* Applications & Games Showcase */}
+      {/* Applications & Games Showcase — Powered by Canonical Project Records */}
       <div className="apps-list mt-36">
-        {/* App 1: QR Scanner | Generator */}
-        <article className="app-card">
-          <div className="app-card-header">
-            <div>
-              <span className="badge primary">ANDROID APPLICATION</span>
-              <h2 className="app-card-title">QR Scanner | Generator</h2>
+        {projects.map((project) => (
+          <article key={project.id} className="app-card">
+            <div className="app-card-header">
+              <div>
+                <span className="badge primary">{project.typeBadge || project.projectType}</span>
+                <h2 className="app-card-title">{project.name}</h2>
+              </div>
+              <div className="studio-release-actions m-0">
+                <NavLink
+                  className="button button-secondary button-sm"
+                  to={`/projects/${project.slug}`}
+                >
+                  Project Details
+                </NavLink>
+                {project.storeUrl ? (
+                  <a
+                    className="button button-primary button-sm"
+                    href={project.storeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {project.storeLabel || 'Google Play ↗'}
+                  </a>
+                ) : null}
+              </div>
             </div>
-            <div>
-              <a
-                className="button button-primary"
-                href="https://play.google.com/store/apps/details?id=com.dsc.qrscanner"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Google Play ↗
-              </a>
-            </div>
-          </div>
 
-          <p className="app-card-tagline">
-            High-speed camera scanner &amp; customizable barcode/QR generator for Android.
-          </p>
-          <p className="app-card-desc">
-            Instantly scan barcodes and QR codes with autofocus detection. Generate custom, styled QR codes from website links, Wi-Fi network credentials, contact cards (vCard), phone numbers, and plain text without needing an active internet connection.
-          </p>
+            {project.shortDescription ? (
+              <p className="app-card-tagline">{project.shortDescription}</p>
+            ) : null}
+            {project.description ? (
+              <p className="app-card-desc">{project.description}</p>
+            ) : null}
 
-          <div className="app-feature-grid">
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Autofocus real-time camera viewfinder</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>100% offline generation engine</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Wi-Fi, URL, Text, and vCard formats</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Direct share, copy &amp; save to device</span>
-            </div>
-          </div>
+            {Array.isArray(project.features) && project.features.length > 0 ? (
+              <div className="app-feature-grid">
+                {project.features.map((feature) => (
+                  <div key={feature} className="app-feature-item">
+                    <span className="app-feature-check" aria-hidden="true">
+                      ✓
+                    </span>
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
-          <div className="app-notice-box">
-            <strong>Permissions Transparency:</strong> Camera access is requested strictly when the scanner viewfinder is active. Storage permission is requested only when exporting a generated QR image file to your gallery. No location data or contacts are ever uploaded.
-          </div>
-        </article>
-
-        {/* App 2: Mind Matrix */}
-        <article className="app-card">
-          <div className="app-card-header">
-            <div>
-              <span className="badge primary">MOBILE LOGIC GAME</span>
-              <h2 className="app-card-title">Mind Matrix</h2>
-            </div>
-            <div>
-              <a
-                className="button button-primary"
-                href="https://play.google.com/store/apps/details?id=com.dsc.mindmatrix"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Google Play ↗
-              </a>
-            </div>
-          </div>
-
-          <p className="app-card-tagline">
-            Cognitive puzzle game with logic, memory, pattern recognition, and reaction drills.
-          </p>
-          <p className="app-card-desc">
-            Mind Matrix is a handcrafted logic game engineered for players who enjoy mental exercises. Features progressive difficulty scaling across multiple challenge modes designed to train short-term memory, pattern recognition, and cognitive reflexes.
-          </p>
-
-          <div className="app-feature-grid">
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Progressive cognitive difficulty scaling</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>100% offline playable without internet</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Smooth 60 FPS animations &amp; tactile touch</span>
-            </div>
-            <div className="app-feature-item">
-              <span className="app-feature-check">✓</span>
-              <span>Zero pay-to-win mechanics or paywalls</span>
-            </div>
-          </div>
-        </article>
+            {project.permissionsNotice ? (
+              <div className="app-notice-box">
+                <strong>Permissions Transparency:</strong> {project.permissionsNotice}
+              </div>
+            ) : null}
+          </article>
+        ))}
       </div>
 
       {/* Studio Quality & Privacy Constitution */}

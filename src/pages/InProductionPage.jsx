@@ -1,9 +1,13 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { inProductionStreams } from '../content/siteContent'
 import {
+  PORTFOLIO_CATEGORIES,
+  PORTFOLIO_TYPE_FILTERS,
+  getProjectsByCategory,
+} from '../content/projectsData'
+import {
+  ProjectCard,
   StudioCtaBanner,
   StudioEmptyState,
   StudioPageContainer,
@@ -11,19 +15,20 @@ import {
   StudioSectionHeader,
 } from '../components/ui/StudioComponents'
 
-const STREAM_FILTERS = [
-  { id: 'all', label: 'All Production Types' },
-  { id: 'android-applications', label: 'Android Applications' },
-  { id: 'websites', label: 'Websites' },
-  { id: 'games', label: 'Games' },
-]
-
 export function InProductionPage() {
   usePageMeta(SEO_ROUTES.inProduction)
-  const [selectedStream, setSelectedStream] = useState('all')
+  const [selectedFilter, setSelectedFilter] = useState('all')
 
-  const visibleStreams = inProductionStreams.filter(
-    (stream) => selectedStream === 'all' || stream.id === selectedStream,
+  const matchingProjects = getProjectsByCategory(
+    PORTFOLIO_CATEGORIES.IN_PRODUCTION,
+    selectedFilter,
+  )
+  const activeFilterObj =
+    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === selectedFilter) || PORTFOLIO_TYPE_FILTERS[0]
+
+  const websiteProjects = getProjectsByCategory(
+    PORTFOLIO_CATEGORIES.IN_PRODUCTION,
+    'websites',
   )
 
   return (
@@ -39,94 +44,92 @@ export function InProductionPage() {
         ]}
         actions={[
           { label: 'All Product Categories', to: '/products', variant: 'secondary' },
-          { label: 'Official Download Center', to: '/pages/downloads', variant: 'ghost' },
+          { label: 'Own Products', to: '/products/own-products', variant: 'ghost' },
         ]}
       />
 
-      {/* Category Filter Controls */}
-      <div className="category-filter-bar mt-24" role="group" aria-label="Filter In Production categories">
-        {STREAM_FILTERS.map((filter) => (
+      {/* Category Filter Controls: All, Android Applications, Websites, Games */}
+      <div
+        className="category-filter-bar mt-24"
+        role="group"
+        aria-label="Filter In Production projects by category"
+      >
+        {PORTFOLIO_TYPE_FILTERS.map((filter) => (
           <button
             key={filter.id}
             type="button"
-            className={`button ${selectedStream === filter.id ? 'button-primary' : 'button-secondary'} button-sm`}
-            aria-pressed={selectedStream === filter.id}
-            onClick={() => setSelectedStream(filter.id)}
+            className={`button ${selectedFilter === filter.id ? 'button-primary' : 'button-secondary'} button-sm category-filter-btn`}
+            aria-pressed={selectedFilter === filter.id}
+            onClick={() => setSelectedFilter(filter.id)}
           >
             {filter.label}
           </button>
         ))}
       </div>
 
-      {/* Three Production Streams: Android Applications, Websites, Games */}
-      <div className="studio-streams-stack mt-36">
-        {visibleStreams.map((stream) => (
-          <section
-            key={stream.id}
-            id={stream.id}
-            className="studio-stream-section"
-            aria-labelledby={`stream-heading-${stream.id}`}
-          >
-            <StudioSectionHeader
-              eyebrow={stream.label}
-              badge={stream.badge}
-              title={stream.title}
-              description={stream.description}
+      {/* Filtered Project Grid or Empty State */}
+      <section className="studio-section mt-36" aria-live="polite">
+        <StudioSectionHeader
+          eyebrow="Production Releases"
+          badge={activeFilterObj.label}
+          title={
+            selectedFilter === 'all'
+              ? 'Active Production Applications, Websites & Games'
+              : `In Production — ${activeFilterObj.label}`
+          }
+          description="Only projects with verified production deployment or official store availability are included in this directory."
+        />
+
+        {matchingProjects.length > 0 ? (
+          <div className="studio-two-col-grid mt-24">
+            {matchingProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                showFullDescription
+                showFeatures
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-24">
+            <StudioEmptyState
+              badge={`${activeFilterObj.label.toUpperCase()} DIRECTORY`}
+              title={`No Additional ${activeFilterObj.label} Listed Yet`}
+              description="No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase."
+              note="Dark Skull Corporation does not list development-only experiments as released production products."
+              actions={[
+                { label: 'Show All In Production', to: '/products/in-production', variant: 'secondary' },
+                { label: 'Website Development Services', to: '/services/websites', variant: 'primary' },
+                { label: 'Contact Studio', to: '/contact', variant: 'ghost' },
+              ]}
             />
+          </div>
+        )}
+      </section>
 
-            {Array.isArray(stream.verifiedReleases) && stream.verifiedReleases.length > 0 ? (
-              <div className="studio-release-grid mt-20">
-                {stream.verifiedReleases.map((release) => (
-                  <article key={release.name} className="app-card studio-release-card">
-                    <div className="app-card-header">
-                      <div>
-                        <span className="badge primary">{release.type}</span>
-                        <h3 className="app-card-title">{release.name}</h3>
-                      </div>
-                      <span className="badge good">{release.status}</span>
-                    </div>
-
-                    <p className="app-card-desc">{release.summary}</p>
-
-                    <div className="studio-release-actions">
-                      {release.externalHref ? (
-                        <a
-                          href={release.externalHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="button button-primary button-sm"
-                        >
-                          {release.externalLabel}
-                        </a>
-                      ) : null}
-                      {release.internalTo ? (
-                        <NavLink
-                          to={release.internalTo}
-                          className="button button-secondary button-sm"
-                        >
-                          {release.internalLabel}
-                        </NavLink>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-20">
-                <StudioEmptyState
-                  badge={`${stream.title.toUpperCase()} DIRECTORY`}
-                  title={`No Additional ${stream.title} Listed Yet`}
-                  description={stream.emptyMessage}
-                  actions={[
-                    { label: 'Website Development Services', to: '/services/websites', variant: 'primary' },
-                    { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
-                  ]}
-                />
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
+      {/* Websites Production Directory Notice when viewing "All" */}
+      {selectedFilter === 'all' && websiteProjects.length === 0 ? (
+        <section className="studio-stream-section mt-36" aria-labelledby="in-prod-websites-heading">
+          <StudioSectionHeader
+            eyebrow="Production Stream · Websites"
+            badge="Websites"
+            title="Production Websites Directory"
+            description="Public websites and web platforms deployed by Dark Skull Corporation."
+          />
+          <div className="mt-20">
+            <StudioEmptyState
+              badge="WEBSITES DIRECTORY"
+              title="No Additional Websites Listed Yet"
+              description="No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase."
+              actions={[
+                { label: 'Website Development Services', to: '/services/websites', variant: 'primary' },
+                { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
+              ]}
+            />
+          </div>
+        </section>
+      ) : null}
 
       <StudioCtaBanner
         eyebrow="Explore More Categories"
