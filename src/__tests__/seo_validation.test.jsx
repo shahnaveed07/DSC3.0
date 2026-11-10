@@ -12,7 +12,9 @@ import {
 } from '../content/seoConfig'
 import { HomePage } from '../pages/HomePage'
 import { AppsPage } from '../pages/AppsPage'
+import { WebsitesPage } from '../pages/WebsitesPage'
 import { ProductsPage } from '../pages/ProductsPage'
+import { LegacyProductsCatalogPage } from '../pages/LegacyProductsCatalogPage'
 import { DownloadsPage } from '../pages/DownloadsPage'
 import { FreePanelPage } from '../pages/FreePanelPage'
 import { AboutPage } from '../pages/AboutPage'
@@ -44,7 +46,7 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
     expect(xml).not.toContain('<lastmod>')
 
     const locMatches = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim())
-    expect(locMatches.length).toBe(10)
+    expect(locMatches.length).toBe(11)
 
     // Uniqueness check
     const uniqueLocs = new Set(locMatches)
@@ -60,12 +62,13 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
       }
     }
 
-    // All 10 indexable public routes must be in sitemap.xml
+    // All 11 indexable public routes must be in sitemap.xml
     const expectedUrls = INDEXABLE_PUBLIC_ROUTES.map((r) => r.canonical)
     expect(locMatches.sort()).toEqual(expectedUrls.sort())
 
     // Non-indexable routes must NEVER appear in sitemap.xml
     const forbiddenSubstrings = [
+      '/pages/catalog',
       '/pages/checkout',
       '/pages/ulogin',
       '/pages/alogin',
@@ -173,6 +176,7 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
     const publicPageMatrix = [
       { key: 'home', element: <HomePage systemStatus={{ isMaintenanceMode: false }} /> },
       { key: 'apps', element: <AppsPage /> },
+      { key: 'websites', element: <WebsitesPage /> },
       { key: 'products', element: <ProductsPage /> },
       { key: 'downloads', element: <DownloadsPage systemStatus={{}} /> },
       { key: 'freepanel', element: <FreePanelPage /> },
@@ -254,6 +258,7 @@ describe('Complete Technical & On-Page SEO Validation Suite', () => {
 
   it('sets robots="noindex, nofollow" on Checkout, Login, Password, Key Generation, Maintenance, and 404 pages', () => {
     const noindexPages = [
+      { key: 'catalog', path: '/pages/catalog', element: <LegacyProductsCatalogPage /> },
       { key: 'checkout', path: '/pages/checkout?panel=streamer', element: <CheckoutPage /> },
       { key: 'ulogin', path: '/pages/ulogin', element: <UserLoginPage session={null} /> },
       { key: 'alogin', path: '/pages/alogin', element: <AdminLoginPage session={null} /> },

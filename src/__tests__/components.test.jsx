@@ -243,6 +243,48 @@ describe('Page Content & AdSense Remediation Tests', () => {
     expect(localStorage.getItem('dscThemePreferenceV2')).toBeNull()
     expect(localStorage.getItem('siteTheme')).toBeNull()
   })
+
+  it('supports opening Menu, toggling Products submenu, Escape key closing, and displays Android Applications / Websites page labels', () => {
+    const { container, unmount } = render(
+      <MemoryRouter initialEntries={['/pages/apps']}>
+        <Routes>
+          <Route element={<SiteLayout session={null} systemStatus={null} onLogout={() => {}} />}>
+            <Route path="/pages/apps" element={<div>Apps Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // Current page label for /pages/apps is "Android Applications"
+    const pageLabel = container.querySelector('.current-page-label')
+    expect(pageLabel?.textContent).toBe('Android Applications')
+
+    // Menu starts hidden
+    const menuBtn = screen.getByRole('button', { name: /^Menu$/i })
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false')
+
+    // Open Menu
+    fireEvent.click(menuBtn)
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('true')
+
+    // Products submenu is open and exposes Android Applications and Websites
+    const submenuToggle = screen.getByRole('button', { name: /Toggle Products submenu/i })
+    expect(submenuToggle.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('link', { name: /Android Applications/i }).getAttribute('href')).toBe('/pages/apps')
+    expect(screen.getByRole('link', { name: /Websites/i }).getAttribute('href')).toBe('/pages/websites')
+
+    // Toggle Products submenu closed and open
+    fireEvent.click(submenuToggle)
+    expect(submenuToggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(submenuToggle)
+    expect(submenuToggle.getAttribute('aria-expanded')).toBe('true')
+
+    // Escape key closes Menu
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false')
+
+    unmount()
+  })
 })
 
 

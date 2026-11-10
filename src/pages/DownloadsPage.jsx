@@ -149,7 +149,7 @@ export function DownloadsPage({ systemStatus }) {
               <NavLink to="/pages/ulogin" className="button button-primary button-sm">
                 Sign In to Client Portal
               </NavLink>
-              <NavLink to="/pages/products" className="button button-secondary button-sm">
+              <NavLink to="/pages/catalog" className="button button-secondary button-sm">
                 View Products Catalog
               </NavLink>
             </div>

@@ -158,7 +158,7 @@ export function UserDashboardPage({ session, onSessionInvalid }) {
                 Change Password
               </NavLink>
             ) : null}
-            <NavLink to="/pages/products" className="button button-ghost button-sm">
+            <NavLink to="/pages/catalog" className="button button-ghost button-sm">
               Upgrade / Renew
             </NavLink>
           </div>
@@ -206,7 +206,7 @@ export function UserDashboardPage({ session, onSessionInvalid }) {
                 Your access has expired. Please renew your plan from the products catalog to restore access.
               </p>
             </div>
-            <NavLink to="/pages/products" className="button button-primary button-sm">
+            <NavLink to="/pages/catalog" className="button button-primary button-sm">
               Renew Access
             </NavLink>
           </div>

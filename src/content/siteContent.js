@@ -1,7 +1,13 @@
 export const primaryNavItems = [
   { label: 'Home', to: '/' },
-  { label: 'Apps', to: '/pages/apps' },
-  { label: 'Products', to: '/pages/products' },
+  {
+    label: 'Products',
+    to: '/pages/products',
+    children: [
+      { label: 'Android Applications', to: '/pages/apps' },
+      { label: 'Websites', to: '/pages/websites' },
+    ],
+  },
   { label: 'Downloads', to: '/pages/downloads' },
   { label: 'About', to: '/pages/about' },
   { label: 'Contact', to: '/pages/contact' },
@@ -13,8 +19,10 @@ export const primaryNavItems = [
 
 export const pageLabels = [
   { label: 'Home', paths: ['/', '/index.html'] },
-  { label: 'Apps', paths: ['/pages/apps', '/pages/apps.html'] },
+  { label: 'Android Applications', paths: ['/pages/apps', '/pages/apps.html'] },
+  { label: 'Websites', paths: ['/pages/websites', '/pages/websites.html'] },
   { label: 'Products', paths: ['/pages/products', '/pages/products.html'] },
+  { label: 'Software Catalog', paths: ['/pages/catalog', '/pages/catalog.html'] },
   { label: 'Downloads', paths: ['/pages/downloads', '/pages/downloads.html'] },
   { label: 'About', paths: ['/pages/about', '/pages/about.html'] },
   { label: 'Contact', paths: ['/pages/contact', '/pages/contact.html'] },
@@ -30,6 +38,49 @@ export const pageLabels = [
   { label: 'Admin Dashboard', paths: ['/pages/adash', '/pages/Adash.html'] },
   { label: 'Owner Workspace', paths: ['/pages/ownerdb', '/pages/OwnerDB.html'] },
   { label: 'Key Generation', paths: ['/pages/generatekey', '/pages/generateKey.html'] },
+]
+
+export const productCategories = [
+  {
+    id: 'android-applications',
+    categoryLabel: 'Category 1',
+    badge: 'Mobile Software',
+    title: 'Android Applications',
+    description:
+      'Official Android applications and mobile games developed and published by Dark Skull Corporation with a focus on usability, offline reliability, and user privacy.',
+    highlights: [
+      'QR Scanner | Generator — High-speed camera barcode & offline QR utility',
+      'Mind Matrix — Cognitive logic, memory & pattern recognition mobile game',
+      'Scoped device permissions with zero background telemetry',
+    ],
+    imageWebp: '/images/dsclogo.webp',
+    imageFallback: '/images/dsclogo.png',
+    imageAlt: 'Dark Skull Corporation Android Applications',
+    action: {
+      label: 'Explore Android Applications',
+      to: '/pages/apps',
+    },
+  },
+  {
+    id: 'websites',
+    categoryLabel: 'Category 2',
+    badge: 'Web Development',
+    title: 'Websites',
+    description:
+      'Custom responsive websites designed and developed by Dark Skull Corporation for individuals, startups, businesses, and companies on request.',
+    highlights: [
+      'Responsive web architecture for desktop, tablet, and mobile browsers',
+      'Custom website design and development available on request',
+      'Direct collaboration with Founder & Lead Developer Naveed Mushtaq',
+    ],
+    imageWebp: '/images/dsclogo2.webp',
+    imageFallback: '/images/dsclogo2.png',
+    imageAlt: 'Dark Skull Corporation Websites',
+    action: {
+      label: 'Explore Websites',
+      to: '/pages/websites',
+    },
+  },
 ]
 
 export const homeHighlights = [
@@ -455,8 +506,9 @@ export const footerGroups = [
     title: 'Explore',
     links: [
       { label: 'Home', to: '/' },
-      { label: 'Apps & Games', to: '/pages/apps' },
-      { label: 'Products & Pricing', to: '/pages/products' },
+      { label: 'Products', to: '/pages/products' },
+      { label: 'Android Applications', to: '/pages/apps' },
+      { label: 'Websites', to: '/pages/websites' },
       { label: 'Download Center', to: '/pages/downloads' },
       { label: 'About Studio', to: '/pages/about' },
       { label: 'Contact Support', to: '/pages/contact' },

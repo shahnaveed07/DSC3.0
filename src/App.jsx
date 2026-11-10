@@ -20,6 +20,7 @@ const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ defa
 const DownloadsPage = lazy(() => import('./pages/DownloadsPage').then((m) => ({ default: m.DownloadsPage })))
 const FreePanelPage = lazy(() => import('./pages/FreePanelPage').then((m) => ({ default: m.FreePanelPage })))
 const GenerateKeyPage = lazy(() => import('./pages/GenerateKeyPage').then((m) => ({ default: m.GenerateKeyPage })))
+const LegacyProductsCatalogPage = lazy(() => import('./pages/LegacyProductsCatalogPage').then((m) => ({ default: m.LegacyProductsCatalogPage })))
 const MaintenancePage = lazy(() => import('./pages/MaintenancePage').then((m) => ({ default: m.MaintenancePage })))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })))
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })))
@@ -27,6 +28,7 @@ const StatusPage = lazy(() => import('./pages/StatusPage').then((m) => ({ defaul
 const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })))
 const UserDashboardPage = lazy(() => import('./pages/UserDashboardPage').then((m) => ({ default: m.UserDashboardPage })))
 const UserLoginPage = lazy(() => import('./pages/UserLoginPage').then((m) => ({ default: m.UserLoginPage })))
+const WebsitesPage = lazy(() => import('./pages/WebsitesPage').then((m) => ({ default: m.WebsitesPage })))
 
 function RouteLoadingFallback() {
   return (
@@ -167,8 +169,14 @@ export default function App() {
             <Route path="/pages/apps" element={<AppsPage />} />
             <Route path="/pages/apps.html" element={<Navigate replace to="/pages/apps" />} />
 
+            <Route path="/pages/websites" element={<WebsitesPage />} />
+            <Route path="/pages/websites.html" element={<Navigate replace to="/pages/websites" />} />
+
             <Route path="/pages/products" element={<ProductsPage />} />
             <Route path="/pages/products.html" element={<Navigate replace to="/pages/products" />} />
+
+            <Route path="/pages/catalog" element={<LegacyProductsCatalogPage />} />
+            <Route path="/pages/catalog.html" element={<Navigate replace to="/pages/catalog" />} />
 
             <Route
               path="/pages/downloads"

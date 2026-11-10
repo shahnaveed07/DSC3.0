@@ -171,7 +171,7 @@ export function CheckoutPage() {
           <h1 className="auth-title">Invalid Selection</h1>
           <p className="auth-subtitle">No valid panel was selected for checkout.</p>
           <div className="mt-20">
-            <NavLink className="button button-primary" to="/pages/products">
+            <NavLink className="button button-primary" to="/pages/catalog">
               View Products
             </NavLink>
           </div>

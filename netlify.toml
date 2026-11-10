@@ -13,8 +13,18 @@
   status = 301
 
 [[redirects]]
+  from = "/pages/websites.html"
+  to = "/pages/websites"
+  status = 301
+
+[[redirects]]
   from = "/pages/products.html"
   to = "/pages/products"
+  status = 301
+
+[[redirects]]
+  from = "/pages/catalog.html"
+  to = "/pages/catalog"
   status = 301
 
 [[redirects]]

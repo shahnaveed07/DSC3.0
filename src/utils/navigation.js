@@ -1,12 +1,51 @@
 /**
- * Centralized contextual navigation logic for DSCWeb_React.
+ * Centralized contextual navigation logic for DSC3.0.
  * Evaluates current route, user role, and owner permissions
- * to return only relevant, purposeful navigation options in structured groups.
+ * to return structured navigation groups with Products organized into:
+ * 1. Android Applications (/pages/apps)
+ * 2. Websites (/pages/websites)
  */
 
 function normalizePath(pathname = '') {
   const clean = String(pathname || '').toLowerCase().replace(/\/index\.html$/, '/')
   return clean.endsWith('.html') ? clean.replace(/\.html$/, '') : clean
+}
+
+function buildProductsNavItem(path) {
+  const isProductsOverview = path === '/pages/products'
+  const isAndroidApps = path === '/pages/apps'
+  const isWebsites = path === '/pages/websites'
+  const isParentActive = isProductsOverview || isAndroidApps || isWebsites
+
+  return {
+    label: 'Products',
+    to: '/pages/products',
+    isCurrent: isProductsOverview,
+    isParentActive,
+    children: [
+      {
+        label: 'Android Applications',
+        to: '/pages/apps',
+        isCurrent: isAndroidApps,
+      },
+      {
+        label: 'Websites',
+        to: '/pages/websites',
+        isCurrent: isWebsites,
+      },
+    ],
+  }
+}
+
+function buildPublicNavigationItems(path) {
+  return [
+    { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
+    buildProductsNavItem(path),
+    { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
+    { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
+    { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
+    { label: 'Status', to: '/pages/status', isCurrent: path === '/pages/status' },
+  ]
 }
 
 export function getContextualMenu({ pathname = '/', session = null, isOwner = false, onLogout }) {
@@ -42,19 +81,18 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       { title: 'Operations', items: operationsItems },
     ]
 
-    // If browsing public pages while logged in as admin, show concise contextual public links
+    // If browsing public pages while logged in as admin, show public navigation
     const isAdminTool = ['/pages/adash', '/pages/generatekey', '/pages/ownerdb'].includes(path)
     if (!isAdminTool) {
-      const publicItems = [
-        { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
-        { label: 'Apps', to: '/pages/apps', isCurrent: path === '/pages/apps' },
-        { label: 'Products', to: '/pages/products', isCurrent: path === '/pages/products' },
-        { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
-      ].filter((item) => !item.isCurrent)
-
-      if (publicItems.length > 0) {
-        groups.push({ title: 'Public Site', items: publicItems })
-      }
+      groups.push({
+        title: 'Public Site',
+        items: [
+          { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
+          buildProductsNavItem(path),
+          { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
+          { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
+        ],
+      })
     }
 
     groups.push({
@@ -79,7 +117,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     const userItems = [
       { label: 'Dashboard', to: '/pages/udash', isCurrent: path === '/pages/udash' },
       { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
-      { label: 'Products / Store', to: '/pages/products', isCurrent: path === '/pages/products' },
+      { label: 'Products / Store', to: '/pages/catalog', isCurrent: path === '/pages/catalog' },
       { label: 'Change Password', to: '/pages/change', isCurrent: path === '/pages/change' },
     ]
 
@@ -91,20 +129,21 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
         title: 'Explore',
         items: [
           { label: 'Home', to: '/' },
-          { label: 'Apps', to: '/pages/apps' },
+          buildProductsNavItem(path),
+          { label: 'About', to: '/pages/about' },
           { label: 'Contact', to: '/pages/contact' },
         ],
       })
     } else {
-      const publicLinks = [
-        { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
-        { label: 'Apps', to: '/pages/apps', isCurrent: path === '/pages/apps' },
-        { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
-      ].filter((item) => !item.isCurrent)
-
-      if (publicLinks.length > 0) {
-        groups.push({ title: 'Navigation', items: publicLinks })
-      }
+      groups.push({
+        title: 'Navigation',
+        items: [
+          { label: 'Home', to: '/', isCurrent: path === '/' || path === '' },
+          buildProductsNavItem(path),
+          { label: 'About', to: '/pages/about', isCurrent: path === '/pages/about' },
+          { label: 'Contact', to: '/pages/contact', isCurrent: path === '/pages/contact' },
+        ],
+      })
     }
 
     groups.push({
@@ -126,169 +165,6 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
   // 3. PUBLIC / GUEST CONTEXT (BY CURRENT PAGE)
   // ---------------------------------------------------------------------------
 
-  // HOME (/)
-  if (path === '/' || path === '' || path === '/index.html') {
-    return [
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Apps', to: '/pages/apps' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'About', to: '/pages/about' },
-          { label: 'Contact', to: '/pages/contact' },
-          { label: 'Status', to: '/pages/status' },
-        ],
-      },
-      {
-        title: 'Community',
-        items: [{ label: 'Discord', href: 'https://discord.gg/XB2Zjmsb7K' }],
-      },
-      {
-        title: 'Access Portals',
-        items: [
-          { label: 'Client Login', to: '/pages/ulogin' },
-          { label: 'Admin Portal', to: '/pages/alogin' },
-        ],
-      },
-    ]
-  }
-
-  // APPS (/pages/apps)
-  if (path === '/pages/apps') {
-    return [
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'About', to: '/pages/about' },
-          { label: 'Contact', to: '/pages/contact' },
-          { label: 'Status', to: '/pages/status' },
-        ],
-      },
-      {
-        title: 'Community',
-        items: [{ label: 'Discord', href: 'https://discord.gg/XB2Zjmsb7K' }],
-      },
-      {
-        title: 'Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
-      },
-    ]
-  }
-
-  // PRODUCTS (/pages/products)
-  if (path === '/pages/products') {
-    return [
-      {
-        title: 'Store & Catalog',
-        items: [
-          { label: 'Products', to: '/pages/products', isCurrent: true },
-          { label: 'Checkout', to: '/pages/checkout' },
-          { label: 'Free Panel', to: '/pages/freepanel' },
-        ],
-      },
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Apps', to: '/pages/apps' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'About', to: '/pages/about' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
-      },
-      {
-        title: 'Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
-      },
-    ]
-  }
-
-  // DOWNLOADS (/pages/downloads)
-  if (path === '/pages/downloads') {
-    return [
-      {
-        title: 'Downloads',
-        items: [
-          { label: 'Downloads', to: '/pages/downloads', isCurrent: true },
-          { label: 'Free Panel', to: '/pages/freepanel' },
-        ],
-      },
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Apps', to: '/pages/apps' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Status', to: '/pages/status' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
-      },
-      {
-        title: 'Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
-      },
-    ]
-  }
-
-  // ABOUT (/pages/about)
-  if (path === '/pages/about') {
-    return [
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Apps', to: '/pages/apps' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
-      },
-      {
-        title: 'Community',
-        items: [{ label: 'Discord', href: 'https://discord.gg/XB2Zjmsb7K' }],
-      },
-    ]
-  }
-
-  // CONTACT (/pages/contact)
-  if (path === '/pages/contact') {
-    return [
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'About', to: '/pages/about' },
-          { label: 'Status', to: '/pages/status' },
-        ],
-      },
-      {
-        title: 'Community',
-        items: [{ label: 'Discord', href: 'https://discord.gg/XB2Zjmsb7K' }],
-      },
-    ]
-  }
-
-  // STATUS (/pages/status)
-  if (path === '/pages/status') {
-    return [
-      {
-        title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
-      },
-      {
-        title: 'Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
-      },
-    ]
-  }
-
   // CHECKOUT (/pages/checkout)
   if (path === '/pages/checkout') {
     return [
@@ -296,14 +172,38 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
         title: 'Checkout Navigation',
         items: [
           { label: 'Checkout', to: '/pages/checkout', isCurrent: true },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'Home', to: '/' },
+          { label: 'Software Catalog', to: '/pages/catalog' },
           { label: 'Free Panel', to: '/pages/freepanel' },
         ],
       },
       {
+        title: 'Navigation',
+        items: buildPublicNavigationItems(path),
+      },
+      {
         title: 'Account',
+        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+      },
+    ]
+  }
+
+  // LEGACY SOFTWARE CATALOG (/pages/catalog)
+  if (path === '/pages/catalog') {
+    return [
+      {
+        title: 'Store & Catalog',
+        items: [
+          { label: 'Software Catalog', to: '/pages/catalog', isCurrent: true },
+          { label: 'Checkout', to: '/pages/checkout' },
+          { label: 'Free Panel', to: '/pages/freepanel' },
+        ],
+      },
+      {
+        title: 'Navigation',
+        items: buildPublicNavigationItems(path),
+      },
+      {
+        title: 'Access',
         items: [{ label: 'Client Login', to: '/pages/ulogin' }],
       },
     ]
@@ -313,14 +213,15 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
   if (path === '/pages/freepanel') {
     return [
       {
-        title: 'Navigation',
+        title: 'Evaluation',
         items: [
           { label: 'Free Panel', to: '/pages/freepanel', isCurrent: true },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Home', to: '/' },
-          { label: 'Contact', to: '/pages/contact' },
+          { label: 'Software Catalog', to: '/pages/catalog' },
         ],
+      },
+      {
+        title: 'Navigation',
+        items: buildPublicNavigationItems(path),
       },
       {
         title: 'Account',
@@ -334,13 +235,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     return [
       {
         title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Apps', to: '/pages/apps' },
-          { label: 'Products', to: '/pages/products' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       },
       {
         title: 'Admin Access',
@@ -354,12 +249,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     return [
       {
         title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'Downloads', to: '/pages/downloads' },
-          { label: 'Status', to: '/pages/status' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       },
       {
         title: 'Client Access',
@@ -374,38 +264,41 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       {
         title: 'Policies',
         items: [
-          { label: 'Privacy Policy', to: '/pages/privacy-policy', isCurrent: path === '/pages/privacy-policy' || path === '/pages/policy' },
-          { label: 'Terms of Service', to: '/pages/terms', isCurrent: path === '/pages/terms' },
+          {
+            label: 'Privacy Policy',
+            to: '/pages/privacy-policy',
+            isCurrent: path === '/pages/privacy-policy' || path === '/pages/policy',
+          },
+          {
+            label: 'Terms of Service',
+            to: '/pages/terms',
+            isCurrent: path === '/pages/terms',
+          },
         ],
       },
       {
         title: 'Navigation',
-        items: [
-          { label: 'Home', to: '/' },
-          { label: 'About', to: '/pages/about' },
-          { label: 'Contact', to: '/pages/contact' },
-        ],
+        items: buildPublicNavigationItems(path),
       },
     ]
   }
 
-  // Fallback
+  // STANDARD PUBLIC PAGES (/, /pages/products, /pages/apps, /pages/websites, /pages/downloads, /pages/about, /pages/contact, /pages/status)
   return [
     {
       title: 'Navigation',
-      items: [
-        { label: 'Home', to: '/' },
-        { label: 'Apps', to: '/pages/apps' },
-        { label: 'Products', to: '/pages/products' },
-        { label: 'Downloads', to: '/pages/downloads' },
-        { label: 'About', to: '/pages/about' },
-        { label: 'Contact', to: '/pages/contact' },
-        { label: 'Status', to: '/pages/status' },
-      ],
+      items: buildPublicNavigationItems(path),
     },
     {
-      title: 'Access',
-      items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+      title: 'Community',
+      items: [{ label: 'Discord', href: 'https://discord.gg/XB2Zjmsb7K' }],
+    },
+    {
+      title: 'Access Portals',
+      items: [
+        { label: 'Client Login', to: '/pages/ulogin' },
+        { label: 'Admin Portal', to: '/pages/alogin' },
+      ],
     },
   ]
 }
@@ -416,6 +309,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
 export const FOOTER_PAGES = new Set([
   '/',
   '/pages/apps',
+  '/pages/websites',
   '/pages/products',
   '/pages/downloads',
   '/pages/about',
@@ -424,14 +318,6 @@ export const FOOTER_PAGES = new Set([
   '/pages/terms',
 ])
 
-/**
- * Checks whether the current path requires the full website footer.
- */
-// export function isFooterNeeded(pathname = '/') {
-//   const clean = normalizePath(pathname).replace(/\/+$/, '') || '/'
-//   return FOOTER_PAGES.has(clean)
-// }
 export function isFooterNeeded(_pathname = '/') {
   return true
 }
-

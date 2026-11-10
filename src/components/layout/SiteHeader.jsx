@@ -11,7 +11,9 @@ function isExternal(target) {
 export function SiteHeader({ session, systemStatus, onLogout, compact = false, wide = false }) {
   const location = useLocation()
   const menuRef = useRef(null)
+  const menuToggleBtnRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openSubmenus, setOpenSubmenus] = useState({ Products: true })
   const [verifiedOwner, setVerifiedOwner] = useState(false)
 
   const isOwner = Boolean(session?.isOwner || verifiedOwner)
@@ -59,7 +61,14 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
     }
 
     function handleEscape(event) {
-      if (event.key === 'Escape') setMenuOpen(false)
+      if (event.key === 'Escape') {
+        setMenuOpen((wasOpen) => {
+          if (wasOpen) {
+            menuToggleBtnRef.current?.focus()
+          }
+          return false
+        })
+      }
     }
 
     document.addEventListener('click', handleDocumentClick)
@@ -70,6 +79,40 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
       document.removeEventListener('keydown', handleEscape)
     }
   }, [])
+
+  function toggleSubmenu(label) {
+    setOpenSubmenus((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }))
+  }
+
+  function handleMenuKeyDown(event) {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    const panel = menuRef.current?.querySelector('#primary-menu')
+    if (!panel) return
+
+    const focusables = Array.from(
+      panel.querySelectorAll('a.nav-link, button.nav-link-btn, button.nav-submenu-toggle'),
+    ).filter((el) => !el.closest('[hidden]'))
+
+    if (focusables.length === 0) return
+
+    event.preventDefault()
+    const currentIndex = focusables.indexOf(document.activeElement)
+
+    if (event.key === 'Home') {
+      focusables[0]?.focus()
+    } else if (event.key === 'End') {
+      focusables[focusables.length - 1]?.focus()
+    } else if (event.key === 'ArrowDown') {
+      const nextIndex = currentIndex < focusables.length - 1 ? currentIndex + 1 : 0
+      focusables[nextIndex]?.focus()
+    } else if (event.key === 'ArrowUp') {
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : focusables.length - 1
+      focusables[prevIndex]?.focus()
+    }
+  }
 
   return (
     <header
@@ -124,6 +167,7 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
 
         <div className="menu-container" ref={menuRef}>
           <button
+            ref={menuToggleBtnRef}
             type="button"
             className="button button-secondary menu-toggle"
             aria-expanded={menuOpen}
@@ -139,6 +183,7 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
             className="menu-panel"
             aria-label="Contextual navigation"
             hidden={!menuOpen}
+            onKeyDown={handleMenuKeyDown}
           >
             {menuGroups.map((group, groupIdx) => (
               <div key={group.title || groupIdx} className="menu-group">
@@ -176,6 +221,82 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
                           <span className="nav-link-text">{item.label}</span>
                           <span className="nav-external-arrow" aria-hidden="true">↗</span>
                         </a>
+                      )
+                    }
+
+                    if (Array.isArray(item.children) && item.children.length > 0) {
+                      const isSubmenuOpen = Boolean(openSubmenus[item.label])
+                      const submenuId = `submenu-${String(item.label).toLowerCase().replace(/\s+/g, '-')}`
+
+                      return (
+                        <div key={item.to || item.label} className="nav-parent-group">
+                          <div
+                            className={`nav-parent-row ${item.isParentActive ? 'nav-parent-row-active' : ''}`.trim()}
+                          >
+                            <NavLink
+                              to={item.to}
+                              end
+                              className={({ isActive }) =>
+                                `nav-link nav-parent-link ${
+                                  isActive || item.isCurrent
+                                    ? 'active nav-link-active'
+                                    : item.isParentActive
+                                      ? 'nav-parent-active'
+                                      : ''
+                                }`.trim()
+                              }
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <span className="nav-link-text">{item.label}</span>
+                              {item.isCurrent ? (
+                                <span className="nav-active-dot" title="Current Page" aria-hidden="true" />
+                              ) : null}
+                            </NavLink>
+
+                            <button
+                              type="button"
+                              className="nav-submenu-toggle"
+                              aria-expanded={isSubmenuOpen}
+                              aria-controls={submenuId}
+                              aria-label={`Toggle ${item.label} submenu`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleSubmenu(item.label)
+                              }}
+                            >
+                              <span
+                                className={`nav-submenu-chevron ${isSubmenuOpen ? 'open' : ''}`.trim()}
+                                aria-hidden="true"
+                              >
+                                ▾
+                              </span>
+                            </button>
+                          </div>
+
+                          <div
+                            id={submenuId}
+                            className="nav-submenu"
+                            role="group"
+                            aria-label={`${item.label} categories`}
+                            hidden={!isSubmenuOpen}
+                          >
+                            {item.children.map((child) => (
+                              <NavLink
+                                key={child.to}
+                                to={child.to}
+                                className={({ isActive }) =>
+                                  `nav-link nav-sublink ${isActive || child.isCurrent ? 'active nav-link-active' : ''}`.trim()
+                                }
+                                onClick={() => setMenuOpen(false)}
+                              >
+                                <span className="nav-link-text">{child.label}</span>
+                                {child.isCurrent ? (
+                                  <span className="nav-active-dot" title="Current Page" aria-hidden="true" />
+                                ) : null}
+                              </NavLink>
+                            ))}
+                          </div>
+                        </div>
                       )
                     }
 

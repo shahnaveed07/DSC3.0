@@ -6,6 +6,8 @@ import { AboutPage } from '../pages/AboutPage'
 import { AppsPage } from '../pages/AppsPage'
 import { DownloadsPage } from '../pages/DownloadsPage'
 import { ProductsPage } from '../pages/ProductsPage'
+import { WebsitesPage } from '../pages/WebsitesPage'
+import { LegacyProductsCatalogPage } from '../pages/LegacyProductsCatalogPage'
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage'
 import { TermsPage } from '../pages/TermsPage'
 import { ContactPage } from '../pages/ContactPage'
@@ -70,10 +72,43 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
     expect(screen.queryByText(/Calculator/i)).toBeNull()
   })
 
-  it('ProductsPage renders all preserved product catalogue entries, category filters, and setup guides', () => {
+  it('ProductsPage presents the two primary categories (Android Applications and Websites) with clear navigation actions', () => {
     render(
       <MemoryRouter>
         <ProductsPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('heading', { level: 1, name: /^Products$/i })).toBeTruthy()
+    expect(
+      screen.getByText(/Explore software and digital products developed by Dark Skull Corporation\./i)
+    ).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /Android Applications/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: /Websites/i })).toBeTruthy()
+
+    const appsLink = screen.getByRole('link', { name: /Explore Android Applications/i })
+    const websitesLink = screen.getByRole('link', { name: /Explore Websites/i })
+    expect(appsLink.getAttribute('href')).toBe('/pages/apps')
+    expect(websitesLink.getAttribute('href')).toBe('/pages/websites')
+  })
+
+  it('WebsitesPage renders the Websites category with a clean verified empty state and no dummy projects', () => {
+    render(
+      <MemoryRouter>
+        <WebsitesPage />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('heading', { level: 1, name: /^Websites$/i })).toBeTruthy()
+    expect(screen.getByText(/Website Portfolio Directory/i)).toBeTruthy()
+    expect(screen.getByRole('link', { name: /Request a Website/i }).getAttribute('href')).toBe('/pages/contact')
+    expect(screen.getByRole('link', { name: /Back to Products/i }).getAttribute('href')).toBe('/pages/products')
+  })
+
+  it('LegacyProductsCatalogPage preserves all software catalogue entries, category filters, and setup guides', () => {
+    render(
+      <MemoryRouter>
+        <LegacyProductsCatalogPage />
       </MemoryRouter>
     )
 

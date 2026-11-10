@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { getContextualMenu } from '../utils/navigation'
 
 describe('Contextual Navigation', () => {
-  it('generates public menu items for guest browsing home', () => {
+  it('generates public menu items with Products parent category and Android Applications / Websites submenu', () => {
     const menu = getContextualMenu({
       pathname: '/',
       session: null,
@@ -13,11 +13,48 @@ describe('Contextual Navigation', () => {
     expect(navGroup).toBeTruthy()
 
     const labels = navGroup.items.map((i) => i.label)
-    expect(labels).toContain('Apps')
+    expect(labels).toContain('Home')
     expect(labels).toContain('Products')
     expect(labels).toContain('Downloads')
     expect(labels).toContain('About')
     expect(labels).toContain('Contact')
+
+    // Ensure Android Applications is not duplicated as a top-level item
+    expect(labels).not.toContain('Apps')
+    expect(labels).not.toContain('Android Applications')
+
+    const productsItem = navGroup.items.find((i) => i.label === 'Products')
+    expect(productsItem).toBeTruthy()
+    expect(productsItem.to).toBe('/pages/products')
+    expect(Array.isArray(productsItem.children)).toBe(true)
+    expect(productsItem.children.map((c) => c.label)).toEqual([
+      'Android Applications',
+      'Websites',
+    ])
+    expect(productsItem.children.map((c) => c.to)).toEqual([
+      '/pages/apps',
+      '/pages/websites',
+    ])
+  })
+
+  it('sets active state on Products parent and child items for /pages/products, /pages/apps, and /pages/websites', () => {
+    const appsMenu = getContextualMenu({ pathname: '/pages/apps', session: null })
+    const appsProducts = appsMenu
+      .find((g) => g.title === 'Navigation')
+      .items.find((i) => i.label === 'Products')
+    expect(appsProducts.isParentActive).toBe(true)
+    expect(appsProducts.isCurrent).toBe(false)
+    expect(appsProducts.children[0].isCurrent).toBe(true)
+    expect(appsProducts.children[1].isCurrent).toBe(false)
+
+    const websitesMenu = getContextualMenu({ pathname: '/pages/websites', session: null })
+    const websitesProducts = websitesMenu
+      .find((g) => g.title === 'Navigation')
+      .items.find((i) => i.label === 'Products')
+    expect(websitesProducts.isParentActive).toBe(true)
+    expect(websitesProducts.isCurrent).toBe(false)
+    expect(websitesProducts.children[0].isCurrent).toBe(false)
+    expect(websitesProducts.children[1].isCurrent).toBe(true)
   })
 
   it('generates user account menu for authenticated user', () => {

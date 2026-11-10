@@ -151,14 +151,37 @@ export const SEO_ROUTES = {
   products: {
     key: 'products',
     routePath: '/pages/products',
-    title: 'Software Products & Pricing | Dark Skull Corporation',
+    title: 'Products — Android Applications & Websites | DSC',
     description:
-      'Explore the existing Dark Skull Corporation software product catalogue, available plans, product details, pricing and purchase options.',
+      'Explore software and digital products developed by Dark Skull Corporation, including official Android applications, mobile games, and custom websites.',
     canonical: 'https://dscweb.me/pages/products',
     robots: 'index, follow',
     indexable: true,
     ogType: 'website',
     schemaType: 'CollectionPage',
+  },
+  websites: {
+    key: 'websites',
+    routePath: '/pages/websites',
+    title: 'Custom Websites & Web Development | Dark Skull Corporation',
+    description:
+      'Explore the Websites category by Dark Skull Corporation. We design and develop responsive custom websites for individuals, startups, and businesses on request.',
+    canonical: 'https://dscweb.me/pages/websites',
+    robots: 'index, follow',
+    indexable: true,
+    ogType: 'website',
+    schemaType: 'CollectionPage',
+  },
+  catalog: {
+    key: 'catalog',
+    routePath: '/pages/catalog',
+    title: 'Software Panel Catalog & Licensing | Dark Skull Corporation',
+    description:
+      'Explore the Dark Skull Corporation desktop software panel catalog, base rates, duration options, setup guides, and verified Client Dashboard delivery.',
+    canonical: 'https://dscweb.me/pages/catalog',
+    robots: 'noindex, nofollow',
+    indexable: false,
+    ogType: 'website',
   },
   downloads: {
     key: 'downloads',

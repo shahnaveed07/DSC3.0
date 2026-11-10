@@ -2,7 +2,9 @@
   "redirects": [
     { "source": "/index.html", "destination": "/", "permanent": true },
     { "source": "/pages/apps.html", "destination": "/pages/apps", "permanent": true },
+    { "source": "/pages/websites.html", "destination": "/pages/websites", "permanent": true },
     { "source": "/pages/products.html", "destination": "/pages/products", "permanent": true },
+    { "source": "/pages/catalog.html", "destination": "/pages/catalog", "permanent": true },
     { "source": "/pages/downloads.html", "destination": "/pages/downloads", "permanent": true },
     { "source": "/pages/freepanel.html", "destination": "/pages/freepanel", "permanent": true },
     { "source": "/pages/about.html", "destination": "/pages/about", "permanent": true },
