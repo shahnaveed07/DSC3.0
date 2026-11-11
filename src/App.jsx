@@ -19,6 +19,7 @@ const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage').then(
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })))
 const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })))
 const DownloadsPage = lazy(() => import('./pages/DownloadsPage').then((m) => ({ default: m.DownloadsPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
 const FreePanelPage = lazy(() => import('./pages/FreePanelPage').then((m) => ({ default: m.FreePanelPage })))
 const GenerateKeyPage = lazy(() => import('./pages/GenerateKeyPage').then((m) => ({ default: m.GenerateKeyPage })))
 const InProductionPage = lazy(() => import('./pages/InProductionPage').then((m) => ({ default: m.InProductionPage })))
@@ -36,6 +37,7 @@ const TeamPage = lazy(() => import('./pages/TeamPage').then((m) => ({ default: m
 const TermsPage = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsPage })))
 const UserDashboardPage = lazy(() => import('./pages/UserDashboardPage').then((m) => ({ default: m.UserDashboardPage })))
 const UserLoginPage = lazy(() => import('./pages/UserLoginPage').then((m) => ({ default: m.UserLoginPage })))
+const UserRegisterPage = lazy(() => import('./pages/UserRegisterPage').then((m) => ({ default: m.UserRegisterPage })))
 const WebsitesPage = lazy(() => import('./pages/WebsitesPage').then((m) => ({ default: m.WebsitesPage })))
 
 function RouteLoadingFallback() {
@@ -243,6 +245,16 @@ export default function App() {
               <Route path="/pages/terms" element={<TermsPage />} />
               <Route path="/pages/terms.html" element={<Navigate replace to="/pages/terms" />} />
 
+              {/* DSC Account Authentication & Recovery Routes */}
+              <Route
+                path="/login"
+                element={
+                  <UserLoginPage
+                    onSessionChange={handleSessionChange}
+                    session={session}
+                  />
+                }
+              />
               <Route
                 path="/pages/ulogin"
                 element={
@@ -255,6 +267,42 @@ export default function App() {
               <Route
                 path="/pages/Ulogin.html"
                 element={<Navigate replace to="/pages/ulogin" />}
+              />
+
+              <Route
+                path="/register"
+                element={
+                  <UserRegisterPage
+                    onSessionChange={handleSessionChange}
+                    session={session}
+                  />
+                }
+              />
+              <Route
+                path="/pages/register"
+                element={
+                  <UserRegisterPage
+                    onSessionChange={handleSessionChange}
+                    session={session}
+                  />
+                }
+              />
+              <Route
+                path="/pages/register.html"
+                element={<Navigate replace to="/register" />}
+              />
+
+              <Route
+                path="/forgot-password"
+                element={<ForgotPasswordPage session={session} />}
+              />
+              <Route
+                path="/pages/forgot-password"
+                element={<ForgotPasswordPage session={session} />}
+              />
+              <Route
+                path="/pages/forgot-password.html"
+                element={<Navigate replace to="/forgot-password" />}
               />
 
               <Route
@@ -284,11 +332,26 @@ export default function App() {
               />
 
               <Route
+                path="/dashboard"
+                element={
+                  <RoleGate role="User" session={session}>
+                    <UserDashboardPage
+                      onLogout={handleLogout}
+                      onSessionInvalid={handleLogout}
+                      onSessionUpdate={handleSessionChange}
+                      session={session}
+                    />
+                  </RoleGate>
+                }
+              />
+              <Route
                 path="/pages/udash"
                 element={
                   <RoleGate role="User" session={session}>
                     <UserDashboardPage
+                      onLogout={handleLogout}
                       onSessionInvalid={handleLogout}
+                      onSessionUpdate={handleSessionChange}
                       session={session}
                     />
                   </RoleGate>

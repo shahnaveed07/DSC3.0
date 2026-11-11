@@ -15,6 +15,17 @@ const USERNAME_KEYS = [
   'username',
   'Username',
 ]
+const EMAIL_KEYS = [
+  'email',
+  'Email',
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+]
+const FULL_NAME_KEYS = [
+  'fullName',
+  'FullName',
+  'given_name',
+  'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+]
 
 function readStorage() {
   try {
@@ -84,6 +95,14 @@ export function getUsernameFromClaims(claims) {
   return String(readClaimValue(claims, USERNAME_KEYS) || '').trim()
 }
 
+export function getEmailFromClaims(claims) {
+  return String(readClaimValue(claims, EMAIL_KEYS) || '').trim()
+}
+
+export function getFullNameFromClaims(claims) {
+  return String(readClaimValue(claims, FULL_NAME_KEYS) || '').trim()
+}
+
 function isExpired(claims, lastActivityAt) {
   if (claims?.exp && Number(claims.exp) * 1000 <= Date.now()) return true
   if (lastActivityAt && Date.now() - Number(lastActivityAt) > SESSION_TIMEOUT_MS) {
@@ -129,6 +148,12 @@ export function loadStoredSession() {
       username: String(
         stored.username || getUsernameFromClaims(claims) || '',
       ).trim(),
+      email: String(
+        stored.email || getEmailFromClaims(claims) || '',
+      ).trim(),
+      fullName: String(
+        stored.fullName || getFullNameFromClaims(claims) || '',
+      ).trim(),
     }
   } catch {
     clearStoredSession()
@@ -171,6 +196,26 @@ export function persistSessionFromResponse(payload, extra = {}) {
         getUsernameFromClaims(claims) ||
         '',
     ).trim(),
+    email: String(
+      payload?.email ||
+        payload?.Email ||
+        extra.email ||
+        getEmailFromClaims(claims) ||
+        '',
+    ).trim(),
+    fullName: String(
+      payload?.fullName ||
+        payload?.FullName ||
+        extra.fullName ||
+        getFullNameFromClaims(claims) ||
+        '',
+    ).trim(),
+    discordId: String(
+      payload?.discordId ||
+        payload?.DiscordId ||
+        extra.discordId ||
+        '',
+    ).trim(),
     plan: String(payload?.plan || payload?.Plan || extra.plan || '').trim(),
     expiry:
       payload?.expiry ||
@@ -199,9 +244,15 @@ export function persistSessionFromResponse(payload, extra = {}) {
 export function updateStoredSession(partial) {
   const current = loadStoredSession()
   if (!current) return null
+  // Never allow client-side partial updates to overwrite role, token, or isOwner
+  const safePartial = { ...partial }
+  delete safePartial.role
+  delete safePartial.token
+  delete safePartial.isOwner
+
   const updated = {
     ...current,
-    ...partial,
+    ...safePartial,
     lastActivityAt: Date.now(),
   }
   writeStorage(updated)
@@ -210,4 +261,94 @@ export function updateStoredSession(partial) {
 
 export function authHeader(token) {
   return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+/**
+ * Validates and sanitizes an post-login / post-registration redirect path.
+ * Blocks external URLs, protocol-relative URLs, and administrative routes for user flows.
+ */
+export function getSafeRedirectPath(rawPath, defaultPath = '/pages/udash') {
+  if (!rawPath || typeof rawPath !== 'string') return defaultPath
+  const trimmed = rawPath.trim()
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.startsWith('/\\')) {
+    return defaultPath
+  }
+  if (/^\/pages\/(alogin|adash|ownerdb|generatekey)/i.test(trimmed)) {
+    return defaultPath
+  }
+  if (/^\/(login|register|forgot-password|pages\/ulogin|pages\/register|pages\/forgot-password)/i.test(trimmed)) {
+    return defaultPath
+  }
+  return trimmed
+}
+
+/**
+ * Pure validation helper for DSC Account Registration.
+ */
+export function validateRegistrationInput({
+  fullName = '',
+  email = '',
+  username = '',
+  password = '',
+  confirmPassword = '',
+} = {}) {
+  const errors = {
+    fullName: '',
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+  }
+
+  const cleanName = String(fullName || '').trim()
+  const cleanEmail = String(email || '').trim()
+  const cleanUsername = String(username || '').trim()
+  const rawPassword = String(password || '')
+  const rawConfirm = String(confirmPassword || '')
+
+  if (!cleanName) {
+    errors.fullName = 'Full name is required.'
+  } else if (cleanName.length < 2) {
+    errors.fullName = 'Full name must be at least 2 characters.'
+  }
+
+  if (!cleanEmail) {
+    errors.email = 'Email address is required.'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    errors.email = 'Please enter a valid email address.'
+  }
+
+  if (!cleanUsername) {
+    errors.username = 'Username is required.'
+  } else if (cleanUsername.length < 3 || cleanUsername.length > 32) {
+    errors.username = 'Username must be between 3 and 32 characters.'
+  } else if (!/^[a-zA-Z0-9_.-]+$/.test(cleanUsername)) {
+    errors.username = 'Username may only contain letters, numbers, dots, hyphens, and underscores.'
+  }
+
+  if (!rawPassword) {
+    errors.password = 'Password is required.'
+  } else if (rawPassword.length < 6) {
+    errors.password = 'Password must be at least 6 characters long.'
+  }
+
+  if (!rawConfirm) {
+    errors.confirmPassword = 'Please confirm your password.'
+  } else if (rawPassword && rawConfirm !== rawPassword) {
+    errors.confirmPassword = 'Passwords do not match.'
+  }
+
+  const isValid = !Object.values(errors).some(Boolean)
+  const cleaned = {
+    fullName: cleanName,
+    email: cleanEmail.toLowerCase(),
+    username: cleanUsername.toLowerCase(),
+    password: rawPassword,
+  }
+  return {
+    isValid,
+    errors,
+    cleaned,
+    sanitized: cleaned,
+  }
 }

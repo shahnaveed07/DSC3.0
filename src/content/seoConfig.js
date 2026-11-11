@@ -423,6 +423,28 @@ export const SEO_ROUTES = {
     indexable: false,
     ogType: 'website',
   },
+  register: {
+    key: 'register',
+    routePath: '/register',
+    title: 'Create DSC Account | Dark Skull Corporation',
+    description:
+      'Register a Dark Skull Corporation account to request development services, track project orders, and manage your software licenses.',
+    canonical: 'https://dscweb.me/register',
+    robots: 'noindex, nofollow',
+    indexable: false,
+    ogType: 'website',
+  },
+  forgotPassword: {
+    key: 'forgotPassword',
+    routePath: '/forgot-password',
+    title: 'Account Password Recovery | Dark Skull Corporation',
+    description:
+      'Initiate password recovery or reset your Dark Skull Corporation client account password.',
+    canonical: 'https://dscweb.me/forgot-password',
+    robots: 'noindex, nofollow',
+    indexable: false,
+    ogType: 'website',
+  },
   alogin: {
     key: 'alogin',
     routePath: '/pages/alogin',

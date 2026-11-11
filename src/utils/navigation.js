@@ -168,8 +168,9 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
   // 2. USER LOGGED-IN CONTEXT
   // ---------------------------------------------------------------------------
   if (role === 'User') {
+    const isDashboardPath = path === '/pages/udash' || path === '/dashboard'
     const userItems = [
-      { label: 'Dashboard', to: '/pages/udash', isCurrent: path === '/pages/udash' },
+      { label: 'Dashboard', to: '/pages/udash', isCurrent: isDashboardPath },
       { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
       {
         label: 'Products / Store',
@@ -182,7 +183,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
     const groups = [{ title: 'User Account', items: userItems }]
 
     // Secondary contextual exploration
-    if (path === '/pages/udash' || path === '/pages/change') {
+    if (isDashboardPath || path === '/pages/change') {
       groups.push({
         title: 'Explore',
         items: buildPublicNavigationItems(path),
@@ -230,7 +231,10 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       },
       {
         title: 'Account',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+        items: [
+          { label: 'Client Login', to: '/pages/ulogin' },
+          { label: 'Create Account', to: '/register' },
+        ],
       },
     ]
   }
@@ -252,7 +256,10 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       },
       {
         title: 'Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+        items: [
+          { label: 'Client Login', to: '/pages/ulogin' },
+          { label: 'Create Account', to: '/register' },
+        ],
       },
     ]
   }
@@ -273,14 +280,44 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       },
       {
         title: 'Account',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+        items: [
+          { label: 'Client Login', to: '/pages/ulogin' },
+          { label: 'Create Account', to: '/register' },
+        ],
       },
     ]
   }
 
-  // USER LOGIN (/pages/ulogin)
-  if (path === '/pages/ulogin') {
+  // USER LOGIN, REGISTER, FORGOT PASSWORD
+  if (
+    path === '/pages/ulogin' ||
+    path === '/login' ||
+    path === '/register' ||
+    path === '/pages/register' ||
+    path === '/forgot-password' ||
+    path === '/pages/forgot-password'
+  ) {
     return [
+      {
+        title: 'Account Access',
+        items: [
+          {
+            label: 'Client Login',
+            to: '/pages/ulogin',
+            isCurrent: path === '/pages/ulogin' || path === '/login',
+          },
+          {
+            label: 'Create Account',
+            to: '/register',
+            isCurrent: path === '/register' || path === '/pages/register',
+          },
+          {
+            label: 'Forgot Password',
+            to: '/forgot-password',
+            isCurrent: path === '/forgot-password' || path === '/pages/forgot-password',
+          },
+        ],
+      },
       {
         title: 'Navigation',
         items: buildPublicNavigationItems(path),
@@ -301,7 +338,10 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       },
       {
         title: 'Client Access',
-        items: [{ label: 'Client Login', to: '/pages/ulogin' }],
+        items: [
+          { label: 'Client Login', to: '/pages/ulogin' },
+          { label: 'Create Account', to: '/register' },
+        ],
       },
     ]
   }
@@ -352,6 +392,7 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
       title: 'Access Portals',
       items: [
         { label: 'Client Login', to: '/pages/ulogin' },
+        { label: 'Create Account', to: '/register' },
         { label: 'Admin Portal', to: '/pages/alogin' },
       ],
     },

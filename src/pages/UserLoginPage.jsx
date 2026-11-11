@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError, extractApiMessage, loginUser } from '../services/dscApi'
-import { clearStoredSession, persistSessionFromResponse } from '../utils/auth'
+import {
+  clearStoredSession,
+  getSafeRedirectPath,
+  persistSessionFromResponse,
+} from '../utils/auth'
 import { FullScreenLoader } from '../components/ui/FullScreenLoader'
 import { PasswordInput } from '../components/ui/PasswordInput'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -11,6 +15,10 @@ export function UserLoginPage({ session, onSessionChange }) {
   usePageMeta(SEO_ROUTES.ulogin)
 
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirectParam = searchParams.get('redirect')
+  const safeRedirectTarget = getSafeRedirectPath(redirectParam, '/pages/udash')
+
   const [form, setForm] = useState({ username: '', password: '' })
   const [fieldErrors, setFieldErrors] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
@@ -18,7 +26,12 @@ export function UserLoginPage({ session, onSessionChange }) {
   const [loaderMessage, setLoaderMessage] = useState('Checking credentials...')
 
   if (session) {
-    return <Navigate replace to={session.role === 'Admin' ? '/pages/adash' : '/pages/udash'} />
+    return (
+      <Navigate
+        replace
+        to={session.role === 'Admin' ? '/pages/adash' : safeRedirectTarget}
+      />
+    )
   }
 
   function handleUsernameChange(event) {
@@ -79,6 +92,8 @@ export function UserLoginPage({ session, onSessionChange }) {
         expiry: payload?.expiry,
         plan: payload?.plan,
         username: trimmedUsername,
+        email: payload?.email ?? payload?.Email,
+        fullName: payload?.fullName ?? payload?.FullName,
       })
 
       if (!nextSession || nextSession.role !== 'User') {
@@ -95,7 +110,7 @@ export function UserLoginPage({ session, onSessionChange }) {
 
       setLoaderMessage('Login successful. Redirecting...')
       onSessionChange(nextSession)
-      navigate('/pages/udash')
+      navigate(safeRedirectTarget)
     } catch (submitError) {
       clearTimeout(wakeTimeout)
       const message =
@@ -112,12 +127,19 @@ export function UserLoginPage({ session, onSessionChange }) {
     }
   }
 
+  const registerTarget = redirectParam
+    ? `/register?redirect=${encodeURIComponent(safeRedirectTarget)}`
+    : '/register'
+
   return (
     <section className="auth-shell">
       <FullScreenLoader active={loading} message={loaderMessage} />
       <div className="auth-card">
         <span className="hero-eyebrow">User Login</span>
         <h1>WELCOME BACK</h1>
+        <p className="auth-subtitle">
+          Sign in with your DSC account to view your orders, quotations, and active licenses.
+        </p>
 
         <form className={`form-stack ${loading ? 'is-processing' : ''}`} onSubmit={handleSubmit} noValidate>
           <label className="field" htmlFor="user-username">
@@ -142,7 +164,12 @@ export function UserLoginPage({ session, onSessionChange }) {
           </label>
 
           <label className="field" htmlFor="user-password">
-            <span>Password</span>
+            <div className="flex items-center justify-between">
+              <span>Password</span>
+              <Link to="/forgot-password" className="text-xs text-primary">
+                Forgot Password?
+              </Link>
+            </div>
             <PasswordInput
               id="user-password"
               autoComplete="current-password"
@@ -184,6 +211,7 @@ export function UserLoginPage({ session, onSessionChange }) {
         </form>
 
         <div className="link-row">
+          <Link to={registerTarget}>Create Account</Link>
           <Link to="/pages/alogin">Admin Portal</Link>
           <Link to="/">Back to Home</Link>
         </div>

@@ -4842,3 +4842,178 @@ a.footer-social-pill:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   18. PHASE 4 — DSC ACCOUNTS & USER DASHBOARD WORKSPACE
+   -------------------------------------------------------------------------- */
+.auth-card-wide {
+  width: min(620px, 100%);
+}
+
+.dashboard-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px;
+  margin-bottom: 24px;
+  background: var(--surface-strong);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+
+.dashboard-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.dashboard-tab-btn:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.dashboard-tab-btn.is-active {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: var(--primary-border);
+}
+
+.dashboard-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--primary-border);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dashboard-tab-logout {
+  margin-left: auto;
+  color: var(--danger);
+}
+
+.dashboard-tab-logout:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
+}
+
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-empty-box {
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--surface-border-strong);
+  background: var(--surface-hover);
+}
+
+.dashboard-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-strong);
+}
+
+.dashboard-orders-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.4fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.dashboard-order-item-btn {
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dashboard-order-item-btn:hover {
+  border-color: var(--surface-border-strong);
+  background: var(--surface-hover);
+}
+
+.dashboard-order-item-btn.is-selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.order-detail-dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.order-detail-pair {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-strong);
+}
+
+.order-detail-pair dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.order-detail-pair dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .dashboard-summary-grid,
+  .dashboard-orders-split,
+  .order-detail-dl {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-tab-logout {
+    margin-left: 0;
+  }
+}
+

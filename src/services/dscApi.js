@@ -153,6 +153,8 @@ async function request(path, options = {}) {
       fallback = 'Access denied. You do not have permission to access this resource.'
     } else if (response.status === 404) {
       fallback = 'The requested resource was not found.'
+    } else if (response.status === 409) {
+      fallback = 'An account with this email or username already exists.'
     } else if (response.status === 429) {
       fallback = 'Too many requests. Please wait a moment before trying again.'
     } else if (response.status >= 500) {
@@ -197,6 +199,80 @@ export function loginUser(credentials) {
       username,
       password,
       HWID: 'WEB-CLIENT',
+    },
+  })
+}
+
+export function registerUser(accountData) {
+  const fullName = String(accountData?.fullName || '').trim()
+  const email = String(accountData?.email || '').trim().toLowerCase()
+  const username = String(accountData?.username || '').trim().toLowerCase()
+  const password = String(accountData?.password || '')
+
+  return request('/api/auth/register', {
+    method: 'POST',
+    body: {
+      fullName,
+      FullName: fullName,
+      email,
+      Email: email,
+      username,
+      Username: username,
+      password,
+      Password: password,
+      HWID: 'WEB-CLIENT',
+    },
+  })
+}
+
+export function requestPasswordRecovery(recoveryData) {
+  const identifier = String(recoveryData?.email || recoveryData?.identifier || '').trim()
+
+  return request('/api/auth/forgot-password', {
+    method: 'POST',
+    body: {
+      email: identifier,
+      Email: identifier,
+      username: identifier.toLowerCase(),
+      Username: identifier.toLowerCase(),
+    },
+  })
+}
+
+export function confirmPasswordReset(resetData) {
+  const identifier = String(resetData?.email || resetData?.identifier || '').trim()
+  const token = String(resetData?.token || '').trim()
+  const newPassword = String(resetData?.newPassword || '')
+
+  return request('/api/auth/reset-password', {
+    method: 'POST',
+    body: {
+      email: identifier,
+      Email: identifier,
+      token,
+      Token: token,
+      resetToken: token,
+      newPassword,
+      NewPassword: newPassword,
+    },
+  })
+}
+
+export function updateUserProfile(token, profile) {
+  const fullName = String(profile?.fullName || '').trim()
+  const email = String(profile?.email || '').trim().toLowerCase()
+  const discordId = String(profile?.discordId || '').trim()
+
+  return request('/api/auth/profile', {
+    method: 'PUT',
+    token,
+    body: {
+      fullName,
+      FullName: fullName,
+      email,
+      Email: email,
+      discordId,
+      DiscordId: discordId,
     },
   })
 }

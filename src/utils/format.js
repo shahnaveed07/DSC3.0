@@ -579,3 +579,196 @@ export function normalizeFreePanelResponse(payload) {
     hasValidDownloadUrl,
   }
 }
+
+/**
+ * Normalizes the authenticated user's order payload from GET /api/auth/my-order
+ * (supporting single order objects, { orders: [] } collections, or 404 empty states)
+ * into a structured list of user orders and real summary statistics.
+ * Never returns dummy orders or fabricated counts.
+ */
+export function normalizeUserOrdersPayload(data, session = null, isNoOrder = false) {
+  const emptySummary = {
+    orders: [],
+    totalOrders: 0,
+    activeOrders: 0,
+    completedOrders: 0,
+    recentActivity: [],
+  }
+
+  if (isNoOrder || !data || typeof data !== 'object') {
+    return emptySummary
+  }
+
+  const sessionUsername = String(session?.username || '').trim().toLowerCase()
+
+  let rawList = []
+  if (Array.isArray(data)) {
+    rawList = data
+  } else if (Array.isArray(data.orders)) {
+    rawList = data.orders
+  } else if (Array.isArray(data.Orders)) {
+    rawList = data.Orders
+  } else {
+    const hasMeaningfulOrderField = Boolean(
+      data.status ||
+        data.Status ||
+        data.plan ||
+        data.Plan ||
+        data.serviceType ||
+        data.ServiceType ||
+        data.key ||
+        data.Key ||
+        data.orderId ||
+        data.OrderId ||
+        data.id ||
+        data.Id,
+    )
+    if (hasMeaningfulOrderField) {
+      rawList = [data]
+    }
+  }
+
+  const normalizedOrders = rawList
+    .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
+    .filter((item) => {
+      // Defense-in-depth ownership check: if an order record explicitly includes a username,
+      // ensure it matches the signed-in user's session username.
+      const recordUser = String(item.username ?? item.Username ?? '').trim().toLowerCase()
+      if (recordUser && sessionUsername && recordUser !== sessionUsername) {
+        return false
+      }
+      return true
+    })
+    .map((item, idx) => {
+      const rawId = resolveRecordField(item, [
+        'orderReference',
+        'OrderReference',
+        'orderId',
+        'OrderId',
+        'id',
+        'Id',
+      ])
+      const reference = rawId
+        ? String(rawId).startsWith('ORD-')
+          ? String(rawId)
+          : `ORD-${rawId}`
+        : `ORD-${idx + 1}`
+
+      const rawPlan = String(resolveRecordField(item, ['plan', 'Plan']) || '').trim()
+      const rawService = String(
+        resolveRecordField(item, ['serviceType', 'ServiceType', 'service', 'Service']) || '',
+      ).trim()
+      const serviceType =
+        rawService || (rawPlan ? `${rawPlan.toUpperCase()} Software Plan` : 'DSC Software Order')
+
+      const status = String(resolveRecordField(item, ['status', 'Status']) || 'Pending').trim()
+      const submittedAt =
+        resolveRecordField(item, [
+          'submittedAt',
+          'SubmittedAt',
+          'createdAt',
+          'CreatedAt',
+          'orderDate',
+          'OrderDate',
+        ]) || null
+
+      const expiry =
+        resolveRecordField(item, ['expiry', 'Expiry', 'expiryTime', 'ExpiryTime']) || null
+
+      const lastUpdate =
+        resolveRecordField(item, [
+          'updatedAt',
+          'UpdatedAt',
+          'lastUpdate',
+          'LastUpdate',
+          'createdAt',
+          'CreatedAt',
+          'expiry',
+          'Expiry',
+          'expiryTime',
+          'ExpiryTime',
+        ]) || null
+
+      const key = String(
+        resolveRecordField(item, ['key', 'Key', 'licenseKey', 'LicenseKey']) || '',
+      ).trim()
+      const isKeyUsed = Boolean(item.isKeyUsed ?? item.IsKeyUsed)
+
+      const rawQuotationStatus = String(
+        resolveRecordField(item, ['quotationStatus', 'QuotationStatus']) || '',
+      ).trim()
+      const quotationStatus =
+        rawQuotationStatus ||
+        (rawService
+          ? status.toLowerCase() === 'approved' || status.toLowerCase() === 'completed'
+            ? 'Approved'
+            : 'Under Scope Review'
+          : key
+            ? 'Direct License Issued'
+            : 'Pending Verification')
+
+      const scopeTemplate = String(
+        resolveRecordField(item, ['scopeTemplate', 'ScopeTemplate', 'package', 'Package']) ||
+          (rawPlan ? `${rawPlan.toUpperCase()} Plan` : 'Custom Scope'),
+      ).trim()
+
+      const deploymentPreference = String(
+        resolveRecordField(item, ['deploymentPreference', 'DeploymentPreference']) || '',
+      ).trim()
+
+      const lowerStatus = status.toLowerCase()
+      const isCompleted = lowerStatus === 'completed' || lowerStatus === 'approved'
+      const isRejected =
+        lowerStatus === 'rejected' ||
+        lowerStatus === 'cancelled' ||
+        lowerStatus === 'canceled' ||
+        lowerStatus === 'quotation declined'
+
+      const notes = String(
+        resolveRecordField(item, ['notes', 'Notes', 'description', 'Description']) || '',
+      ).trim()
+
+      return {
+        id: String(rawId ?? reference),
+        reference,
+        serviceType,
+        plan: rawPlan || 'Standard',
+        scopeTemplate,
+        deploymentPreference,
+        submittedAt,
+        submissionDate: submittedAt,
+        status,
+        currentStatus: status,
+        quotationStatus,
+        lastUpdate,
+        expiry,
+        key,
+        isKeyUsed,
+        isCompleted,
+        isRejected,
+        notes,
+      }
+    })
+
+  let activeOrders = 0
+  let completedOrders = 0
+
+  for (const order of normalizedOrders) {
+    if (order.isCompleted) {
+      completedOrders += 1
+    } else if (!order.isRejected && order.status.toLowerCase() !== 'expired') {
+      activeOrders += 1
+    }
+  }
+
+  const recentActivity = normalizedOrders.slice(0, 5)
+
+  return {
+    orders: normalizedOrders,
+    totalOrders: normalizedOrders.length,
+    activeOrders,
+    completedOrders,
+    recentActivity,
+  }
+}
+
