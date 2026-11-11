@@ -1,5 +1,6 @@
-const AUTH_STORAGE_KEY = 'dscweb.current-session'
-const SESSION_TIMEOUT_MS = 10 * 60 * 60 * 1000
+export const AUTH_STORAGE_KEY = 'dscweb.current-session'
+export const SESSION_TIMEOUT_MS = 10 * 60 * 60 * 1000
+export const ACTIVITY_THROTTLE_MS = 60 * 1000
 const ROLE_KEYS = [
   'role',
   'roles',
@@ -103,16 +104,16 @@ export function getFullNameFromClaims(claims) {
   return String(readClaimValue(claims, FULL_NAME_KEYS) || '').trim()
 }
 
-function isExpired(claims, lastActivityAt) {
-  if (claims?.exp && Number(claims.exp) * 1000 <= Date.now()) return true
-  if (lastActivityAt && Date.now() - Number(lastActivityAt) > SESSION_TIMEOUT_MS) {
+function isExpired(claims, lastActivityAt, now = Date.now()) {
+  if (claims?.exp && Number(claims.exp) * 1000 <= now) return true
+  if (lastActivityAt && now - Number(lastActivityAt) > SESSION_TIMEOUT_MS) {
     return true
   }
   return false
 }
 
-export function isSessionExpired(claims, lastActivityAt) {
-  return isExpired(claims, lastActivityAt)
+export function isSessionExpired(claims, lastActivityAt, now = Date.now()) {
+  return isExpired(claims, lastActivityAt, now)
 }
 
 export function persistCurrentUser(session) {
@@ -127,17 +128,20 @@ export function persistCurrentUser(session) {
   return completeSession
 }
 
-export function loadStoredSession() {
+export function loadStoredSession(now = Date.now()) {
   try {
     const raw = readStorage()
     if (!raw) return null
     const stored = JSON.parse(raw)
-    if (!stored?.token) return null
+    if (!stored || typeof stored !== 'object' || !stored.token) {
+      clearStoredSession()
+      return null
+    }
 
     const claims = decodeJwtPayload(stored.token)
     const role = getRoleFromClaims(claims)
 
-    if (!claims || !role || isExpired(claims, stored.lastActivityAt)) {
+    if (!claims || !role || isExpired(claims, stored.lastActivityAt, now)) {
       clearStoredSession()
       return null
     }
@@ -161,13 +165,41 @@ export function loadStoredSession() {
   }
 }
 
-export function touchStoredSession(session = null) {
-  const activeSession = session || loadStoredSession()
-  if (!activeSession?.token) return null
+/**
+ * Refreshes `lastActivityAt` on meaningful user interaction.
+ * - Always respects JWT `exp` (never extends token expiration).
+ * - Clears stored session and returns `null` if JWT `exp` or idle timeout (`SESSION_TIMEOUT_MS`) has already elapsed.
+ * - Throttles writes to `localStorage` (`ACTIVITY_THROTTLE_MS`) unless `{ force: true }` is specified.
+ */
+export function touchStoredSession(session = null, options = {}) {
+  const now = typeof options.now === 'number' ? options.now : Date.now()
+  const throttleMs =
+    typeof options.throttleMs === 'number' ? options.throttleMs : ACTIVITY_THROTTLE_MS
+  const force = Boolean(options.force)
+
+  const stored = loadStoredSession(now)
+  const activeSession = stored || session
+  if (!activeSession?.token) {
+    clearStoredSession()
+    return null
+  }
+
+  const claims = decodeJwtPayload(activeSession.token)
+  const role = getRoleFromClaims(claims)
+  if (!claims || !role || isExpired(claims, activeSession.lastActivityAt, now)) {
+    clearStoredSession()
+    return null
+  }
+
+  const prevActivity = Number(activeSession.lastActivityAt || 0)
+  if (!force && prevActivity > 0 && now - prevActivity < throttleMs) {
+    return activeSession
+  }
 
   const next = {
     ...activeSession,
-    lastActivityAt: Date.now(),
+    role,
+    lastActivityAt: now,
   }
   writeStorage(next)
   return next
@@ -179,13 +211,12 @@ export function persistSessionFromResponse(payload, extra = {}) {
   ).trim()
   const claims = decodeJwtPayload(token)
   const role = getRoleFromClaims(claims)
+  const now = Date.now()
 
-  if (!token || !claims || !role) {
+  if (!token || !claims || !role || isExpired(claims, now, now)) {
     clearStoredSession()
     return null
   }
-
-  const now = Date.now()
   const session = {
     token,
     role,

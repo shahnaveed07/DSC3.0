@@ -52,6 +52,15 @@ export function ChangePasswordPage({ session, onSessionInvalid, onSessionUpdate 
         onSessionInvalid()
         return
       }
+      if (submitError?.status === 403) {
+        setError(
+          extractApiMessage(
+            submitError.payload,
+            'Access denied: You do not have permission to change this password.',
+          ),
+        )
+        return
+      }
       setError(extractApiMessage(submitError.payload, submitError.message || 'Password update failed.'))
     } finally {
       setLoading(false)

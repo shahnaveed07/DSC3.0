@@ -44,6 +44,13 @@ export function GenerateKeyPage({ session, onSessionInvalid }) {
     } catch (issue) {
       if (isAuthError(issue)) {
         onSessionInvalid()
+      } else if (issue?.status === 403) {
+        setError(
+          extractApiMessage(
+            issue.payload,
+            'Access denied: Insufficient permissions to generate license keys.',
+          ),
+        )
       } else {
         setError(extractApiMessage(issue.payload, issue.message || 'Failed to generate key.'))
       }

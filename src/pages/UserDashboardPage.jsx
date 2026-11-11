@@ -11,7 +11,7 @@ import {
   getCurrentOrder,
   getSecureDownload,
   isAuthError,
-  respondToServiceOrderQuotation,
+  isForbiddenError,
   updateUserProfile,
 } from '../services/dscApi'
 import { updateStoredSession } from '../utils/auth'
@@ -20,10 +20,6 @@ import {
   formatDateTime,
   normalizeUserOrdersPayload,
 } from '../utils/format'
-import {
-  applyCustomerQuotationAction,
-  updateUserServiceOrderQuotation,
-} from '../utils/serviceOrders'
 
 const DASHBOARD_TABS = [
   { id: 'overview', label: 'Overview' },
@@ -51,13 +47,6 @@ export function UserDashboardPage({
   const [downloadError, setDownloadError] = useState('')
   const [downloadLoading, setDownloadLoading] = useState(false)
   const [reloadCount, setReloadCount] = useState(0)
-
-  // Quotation response state
-  const [quotationNotes, setQuotationNotes] = useState('')
-  const [quotationActionLoading, setQuotationActionLoading] = useState(false)
-  const [quotationActionError, setQuotationActionError] = useState('')
-  const [quotationActionMessage, setQuotationActionMessage] = useState('')
-  const [orderOverrides, setOrderOverrides] = useState({})
 
   // Profile tab state
   const [profileForm, setProfileForm] = useState({
@@ -95,13 +84,14 @@ export function UserDashboardPage({
         <section className="panel text-center">
           <div className="skeleton-line skeleton-title" />
           <div className="skeleton-line skeleton-bar" />
-          <p className="text-muted">Retrieving your order and subscription status...</p>
+          <p className="text-muted">Retrieving your account and subscription status...</p>
         </section>
       </div>
     )
   }
 
   const is404NoOrder = error?.status === 404
+  const is403Forbidden = isForbiddenError(error)
   const fatalError = error && !is404NoOrder && !isAuthError(error) ? error : null
 
   const rawStatus = String(data?.status ?? data?.Status ?? '').trim()
@@ -115,63 +105,49 @@ export function UserDashboardPage({
         data.ServiceType ||
         data.key ||
         data.Key ||
+        data.licenseKey ||
+        data.LicenseKey ||
         data.orderId ||
         data.id ||
         Array.isArray(data.orders) ||
-        Array.isArray(data.Orders)),
+        Array.isArray(data.Orders) ||
+        Array.isArray(data.projectOrders) ||
+        Array.isArray(data.serviceOrders)),
   )
   const isNoRemoteOrder = is404NoOrder || (!fatalError && !hasSingleOrderFields)
 
-  const baseOrderSummary = normalizeUserOrdersPayload(
+  const orderSummary = normalizeUserOrdersPayload(
     data,
     session,
     isNoRemoteOrder || Boolean(fatalError),
   )
 
-  const orders = baseOrderSummary.orders.map((ord) => {
-    const override = orderOverrides[ord.id] || orderOverrides[ord.reference]
-    if (!override) return ord
-    const lower = String(override.status || '').toLowerCase()
-    return {
-      ...ord,
-      ...override,
-      isCompleted: lower === 'completed' || lower === 'approved',
-      isRejected:
-        lower === 'rejected' ||
-        lower === 'cancelled' ||
-        lower === 'canceled' ||
-        lower === 'cancelled / rejected' ||
-        lower === 'quotation declined',
-    }
-  })
+  const legacyOrders = orderSummary.legacyOrders || []
+  const projectOrders = orderSummary.projectOrders || []
+  const totalOrders = orderSummary.totalOrders
+  const activeOrders = orderSummary.activeOrders
+  const completedOrders = orderSummary.completedOrders
+  const primaryLegacyOrder = legacyOrders[0] || null
+  const isNoLegacyOrder = isNoRemoteOrder || (!primaryLegacyOrder && !rawStatus)
 
-  const totalOrders = orders.length
-  const completedOrders = orders.filter((o) => o.isCompleted).length
-  const activeOrders = orders.filter(
-    (o) => !o.isCompleted && !o.isRejected && o.status.toLowerCase() !== 'expired',
-  ).length
-  const recentActivity = orders.slice(0, 5)
-  const primaryOrder = orders[0] || null
-  const isNoOrder = isNoRemoteOrder && orders.length === 0
-
-  const liveStatus = isNoOrder
+  const liveStatus = isNoLegacyOrder
     ? 'NO ACTIVE ORDERS'
-    : rawStatus || primaryOrder?.currentStatus || 'Pending'
+    : rawStatus || primaryLegacyOrder?.currentStatus || 'Pending'
   const normalizedStatus = liveStatus.toLowerCase()
   const isApproved =
-    !isNoOrder && (normalizedStatus === 'approved' || normalizedStatus === 'completed')
+    !isNoLegacyOrder && (normalizedStatus === 'approved' || normalizedStatus === 'completed')
   const isRejected =
-    !isNoOrder &&
+    !isNoLegacyOrder &&
     (normalizedStatus === 'rejected' ||
       normalizedStatus === 'cancelled / rejected' ||
       normalizedStatus === 'cancelled')
-  const isPending = !isNoOrder && !fatalError && !isApproved && !isRejected
+  const isPending = !isNoLegacyOrder && !fatalError && !isApproved && !isRejected
 
   const livePlan =
     String(
       data?.plan ??
         data?.Plan ??
-        primaryOrder?.plan ??
+        primaryLegacyOrder?.plan ??
         session?.plan ??
         'Temp',
     ).trim() || 'Temp'
@@ -181,7 +157,7 @@ export function UserDashboardPage({
     data?.Expiry ??
     data?.expiryTime ??
     data?.ExpiryTime ??
-    primaryOrder?.expiry ??
+    primaryLegacyOrder?.expiry ??
     session?.expiry ??
     null
 
@@ -190,28 +166,28 @@ export function UserDashboardPage({
     session,
     liveExpiry,
     isPending,
-    isNoOrder,
+    isNoOrder: isNoLegacyOrder,
   })
 
-  const orderKey = isNoOrder
+  const orderKey = isNoLegacyOrder
     ? ''
     : String(
         data?.key ??
           data?.Key ??
           data?.licenseKey ??
           data?.LicenseKey ??
-          primaryOrder?.key ??
+          primaryLegacyOrder?.key ??
           '',
       ).trim()
   const keyUsed = Boolean(
-    data?.isKeyUsed ?? data?.IsKeyUsed ?? primaryOrder?.isKeyUsed,
+    data?.isKeyUsed ?? data?.IsKeyUsed ?? primaryLegacyOrder?.isKeyUsed,
   )
 
-  const selectedOrder =
-    orders.find(
+  const selectedProjectOrder =
+    projectOrders.find(
       (item) => item.id === selectedOrderId || item.reference === selectedOrderId,
     ) ||
-    orders[0] ||
+    projectOrders[0] ||
     null
 
   async function handleCopyKey() {
@@ -248,6 +224,15 @@ export function UserDashboardPage({
         onSessionInvalid()
         return
       }
+      if (isForbiddenError(downloadIssue)) {
+        setDownloadError(
+          extractApiMessage(
+            downloadIssue.payload,
+            'Access denied: Your account is not authorized to download this package.',
+          ),
+        )
+        return
+      }
       setDownloadError(
         extractApiMessage(
           downloadIssue.payload,
@@ -256,78 +241,6 @@ export function UserDashboardPage({
       )
     } finally {
       setDownloadLoading(false)
-    }
-  }
-
-  async function handleQuotationResponse(action) {
-    if (!selectedOrder || quotationActionLoading) return
-    setQuotationActionError('')
-    setQuotationActionMessage('')
-
-    let transitioned
-    try {
-      transitioned = applyCustomerQuotationAction(
-        selectedOrder,
-        action,
-        quotationNotes,
-      )
-    } catch (validationError) {
-      setQuotationActionError(validationError.message)
-      return
-    }
-
-    setQuotationActionLoading(true)
-    try {
-      try {
-        await respondToServiceOrderQuotation(
-          session.token,
-          selectedOrder.id,
-          action,
-          quotationNotes,
-        )
-      } catch (apiError) {
-        if (isAuthError(apiError)) {
-          onSessionInvalid()
-          return
-        }
-        if (apiError instanceof ApiError && apiError.status === 400) {
-          throw apiError
-        }
-      }
-
-      updateUserServiceOrderQuotation(
-        session.username,
-        selectedOrder.id,
-        action,
-        quotationNotes,
-      )
-
-      setOrderOverrides((prev) => ({
-        ...prev,
-        [selectedOrder.id]: transitioned,
-        [selectedOrder.reference]: transitioned,
-      }))
-
-      if (action === 'approve') {
-        setQuotationActionMessage(
-          'Quotation approved. Your order is now marked as Approved for DSC engineering execution.',
-        )
-      } else if (action === 'request_changes') {
-        setQuotationActionMessage(
-          'Your revision and clarification notes have been submitted for DSC scope review.',
-        )
-      } else if (action === 'decline') {
-        setQuotationActionMessage(
-          'This service order / quotation has been cancelled at your request.',
-        )
-      }
-      setQuotationNotes('')
-    } catch (err) {
-      setQuotationActionError(
-        err?.message || 'Unable to submit quotation response. Please try again.',
-      )
-    } finally {
-      setQuotationActionLoading(false)
     }
   }
 
@@ -371,6 +284,15 @@ export function UserDashboardPage({
     } catch (err) {
       if (isAuthError(err)) {
         onSessionInvalid()
+        return
+      }
+      if (isForbiddenError(err)) {
+        setProfileError(
+          extractApiMessage(
+            err.payload,
+            'Access denied: You do not have permission to update this profile.',
+          ),
+        )
         return
       }
       const message =
@@ -425,6 +347,15 @@ export function UserDashboardPage({
         onSessionInvalid()
         return
       }
+      if (isForbiddenError(err)) {
+        setSecurityError(
+          extractApiMessage(
+            err.payload,
+            'Access denied: You do not have permission to change this password.',
+          ),
+        )
+        return
+      }
       const message =
         err instanceof ApiError
           ? err.message
@@ -435,7 +366,7 @@ export function UserDashboardPage({
     }
   }
 
-  const statusColorClass = isNoOrder
+  const statusColorClass = isNoLegacyOrder
     ? 'text-muted'
     : isApproved
       ? 'text-success'
@@ -443,30 +374,13 @@ export function UserDashboardPage({
         ? 'text-danger'
         : 'text-warning'
 
-  const statusIconSymbol = isNoOrder
+  const statusIconSymbol = isNoLegacyOrder
     ? '📋'
     : isApproved
       ? '✅'
       : isRejected
         ? '❌'
         : '⏳'
-
-  const canApproveQuotation = Boolean(
-    selectedOrder &&
-      !selectedOrder.isCompleted &&
-      !selectedOrder.isRejected &&
-      (selectedOrder.quotation?.hasIssuedQuotation ||
-        ['quotation sent', 'awaiting customer approval'].includes(
-          String(selectedOrder.currentStatus || '').toLowerCase(),
-        ) ||
-        ['quotation sent', 'awaiting customer approval'].includes(
-          String(selectedOrder.quotationStatus || '').toLowerCase(),
-        )),
-  )
-
-  const canModifyOrCancelOrder = Boolean(
-    selectedOrder && !selectedOrder.isCompleted && !selectedOrder.isRejected,
-  )
 
   return (
     <div className="center-wrap">
@@ -478,12 +392,12 @@ export function UserDashboardPage({
               Welcome, {String(session?.username || 'User').toUpperCase()}
             </h1>
             <p className="text-muted text-sm m-0 mt-4">
-              Track your project orders, review quotation statuses, and manage your DSC software licenses.
+              Manage your existing DSC software licenses, panel subscriptions, and account security.
             </p>
           </div>
           <div className="flex gap-10 flex-wrap">
-            <NavLink to="/services/request" className="button button-primary button-sm">
-              Submit Project Requirements
+            <NavLink to="/contact" className="button button-primary button-sm">
+              Send Project Inquiry
             </NavLink>
             {!isFreePlan ? (
               <NavLink to="/pages/change" className="button button-secondary button-sm">
@@ -524,16 +438,25 @@ export function UserDashboardPage({
           ) : null}
         </nav>
 
-        {/* Fatal API / Network Error Banner (Non-404) */}
+        {/* Fatal API / Network / 403 Error Banner (Non-404, Non-401) */}
         {fatalError ? (
           <div className="form-error mb-24 flex items-center justify-between flex-wrap gap-12" role="alert">
             <div>
-              <strong>Unable to Load Order Status</strong>
+              <strong>
+                {is403Forbidden
+                  ? 'Access Denied (HTTP 403)'
+                  : 'Unable to Load Order Status'}
+              </strong>
               <p className="mt-4 text-sm text-main">
-                {extractApiMessage(
-                  fatalError.payload,
-                  fatalError.message || 'Could not retrieve your order details at this time.',
-                )}
+                {is403Forbidden
+                  ? extractApiMessage(
+                      fatalError.payload,
+                      'Access denied: Your account does not have permission to access this resource.',
+                    )
+                  : extractApiMessage(
+                      fatalError.payload,
+                      fatalError.message || 'Could not retrieve your order details at this time.',
+                    )}
               </p>
             </div>
             <button
@@ -547,17 +470,25 @@ export function UserDashboardPage({
         ) : null}
 
         {/* ================================================================= */}
-        {/* TAB 1: OVERVIEW                                                   */}
+        {/* TAB 1: OVERVIEW (EXISTING SOFTWARE ORDERS & PANEL SUBSCRIPTION)   */}
         {/* ================================================================= */}
         {activeTab === 'overview' ? (
           <div className="dashboard-tab-panel" data-testid="dashboard-overview-panel">
+            <div className="mb-16">
+              <span className="micro-label">EXISTING SOFTWARE ORDERS &amp; PANEL SUBSCRIPTION</span>
+              <h2 className="my-4 text-lg font-bold">Software License &amp; Subscription Status</h2>
+              <p className="text-muted text-sm m-0">
+                Displays your active DSC desktop panel subscription, payment verification status, and license key from <code>/api/auth/my-order</code>.
+              </p>
+            </div>
+
             {/* Status Alerts */}
             {isPending ? (
               <div className="form-error mb-24 alert-warning-box">
                 <div>
-                  <strong>⚠️ Order Pending Review</strong>
+                  <strong>⚠️ Software Order Pending Verification</strong>
                   <p className="mt-4 text-sm text-main">
-                    Your order is currently awaiting verification or scope review. Updates will appear here and in My Orders.
+                    Your software panel order is currently awaiting administrator payment verification. Once approved, your license key will unlock below.
                   </p>
                 </div>
               </div>
@@ -568,7 +499,7 @@ export function UserDashboardPage({
                 <div>
                   <strong>⛔ Subscription Expired</strong>
                   <p className="mt-4 text-sm text-main">
-                    Your access has expired. Please renew your plan from the products catalog to restore access.
+                    Your access has expired. Please renew your plan from the software catalog to restore access.
                   </p>
                 </div>
                 <NavLink to="/pages/catalog" className="button button-primary button-sm">
@@ -579,9 +510,9 @@ export function UserDashboardPage({
 
             {isRejected ? (
               <div className="form-error mb-24">
-                <strong>❌ Order Not Approved</strong>
+                <strong>❌ Software Order Not Approved</strong>
                 <p className="mt-4 text-sm text-main">
-                  Your order could not be verified or was cancelled. Please contact support on Discord or submit a new request.
+                  Your software order could not be verified or was rejected. Please contact support on Discord or submit a new checkout request.
                 </p>
               </div>
             ) : null}
@@ -616,7 +547,7 @@ export function UserDashboardPage({
 
               <div className="stat-card" id="status-card">
                 <p className="stat-label">
-                  <span id="statusIcon">{statusIconSymbol}</span> Order Status
+                  <span id="statusIcon">{statusIconSymbol}</span> License Order Status
                 </p>
                 <div
                   id="dashOrderStatus"
@@ -627,35 +558,13 @@ export function UserDashboardPage({
               </div>
             </div>
 
-            {/* Order Metrics Summary Row */}
-            <div className="dashboard-summary-grid mb-24">
-              <div className="stat-card">
-                <p className="stat-label">Total Orders</p>
-                <div id="dashTotalOrders" className="stat-value">
-                  {totalOrders}
-                </div>
-              </div>
-              <div className="stat-card">
-                <p className="stat-label">Active Orders</p>
-                <div id="dashActiveOrders" className="stat-value text-primary">
-                  {activeOrders}
-                </div>
-              </div>
-              <div className="stat-card">
-                <p className="stat-label">Completed Orders</p>
-                <div id="dashCompletedOrders" className="stat-value text-success">
-                  {completedOrders}
-                </div>
-              </div>
-            </div>
-
             {/* License Key Card */}
             <div className="card mb-24" id="key-card">
               <div className="flex items-center justify-between mb-10 flex-wrap gap-10">
                 <span className="micro-label">LICENSE KEY</span>
                 <span
                   className={`badge ${
-                    isNoOrder
+                    isNoLegacyOrder
                       ? 'warning'
                       : isApproved
                         ? keyUsed
@@ -664,7 +573,7 @@ export function UserDashboardPage({
                         : 'warning'
                   }`}
                 >
-                  {isNoOrder ? 'No Order' : isApproved ? (keyUsed ? 'Used' : 'Active') : 'Pending'}
+                  {isNoLegacyOrder ? 'No Order' : isApproved ? (keyUsed ? 'Used' : 'Active') : 'Pending'}
                 </span>
               </div>
 
@@ -672,12 +581,12 @@ export function UserDashboardPage({
                 id="dashOrderKey"
                 className={`license-key-box ${orderKey ? '' : 'is-empty'}`}
               >
-                {isNoOrder
+                {isNoLegacyOrder
                   ? 'No Active Order'
                   : orderKey || 'Key will be issued upon admin approval'}
               </div>
 
-              {!isNoOrder && orderKey ? (
+              {!isNoLegacyOrder && orderKey ? (
                 <div className="mt-14">
                   <button
                     id="copyDashKeyBtn"
@@ -692,7 +601,7 @@ export function UserDashboardPage({
             </div>
 
             {/* Download Section */}
-            {!isNoOrder && isApproved && orderKey ? (
+            {!isNoLegacyOrder && isApproved ? (
               <div className="card mb-24">
                 <span className="micro-label">SOFTWARE DOWNLOAD</span>
                 <h3 className="my-8 text-lg font-bold">Verified Panel Package</h3>
@@ -701,41 +610,7 @@ export function UserDashboardPage({
                 </p>
 
                 {downloadError ? (
-                  <div className="form-error mb-14">
-                    {downloadError}
-                  </div>
-                ) : null}
-
-                <button
-                  id="downloadPanelBtn"
-                  className={`button button-primary button-lg btn-download ${downloadLoading ? 'is-loading' : ''}`}
-                  disabled={downloadLoading}
-                  onClick={handleDownload}
-                  type="button"
-                >
-                  {downloadLoading ? (
-                    <span className="button-loading-content">
-                      <span className="spinner-inline" aria-hidden="true" />
-                      <span>Retrieving Package...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <span aria-hidden="true">📥 </span>
-                      <span>Download {livePlan.toUpperCase()} Panel</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : !isNoOrder && isApproved && !primaryOrder?.isServiceOrder ? (
-              <div className="card mb-24">
-                <span className="micro-label">SOFTWARE DOWNLOAD</span>
-                <h3 className="my-8 text-lg font-bold">Verified Panel Package</h3>
-                <p className="text-muted text-sm mb-18">
-                  Your account is approved. Fetch your secure binary build for {livePlan.toUpperCase()} directly.
-                </p>
-
-                {downloadError ? (
-                  <div className="form-error mb-14">
+                  <div className="form-error mb-14" role="alert">
                     {downloadError}
                   </div>
                 ) : null}
@@ -762,57 +637,76 @@ export function UserDashboardPage({
               </div>
             ) : null}
 
-            {/* Recent Order Activity */}
+            {/* DSC Service Project Orders Summary (Separated from Legacy Software Licenses) */}
             <div className="card" id="dashRecentActivity">
               <div className="flex items-center justify-between flex-wrap gap-10 mb-14">
                 <div>
-                  <span className="micro-label">RECENT ORDER ACTIVITY</span>
-                  <h3 className="my-4 text-lg font-bold">Your Latest Orders &amp; Quotations</h3>
+                  <span className="micro-label">DSC SERVICE PROJECT ORDERS</span>
+                  <h3 className="my-4 text-lg font-bold">Software Studio Project Order Tracking</h3>
                 </div>
-                {orders.length > 0 ? (
-                  <button
-                    type="button"
-                    className="button button-ghost button-sm"
-                    onClick={() => setActiveTab('orders')}
-                  >
-                    View All Orders →
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="button button-ghost button-sm"
+                  onClick={() => setActiveTab('orders')}
+                >
+                  Open My Orders Tab →
+                </button>
               </div>
 
-              {recentActivity.length === 0 ? (
-                <div className="dashboard-empty-box">
+              <div className="dashboard-summary-grid mb-16">
+                <div className="stat-card">
+                  <p className="stat-label">Project Orders</p>
+                  <div id="dashTotalOrders" className="stat-value">
+                    {totalOrders}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <p className="stat-label">Active Project Orders</p>
+                  <div id="dashActiveOrders" className="stat-value text-primary">
+                    {activeOrders}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <p className="stat-label">Completed Project Orders</p>
+                  <div id="dashCompletedOrders" className="stat-value text-success">
+                    {completedOrders}
+                  </div>
+                </div>
+              </div>
+
+              {projectOrders.length === 0 ? (
+                <div className="dashboard-empty-box" data-testid="project-orders-empty-notice">
                   <p className="text-muted m-0">
-                    You do not have any recorded orders yet. Submit a software development project requirement for a custom quotation or browse the software panel catalog.
+                    Project order tracking will become available when DSC&apos;s Service Order system is connected.
                   </p>
                   <div className="flex gap-10 flex-wrap mt-14">
-                    <NavLink to="/services/request" className="button button-primary button-sm">
-                      Submit Project Requirements
+                    <NavLink to="/services" className="button button-primary button-sm">
+                      Explore Development Services
                     </NavLink>
-                    <NavLink to="/pages/catalog" className="button button-secondary button-sm">
-                      Browse Software Catalog
+                    <NavLink to="/contact" className="button button-secondary button-sm">
+                      Send Project Inquiry
                     </NavLink>
                   </div>
                 </div>
               ) : (
                 <div className="dashboard-orders-list">
-                  {recentActivity.map((order) => (
-                    <div key={order.id} className="dashboard-order-row">
+                  {projectOrders.slice(0, 5).map((order) => (
+                    <div key={order.id || order.serviceType} className="dashboard-order-row">
                       <div>
                         <div className="flex items-center gap-10 flex-wrap">
                           <strong className="text-main">
-                            {order.projectTitle && order.projectTitle !== order.serviceType
-                              ? `${order.projectTitle} (${order.serviceType})`
-                              : order.serviceType}
+                            {order.projectTitle || order.serviceType}
                           </strong>
-                          <span className="badge">{order.reference}</span>
+                          {order.reference ? (
+                            <span className="badge">{order.reference}</span>
+                          ) : null}
                         </div>
                         <p className="text-xs text-muted m-0 mt-4">
                           Submitted:{' '}
                           {order.submissionDate
                             ? formatDateTime(order.submissionDate)
-                            : 'Recorded in DSC Portal'}{' '}
-                          • Quotation: {order.quotationStatus}
+                            : 'Recorded in DSC Portal'}
+                          {order.quotationStatus ? ` • Quotation: ${order.quotationStatus}` : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-10">
@@ -847,59 +741,74 @@ export function UserDashboardPage({
         ) : null}
 
         {/* ================================================================= */}
-        {/* TAB 2: MY ORDERS & QUOTATION WORKFLOW                             */}
+        {/* TAB 2: MY ORDERS (DSC SERVICE PROJECT ORDERS)                     */}
         {/* ================================================================= */}
         {activeTab === 'orders' ? (
           <div className="dashboard-tab-panel" data-testid="dashboard-orders-panel">
             <div className="flex items-center justify-between flex-wrap gap-12 mb-18">
               <div>
-                <span className="micro-label">MY ORDERS &amp; QUOTATIONS</span>
-                <h2 className="my-4 text-xl font-bold">Order History &amp; Quotation Tracking</h2>
+                <span className="micro-label">DSC SERVICE PROJECT ORDERS</span>
+                <h2 className="my-4 text-xl font-bold">Project Order &amp; Quotation Tracking</h2>
                 <p className="text-muted text-sm m-0">
-                  Displaying orders and custom quotations exclusively associated with account{' '}
-                  <strong>{String(session?.username || '').toUpperCase()}</strong>.
+                  Dedicated tracking view for custom Website, Android Application, and Game Development project orders.
                 </p>
               </div>
               <div className="flex gap-10 flex-wrap">
-                <NavLink to="/services/request" className="button button-primary button-sm">
-                  + New Service Order Request
+                <NavLink to="/services" className="button button-primary button-sm">
+                  Explore Services
                 </NavLink>
-                <NavLink to="/pages/checkout" className="button button-secondary button-sm">
-                  Panel Checkout
+                <NavLink to="/contact" className="button button-secondary button-sm">
+                  Send Project Inquiry
                 </NavLink>
               </div>
             </div>
 
-            {orders.length === 0 ? (
-              <div className="card dashboard-empty-box">
-                <h3 className="m-0 mb-8 text-lg">No Orders Recorded for Your Account</h3>
-                <p className="text-muted m-0">
-                  When you submit a service requirement or software panel order, its reference ID, quotation breakdown, and real-time lifecycle updates will appear here.
+            {projectOrders.length === 0 ? (
+              <div className="card dashboard-empty-box" data-testid="service-orders-empty-state">
+                <span className="badge primary mb-10">Service Order System Status</span>
+                <h3 className="m-0 mb-8 text-lg">No Service Project Orders Connected</h3>
+                <p className="text-muted m-0" data-testid="service-orders-honest-message">
+                  Project order tracking will become available when DSC&apos;s Service Order system is connected.
                 </p>
+                <p className="text-muted text-sm mt-10 mb-0">
+                  To discuss a custom Website Development, Android Application Development, or Game Development engagement today, select a scope template on our Services pages and send a project inquiry through our Contact page.
+                </p>
+                {!isNoLegacyOrder ? (
+                  <p className="text-xs text-muted mt-12 mb-0">
+                    Looking for your desktop software panel license ({livePlan.toUpperCase()})? View your license key and status on the{' '}
+                    <button
+                      type="button"
+                      className="button button-ghost button-sm"
+                      onClick={() => setActiveTab('overview')}
+                    >
+                      Overview Tab
+                    </button>
+                    .
+                  </p>
+                ) : null}
                 <div className="flex gap-10 flex-wrap mt-16">
-                  <NavLink to="/services/request" className="button button-primary button-sm">
-                    Submit Project Requirements
+                  <NavLink to="/services" className="button button-primary button-sm">
+                    Browse Development Services
                   </NavLink>
-                  <NavLink to="/pages/catalog" className="button button-secondary button-sm">
-                    Open Software Catalog
+                  <NavLink to="/contact" className="button button-secondary button-sm">
+                    Discuss Project Scope
+                  </NavLink>
+                  <NavLink to="/pages/catalog" className="button button-ghost button-sm">
+                    Software Panel Catalog
                   </NavLink>
                 </div>
               </div>
             ) : (
               <div className="dashboard-orders-split">
                 <div className="dashboard-orders-list">
-                  {orders.map((order) => {
-                    const isSelected = selectedOrder?.id === order.id
+                  {projectOrders.map((order) => {
+                    const isSelected = selectedProjectOrder?.id === order.id
                     return (
                       <button
                         key={order.id}
                         type="button"
                         className={`dashboard-order-item-btn ${isSelected ? 'is-selected' : ''}`}
-                        onClick={() => {
-                          setSelectedOrderId(order.id)
-                          setQuotationActionError('')
-                          setQuotationActionMessage('')
-                        }}
+                        onClick={() => setSelectedOrderId(order.id)}
                       >
                         <div className="flex items-center justify-between gap-10 w-full">
                           <span className="font-bold text-main">
@@ -918,261 +827,76 @@ export function UserDashboardPage({
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-10 w-full mt-6 text-xs text-muted">
-                          <span>Ref: {order.reference}</span>
-                          <span>{order.quotationStatus}</span>
+                          <span>{order.reference ? `Ref: ${order.reference}` : order.serviceType}</span>
+                          {order.quotationStatus ? <span>{order.quotationStatus}</span> : null}
                         </div>
                       </button>
                     )
                   })}
                 </div>
 
-                {selectedOrder ? (
+                {selectedProjectOrder ? (
                   <div className="card dashboard-order-detail" data-testid="order-detail-card">
                     <div className="flex items-center justify-between flex-wrap gap-10 mb-16">
                       <div>
-                        <span className="micro-label">ORDER &amp; QUOTATION DETAILS</span>
+                        <span className="micro-label">PROJECT ORDER DETAILS</span>
                         <h3 className="my-4 text-lg font-bold">
-                          {selectedOrder.projectTitle || selectedOrder.serviceType}
+                          {selectedProjectOrder.projectTitle || selectedProjectOrder.serviceType}
                         </h3>
                       </div>
                       <span
                         className={`badge ${
-                          selectedOrder.isCompleted
+                          selectedProjectOrder.isCompleted
                             ? 'good'
-                            : selectedOrder.isRejected
+                            : selectedProjectOrder.isRejected
                               ? 'danger'
                               : 'warning'
                         }`}
                       >
-                        {selectedOrder.currentStatus}
+                        {selectedProjectOrder.currentStatus}
                       </span>
                     </div>
 
                     <dl className="order-detail-dl">
-                      <div className="order-detail-pair">
-                        <dt>Order Reference</dt>
-                        <dd data-testid="detail-order-reference">{selectedOrder.reference}</dd>
-                      </div>
+                      {selectedProjectOrder.reference ? (
+                        <div className="order-detail-pair">
+                          <dt>Order Reference</dt>
+                          <dd data-testid="detail-order-reference">{selectedProjectOrder.reference}</dd>
+                        </div>
+                      ) : null}
                       <div className="order-detail-pair">
                         <dt>Service Type</dt>
-                        <dd data-testid="detail-service-type">{selectedOrder.serviceType}</dd>
+                        <dd data-testid="detail-service-type">{selectedProjectOrder.serviceType}</dd>
                       </div>
                       <div className="order-detail-pair">
                         <dt>Submission Date</dt>
                         <dd data-testid="detail-submission-date">
-                          {selectedOrder.submissionDate
-                            ? formatDateTime(selectedOrder.submissionDate)
+                          {selectedProjectOrder.submissionDate
+                            ? formatDateTime(selectedProjectOrder.submissionDate)
                             : 'Recorded in DSC Portal'}
                         </dd>
                       </div>
                       <div className="order-detail-pair">
                         <dt>Current Status</dt>
-                        <dd data-testid="detail-current-status">{selectedOrder.currentStatus}</dd>
+                        <dd data-testid="detail-current-status">{selectedProjectOrder.currentStatus}</dd>
                       </div>
-                      <div className="order-detail-pair">
-                        <dt>Quotation Status</dt>
-                        <dd data-testid="detail-quotation-status">
-                          {selectedOrder.quotationStatus}
-                        </dd>
-                      </div>
+                      {selectedProjectOrder.quotationStatus ? (
+                        <div className="order-detail-pair">
+                          <dt>Quotation Status</dt>
+                          <dd data-testid="detail-quotation-status">
+                            {selectedProjectOrder.quotationStatus}
+                          </dd>
+                        </div>
+                      ) : null}
                       <div className="order-detail-pair">
                         <dt>Last Update</dt>
                         <dd data-testid="detail-last-update">
-                          {selectedOrder.lastUpdate
-                            ? formatDateTime(selectedOrder.lastUpdate)
+                          {selectedProjectOrder.lastUpdate
+                            ? formatDateTime(selectedProjectOrder.lastUpdate)
                             : 'Up to date'}
                         </dd>
                       </div>
                     </dl>
-
-                    {/* Quotation Breakdown & Customer Response Section */}
-                    <div
-                      className="quotation-detail-panel mt-20"
-                      data-testid="order-quotation-section"
-                    >
-                      <div className="flex items-center justify-between flex-wrap gap-10 mb-12">
-                        <div>
-                          <span className="micro-label">STUDIO QUOTATION &amp; SCOPE</span>
-                          <h4 className="m-0 mt-4 text-base font-bold">
-                            Quotation Breakdown &amp; Customer Actions
-                          </h4>
-                        </div>
-                        <span
-                          className="badge primary"
-                          data-testid="quotation-customer-response-status"
-                        >
-                          {selectedOrder.quotation?.customerResponseStatus ||
-                            selectedOrder.quotationStatus}
-                        </span>
-                      </div>
-
-                      <dl className="order-detail-dl">
-                        <div className="order-detail-pair">
-                          <dt>Proposed Scope</dt>
-                          <dd data-testid="quotation-proposed-scope">
-                            {selectedOrder.quotation?.proposedScope ||
-                              selectedOrder.scopeTemplate ||
-                              'Custom Project Scope'}
-                          </dd>
-                        </div>
-                        <div className="order-detail-pair">
-                          <dt>Quoted Amount / Currency</dt>
-                          <dd data-testid="quotation-amount">
-                            {selectedOrder.quotation?.quotedAmount
-                              ? `${selectedOrder.quotation.currency} ${selectedOrder.quotation.quotedAmount}`
-                              : 'Pending DSC Scope Evaluation'}
-                          </dd>
-                        </div>
-                        <div className="order-detail-pair">
-                          <dt>Estimated Timeline</dt>
-                          <dd data-testid="quotation-timeline">
-                            {selectedOrder.quotation?.estimatedTimeline ||
-                              selectedOrder.preferredTimeline ||
-                              'To be confirmed upon review'}
-                          </dd>
-                        </div>
-                        <div className="order-detail-pair">
-                          <dt>Deployment Option Included</dt>
-                          <dd data-testid="quotation-deployment">
-                            {selectedOrder.quotation?.deploymentPreference ||
-                              selectedOrder.deploymentPreference ||
-                              'With Deployment'}
-                          </dd>
-                        </div>
-                      </dl>
-
-                      <div className="mt-14">
-                        <span className="micro-label">QUOTATION SUMMARY</span>
-                        <p
-                          className="text-sm text-muted mt-4 m-0"
-                          data-testid="quotation-summary-text"
-                        >
-                          {selectedOrder.quotation?.summary ||
-                            'DSC is evaluating your submitted project scope and requirements. A custom quotation will be posted here once scope review is complete.'}
-                        </p>
-                      </div>
-
-                      {selectedOrder.quotation?.adminNotes ? (
-                        <div className="mt-12">
-                          <span className="micro-label">ADMIN / STUDIO NOTES</span>
-                          <p
-                            className="text-sm text-muted mt-4 m-0"
-                            data-testid="quotation-admin-notes"
-                          >
-                            {selectedOrder.quotation.adminNotes}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {selectedOrder.quotation?.customerNotes ? (
-                        <div className="mt-12">
-                          <span className="micro-label">YOUR SUBMITTED NOTES</span>
-                          <p
-                            className="text-sm text-main mt-4 m-0"
-                            data-testid="quotation-customer-notes-display"
-                          >
-                            {selectedOrder.quotation.customerNotes}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {/* Submitted Brief Summary for Service Orders */}
-                      {selectedOrder.projectDescription || selectedOrder.keyFeatures ? (
-                        <div className="mt-16 pt-16 border-t">
-                          <span className="micro-label">SUBMITTED PROJECT BRIEF</span>
-                          {selectedOrder.targetPlatform ? (
-                            <p className="text-xs text-muted mt-4 m-0">
-                              <strong>Target Platform:</strong> {selectedOrder.targetPlatform}
-                            </p>
-                          ) : null}
-                          {selectedOrder.projectDescription ? (
-                            <p className="text-sm text-muted mt-6 m-0">
-                              {selectedOrder.projectDescription}
-                            </p>
-                          ) : null}
-                          {selectedOrder.keyFeatures ? (
-                            <p className="text-xs text-muted mt-6 m-0">
-                              <strong>Key Features:</strong> {selectedOrder.keyFeatures}
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {/* Customer Quotation Response Controls */}
-                      {canModifyOrCancelOrder ? (
-                        <div
-                          className="mt-16 pt-16 border-t"
-                          data-testid="quotation-customer-actions"
-                        >
-                          <label className="field" htmlFor="quotation-customer-notes">
-                            <span className="micro-label">
-                              NOTES FOR DSC (REQUIRED WHEN REQUESTING CHANGES)
-                            </span>
-                            <textarea
-                              id="quotation-customer-notes"
-                              rows={2}
-                              placeholder="Add optional approval notes, or describe requested scope/quotation adjustments..."
-                              value={quotationNotes}
-                              disabled={quotationActionLoading}
-                              onChange={(e) => {
-                                setQuotationNotes(e.target.value)
-                                if (quotationActionError) setQuotationActionError('')
-                              }}
-                            />
-                          </label>
-
-                          {quotationActionError ? (
-                            <p className="form-error mt-10 mb-10" role="alert">
-                              {quotationActionError}
-                            </p>
-                          ) : null}
-
-                          {quotationActionMessage ? (
-                            <div className="status-banner mt-10 mb-10" role="status">
-                              {quotationActionMessage}
-                            </div>
-                          ) : null}
-
-                          <div className="flex gap-10 flex-wrap mt-12">
-                            {canApproveQuotation ? (
-                              <button
-                                type="button"
-                                className="button button-primary button-sm"
-                                data-testid="approve-quotation-btn"
-                                disabled={quotationActionLoading}
-                                onClick={() => handleQuotationResponse('approve')}
-                              >
-                                Approve Quotation ✓
-                              </button>
-                            ) : null}
-
-                            <button
-                              type="button"
-                              className="button button-secondary button-sm"
-                              data-testid="request-changes-quotation-btn"
-                              disabled={quotationActionLoading}
-                              onClick={() => handleQuotationResponse('request_changes')}
-                            >
-                              Request Changes / Clarification
-                            </button>
-
-                            <button
-                              type="button"
-                              className="button button-ghost button-sm text-danger"
-                              data-testid="decline-quotation-btn"
-                              disabled={quotationActionLoading}
-                              onClick={() => handleQuotationResponse('decline')}
-                            >
-                              Cancel / Decline Request
-                            </button>
-                          </div>
-                        </div>
-                      ) : quotationActionMessage ? (
-                        <div className="status-banner mt-14" role="status">
-                          {quotationActionMessage}
-                        </div>
-                      ) : null}
-                    </div>
                   </div>
                 ) : null}
               </div>
@@ -1189,7 +913,7 @@ export function UserDashboardPage({
               <span className="micro-label">ACCOUNT PROFILE</span>
               <h2 className="my-4 text-xl font-bold">Client Account Details</h2>
               <p className="text-muted text-sm mb-20">
-                View and maintain your Dark Skull Corporation contact profile used for project quotations and order notifications.
+                View and maintain your Dark Skull Corporation contact profile.
               </p>
 
               <form
@@ -1260,7 +984,7 @@ export function UserDashboardPage({
                   <input
                     id="profile-discord"
                     type="text"
-                    placeholder="e.g. username#0000 or phone/WhatsApp"
+                    placeholder="e.g. username#0000"
                     value={profileForm.discordId}
                     disabled={profileSaving}
                     onChange={(e) => {

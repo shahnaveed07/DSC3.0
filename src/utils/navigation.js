@@ -62,10 +62,9 @@ export function buildServicesNavItem(path) {
   const isWebsites = path === '/services/websites'
   const isAndroidApps = path === '/services/android-applications'
   const isGameDev = path === '/services/game-development'
-  const isServiceOrder = path === '/services/request' || path === '/pages/service-order'
 
   const isParentActive =
-    isServicesOverview || isWebsites || isAndroidApps || isGameDev || isServiceOrder
+    isServicesOverview || isWebsites || isAndroidApps || isGameDev
 
   return {
     label: 'Services',
@@ -170,14 +169,8 @@ export function getContextualMenu({ pathname = '/', session = null, isOwner = fa
   // ---------------------------------------------------------------------------
   if (role === 'User') {
     const isDashboardPath = path === '/pages/udash' || path === '/dashboard'
-    const isServiceOrderPath = path === '/services/request' || path === '/pages/service-order'
     const userItems = [
       { label: 'Dashboard', to: '/pages/udash', isCurrent: isDashboardPath },
-      {
-        label: 'Submit Project Order',
-        to: '/services/request',
-        isCurrent: isServiceOrderPath,
-      },
       { label: 'Downloads', to: '/pages/downloads', isCurrent: path === '/pages/downloads' },
       {
         label: 'Products / Store',

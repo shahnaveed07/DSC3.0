@@ -229,8 +229,20 @@ export function AdminWorkspacePage({ session, onSessionInvalid }) {
         }
       } catch (issue) {
         if (!ignore) {
-          if (isAuthError(issue)) onSessionInvalid()
-          else setError(extractApiMessage(issue?.payload, issue?.message || 'Could not load owner records.'))
+          if (isAuthError(issue)) {
+            onSessionInvalid()
+          } else if (issue?.status === 403) {
+            setError(
+              extractApiMessage(
+                issue?.payload,
+                'Access denied: Owner privileges required for this workspace.',
+              ),
+            )
+          } else {
+            setError(
+              extractApiMessage(issue?.payload, issue?.message || 'Could not load owner records.'),
+            )
+          }
         }
       } finally {
         if (!ignore) {

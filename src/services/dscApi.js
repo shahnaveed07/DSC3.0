@@ -174,7 +174,11 @@ async function request(path, options = {}) {
 }
 
 export function isAuthError(error) {
-  return error instanceof ApiError && [401, 403].includes(error.status)
+  return error instanceof ApiError && error.status === 401
+}
+
+export function isForbiddenError(error) {
+  return error instanceof ApiError && error.status === 403
 }
 
 export function getSystemStatus(signal) {
@@ -203,6 +207,10 @@ export function loginUser(credentials) {
   })
 }
 
+/**
+ * Registers a DSC client account.
+ * Contract status: Unverified / Pending Backend Confirmation on dscauth.onrender.com.
+ */
 export function registerUser(accountData) {
   const fullName = String(accountData?.fullName || '').trim()
   const email = String(accountData?.email || '').trim().toLowerCase()
@@ -213,18 +221,18 @@ export function registerUser(accountData) {
     method: 'POST',
     body: {
       fullName,
-      FullName: fullName,
       email,
-      Email: email,
       username,
-      Username: username,
       password,
-      Password: password,
       HWID: 'WEB-CLIENT',
     },
   })
 }
 
+/**
+ * Requests password recovery instructions/token for a DSC account.
+ * Contract status: Unverified / Pending Backend Confirmation on dscauth.onrender.com.
+ */
 export function requestPasswordRecovery(recoveryData) {
   const identifier = String(recoveryData?.email || recoveryData?.identifier || '').trim()
 
@@ -232,13 +240,15 @@ export function requestPasswordRecovery(recoveryData) {
     method: 'POST',
     body: {
       email: identifier,
-      Email: identifier,
       username: identifier.toLowerCase(),
-      Username: identifier.toLowerCase(),
     },
   })
 }
 
+/**
+ * Completes a password reset with a recovery token and new password.
+ * Contract status: Unverified / Pending Backend Confirmation on dscauth.onrender.com.
+ */
 export function confirmPasswordReset(resetData) {
   const identifier = String(resetData?.email || resetData?.identifier || '').trim()
   const token = String(resetData?.token || '').trim()
@@ -248,16 +258,16 @@ export function confirmPasswordReset(resetData) {
     method: 'POST',
     body: {
       email: identifier,
-      Email: identifier,
       token,
-      Token: token,
-      resetToken: token,
       newPassword,
-      NewPassword: newPassword,
     },
   })
 }
 
+/**
+ * Updates basic client account profile details.
+ * Contract status: Unverified / Pending Backend Confirmation on dscauth.onrender.com.
+ */
 export function updateUserProfile(token, profile) {
   const fullName = String(profile?.fullName || '').trim()
   const email = String(profile?.email || '').trim().toLowerCase()
@@ -268,11 +278,8 @@ export function updateUserProfile(token, profile) {
     token,
     body: {
       fullName,
-      FullName: fullName,
       email,
-      Email: email,
       discordId,
-      DiscordId: discordId,
     },
   })
 }
@@ -309,30 +316,6 @@ export function submitCheckout(order) {
   })
 }
 
-export function submitServiceOrder(token, orderPayload) {
-  return request('/api/auth/service-orders', {
-    method: 'POST',
-    token,
-    body: orderPayload,
-  })
-}
-
-export function respondToServiceOrderQuotation(token, orderId, action, customerNotes = '') {
-  return request(
-    `/api/auth/service-orders/${encodeURIComponent(orderId)}/quotation-response`,
-    {
-      method: 'POST',
-      token,
-      body: {
-        action,
-        Action: action,
-        customerNotes,
-        CustomerNotes: customerNotes,
-      },
-    },
-  )
-}
-
 export function getSecureDownload(token, plan) {
   return request(`/api/auth/download?plan=${encodeURIComponent(plan)}`, {
     token,
@@ -346,6 +329,20 @@ export async function getAdminSnapshot(token) {
     request('/api/admin/settings/all', { token }),
     request('/api/admin/owner/probe', { token }),
   ])
+
+  const authFailure = [users, orders, settings].find(
+    (entry) => entry.status === 'rejected' && isAuthError(entry.reason),
+  )
+  if (authFailure) {
+    throw authFailure.reason
+  }
+
+  const criticalFailures = [users, orders, settings].filter(
+    (entry) => entry.status === 'rejected',
+  )
+  if (criticalFailures.length === 3) {
+    throw criticalFailures[0].reason
+  }
 
   return {
     users,

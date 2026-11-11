@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
+import { getFeaturedProjects } from '../content/projectsData'
 import { ButtonLink } from '../components/layout/SiteHeader'
 
 export function HomePage({ systemStatus }) {
   usePageMeta(SEO_ROUTES.home)
+  const featuredProjects = getFeaturedProjects()
 
   const isMaintenance =
     systemStatus?.isMaintenanceMode === true || systemStatus?.IsMaintenanceMode === true
@@ -138,45 +140,24 @@ export function HomePage({ systemStatus }) {
         </div>
 
         <div className="showcase-grid">
-          {/* Card 1: QR Scanner */}
-          <article className="showcase-card">
-            <div className="showcase-card-top">
-              <span className="showcase-badge">Android Application</span>
-              <h3 className="showcase-title">QR Scanner | Generator</h3>
-              <p className="showcase-desc">
-                High-speed autofocus camera scanner for barcodes and QR codes, paired with an offline generator for Wi-Fi, contacts, and URLs on Google Play.
-              </p>
-            </div>
-            <div className="showcase-card-bottom">
-              <ButtonLink
-                action={{
-                  label: 'Google Play ↗',
-                  href: 'https://play.google.com/store/apps/details?id=com.dsc.qrscanner',
-                }}
-                className="button button-primary"
-              />
-            </div>
-          </article>
-
-          {/* Card 2: Mind Matrix */}
-          <article className="showcase-card">
-            <div className="showcase-card-top">
-              <span className="showcase-badge">Mobile Game</span>
-              <h3 className="showcase-title">Mind Matrix</h3>
-              <p className="showcase-desc">
-                Minimalist mobile puzzle game featuring progressive logic, sequence recall, and cognitive reflex drills playable completely offline.
-              </p>
-            </div>
-            <div className="showcase-card-bottom">
-              <ButtonLink
-                action={{
-                  label: 'Google Play ↗',
-                  href: 'https://play.google.com/store/apps/details?id=com.dsc.mindmatrix',
-                }}
-                className="button button-primary"
-              />
-            </div>
-          </article>
+          {featuredProjects.map((project) => (
+            <article key={project.id} className="showcase-card">
+              <div className="showcase-card-top">
+                <span className="showcase-badge">{project.projectType}</span>
+                <h3 className="showcase-title">{project.name}</h3>
+                <p className="showcase-desc">{project.shortDescription}</p>
+              </div>
+              <div className="showcase-card-bottom">
+                <ButtonLink
+                  action={{
+                    label: project.storeLabel || 'Google Play ↗',
+                    href: project.storeUrl || project.liveUrl,
+                  }}
+                  className="button button-primary"
+                />
+              </div>
+            </article>
+          ))}
 
           {/* Card 3: Custom Website Development */}
           <article className="showcase-card">

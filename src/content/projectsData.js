@@ -62,6 +62,8 @@ export const portfolioProjects = [
       PORTFOLIO_CATEGORIES.OWN_PRODUCT,
     ],
     ownership: 'Dark Skull Corporation',
+    publisher: 'Dark Skull Corporation',
+    seoKey: 'projectQrScanner',
     productionStatus: 'In Production — Google Play',
     packageId: 'com.dsc.qrscanner',
     platforms: ['Android 7.0 (Nougat) or newer'],
@@ -106,6 +108,8 @@ export const portfolioProjects = [
       PORTFOLIO_CATEGORIES.OWN_PRODUCT,
     ],
     ownership: 'Dark Skull Corporation',
+    publisher: 'Dark Skull Corporation',
+    seoKey: 'projectMindMatrix',
     productionStatus: 'In Production — Google Play',
     packageId: 'com.dsc.mindmatrix',
     platforms: ['Android 6.0 or newer'],
@@ -134,6 +138,39 @@ export const portfolioProjects = [
     displayOrder: 2,
   },
 ]
+
+const PROJECT_SEO_KEY_BY_SLUG = {
+  'qr-scanner-generator': 'projectQrScanner',
+  'mind-matrix': 'projectMindMatrix',
+}
+
+/**
+ * Resolves SEO metadata for a project detail page.
+ * Uses a static SEO_ROUTES entry when configured, or dynamically derives indexable SEO metadata
+ * from the canonical project record so valid projects never fall back to SEO_ROUTES.notFound.
+ */
+export function buildProjectSeoConfig(project, seoRoutes = {}) {
+  if (!project) {
+    return seoRoutes.notFound || null
+  }
+
+  const mappedKey = project.seoKey || PROJECT_SEO_KEY_BY_SLUG[project.slug]
+  if (mappedKey && seoRoutes[mappedKey]) {
+    return seoRoutes[mappedKey]
+  }
+
+  return {
+    key: `project_${project.slug}`,
+    routePath: `/projects/${project.slug}`,
+    title: `${project.name} — ${project.projectType || 'Project'} | Dark Skull Corporation`,
+    description: project.shortDescription || project.description || '',
+    canonical: `https://dscweb.me/projects/${project.slug}`,
+    robots: 'index, follow',
+    indexable: true,
+    ogType: 'website',
+    schemaType: 'ItemPage',
+  }
+}
 
 /**
  * Returns all canonical portfolio projects ordered by displayOrder.

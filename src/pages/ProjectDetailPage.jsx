@@ -1,7 +1,11 @@
 import { useParams } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { getAllProjects, getProjectBySlug } from '../content/projectsData'
+import {
+  buildProjectSeoConfig,
+  getAllProjects,
+  getProjectBySlug,
+} from '../content/projectsData'
 import {
   ProjectCard,
   StudioCtaBanner,
@@ -11,18 +15,12 @@ import {
   StudioSectionHeader,
 } from '../components/ui/StudioComponents'
 
-const PROJECT_SEO_KEY_BY_SLUG = {
-  'qr-scanner-generator': 'projectQrScanner',
-  'mind-matrix': 'projectMindMatrix',
-}
-
 export function ProjectDetailPage({ projectSlug }) {
   const params = useParams()
   const activeSlug = projectSlug || params.slug || ''
   const project = getProjectBySlug(activeSlug)
 
-  const seoKey = project ? PROJECT_SEO_KEY_BY_SLUG[project.slug] : null
-  const seoConfig = (seoKey && SEO_ROUTES[seoKey]) || SEO_ROUTES.notFound
+  const seoConfig = buildProjectSeoConfig(project, SEO_ROUTES)
   usePageMeta(seoConfig)
 
   if (!project) {
@@ -153,7 +151,8 @@ export function ProjectDetailPage({ projectSlug }) {
                 </p>
               ) : null}
               <p className="text-muted text-sm m-0">
-                <strong>Publisher:</strong> Dark Skull Corporation
+                <strong>Publisher:</strong>{' '}
+                {project.publisher || project.ownership || 'Dark Skull Corporation'}
               </p>
             </article>
 

@@ -7,12 +7,15 @@ import {
   validateRegistrationInput,
 } from '../utils/auth'
 import { normalizeUserOrdersPayload } from '../utils/format'
+import { buildProjectSeoConfig } from '../content/projectsData'
+import { SEO_ROUTES } from '../content/seoConfig'
 import { UserRegisterPage } from '../pages/UserRegisterPage'
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
 import { UserLoginPage } from '../pages/UserLoginPage'
 import { UserDashboardPage } from '../pages/UserDashboardPage'
+import { AdminDashboardPage } from '../pages/AdminDashboardPage'
 
-describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
+describe('Phase 4 & Stabilization — DSC Accounts, Legacy Licenses vs Project Orders & 401/403 Handling', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()
@@ -96,17 +99,40 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
     })
   })
 
-  describe('2. User Orders Normalization & Ownership Isolation', () => {
-    it('returns zero counts and empty lists when user has no active orders (no dummy statistics)', () => {
+  describe('2. Legacy Software Licenses vs DSC Service Project Orders Separation', () => {
+    it('returns zero counts and empty lists when user has no active orders', () => {
       const normalized = normalizeUserOrdersPayload(null, { username: 'client1' }, true)
       expect(normalized.totalOrders).toBe(0)
       expect(normalized.activeOrders).toBe(0)
       expect(normalized.completedOrders).toBe(0)
-      expect(normalized.orders).toEqual([])
-      expect(normalized.recentActivity).toEqual([])
+      expect(normalized.legacyOrders).toEqual([])
+      expect(normalized.projectOrders).toEqual([])
     })
 
-    it('normalizes user orders and filters out records belonging to any other username', () => {
+    it('does NOT generate synthetic ORD-1 or infer quotation status for legacy /api/auth/my-order payloads', () => {
+      const legacyPayload = {
+        plan: 'streamer',
+        status: 'Approved',
+        key: 'DSC-STREAMER-999',
+        expiry: '2027-01-01T00:00:00Z',
+      }
+
+      const normalized = normalizeUserOrdersPayload(
+        legacyPayload,
+        { username: 'client1' },
+        false,
+      )
+
+      expect(normalized.legacyOrders).toHaveLength(1)
+      expect(normalized.legacyOrders[0].reference).toBeNull()
+      expect(normalized.legacyOrders[0].quotationStatus).toBeNull()
+      expect(normalized.legacyOrders[0].quotation).toBeNull()
+      // Legacy license payload must NOT be counted as a DSC Service Project Order
+      expect(normalized.projectOrders).toEqual([])
+      expect(normalized.totalOrders).toBe(0)
+    })
+
+    it('normalizes explicit project orders with real IDs and filters out other users', () => {
       const payload = {
         orders: [
           {
@@ -116,13 +142,6 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
             status: 'In Progress',
             quotationStatus: 'Quotation Approved',
             createdAt: '2026-03-01T10:00:00Z',
-          },
-          {
-            id: 102,
-            username: 'client1',
-            plan: 'streamer',
-            status: 'Approved',
-            createdAt: '2026-02-15T10:00:00Z',
           },
           {
             id: 999,
@@ -138,11 +157,11 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
         { username: 'client1' },
         false,
       )
-      expect(normalized.totalOrders).toBe(2)
+      expect(normalized.totalOrders).toBe(1)
       expect(normalized.activeOrders).toBe(1)
-      expect(normalized.completedOrders).toBe(1)
-      expect(normalized.orders.map((o) => o.id)).toEqual(['101', '102'])
-      expect(normalized.orders[0].reference).toBe('ORD-101')
+      expect(normalized.projectOrders).toHaveLength(1)
+      expect(normalized.projectOrders[0].reference).toBe('ORD-101')
+      expect(normalized.projectOrders[0].quotationStatus).toBe('Quotation Approved')
     })
   })
 
@@ -216,12 +235,11 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
           'Account recovery service unavailable for this username.',
         )
       })
-      // Must stay on request step and not show fake completion
       expect(screen.queryByText(/RECOVERY COMPLETE/i)).toBeNull()
     })
   })
 
-  describe('4. UserLoginPage Redirect & UserDashboardPage 4-Tab Architecture', () => {
+  describe('4. UserDashboardPage Separation & HTTP 401 vs 403 Handling', () => {
     it('redirects authenticated user to safe redirect target on login page', () => {
       const activeSession = {
         token: 'valid.jwt.token',
@@ -244,19 +262,14 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
       expect(screen.getByText('Websites Service Target')).toBeTruthy()
     })
 
-    it('renders Overview, My Orders, Profile, and Account Security tabs with real user data', async () => {
+    it('displays legacy software license on Overview tab and honest empty state on My Orders tab', async () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            id: 501,
-            username: 'client_user',
-            serviceType: 'Website Development',
-            plan: 'Website Development',
+            plan: 'streamer',
             status: 'Approved',
-            quotationStatus: 'Quotation Approved',
-            key: 'DSC-WEB-501',
-            createdAt: '2026-03-10T12:00:00Z',
-            updatedAt: '2026-03-12T15:30:00Z',
+            key: 'DSC-STREAMER-777',
+            expiry: '2027-05-01T00:00:00Z',
           }),
           {
             status: 200,
@@ -288,28 +301,153 @@ describe('Phase 4 — DSC Accounts & User Dashboard Suite', () => {
         expect(container.querySelector('#dashUsername')?.textContent).toBe('CLIENT_USER')
       })
 
-      // Overview tab metrics
-      expect(container.querySelector('#dashTotalOrders')?.textContent).toBe('1')
-      expect(container.querySelector('#dashCompletedOrders')?.textContent).toBe('1')
+      expect(container.querySelector('#dashPlan')?.textContent).toBe('STREAMER')
+      expect(container.querySelector('#dashOrderKey')?.textContent).toBe('DSC-STREAMER-777')
+      // Legacy license does not inflate project order count
+      expect(container.querySelector('#dashTotalOrders')?.textContent).toBe('0')
 
-      // Switch to My Orders tab
+      // Switch to My Orders tab -> shows honest empty state
       fireEvent.click(screen.getByRole('tab', { name: /My Orders/i }))
-      expect(screen.getByTestId('dashboard-orders-panel')).toBeTruthy()
-      expect(screen.getByTestId('detail-order-reference').textContent).toBe('ORD-501')
-      expect(screen.getByTestId('detail-service-type').textContent).toBe('Website Development')
-      expect(screen.getByTestId('detail-current-status').textContent).toBe('Approved')
-      expect(screen.getByTestId('detail-quotation-status').textContent).toBe('Quotation Approved')
+      expect(screen.getByTestId('service-orders-honest-message').textContent).toContain(
+        "Project order tracking will become available when DSC's Service Order system is connected.",
+      )
+    })
 
-      // Switch to Profile tab
-      fireEvent.click(screen.getByRole('tab', { name: /Profile/i }))
-      expect(screen.getByTestId('dashboard-profile-panel')).toBeTruthy()
-      expect(screen.getByLabelText(/Full Name/i).value).toBe('Client User')
-      expect(screen.getByLabelText(/Email Address/i).value).toBe('client@example.com')
+    it('logs out on User 401 Unauthorized, but preserves session and shows Access Denied on User 403 Forbidden', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      const onSessionInvalid401 = vi.fn()
+      const onSessionInvalid403 = vi.fn()
 
-      // Switch to Account Security tab
-      fireEvent.click(screen.getByRole('tab', { name: /Account Security/i }))
-      expect(screen.getByTestId('dashboard-security-panel')).toBeTruthy()
-      expect(screen.getByRole('button', { name: /Update Password/i })).toBeTruthy()
+      const session = {
+        token: 'valid.jwt.token',
+        role: 'User',
+        username: 'client_user',
+      }
+
+      // Case A: User 401 -> calls onSessionInvalid
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Expired token' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/pages/udash']}>
+          <UserDashboardPage
+            session={session}
+            onSessionInvalid={onSessionInvalid401}
+            onSessionUpdate={vi.fn()}
+            onLogout={vi.fn()}
+          />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(onSessionInvalid401).toHaveBeenCalledTimes(1)
+      })
+      unmount()
+
+      // Case B: User 403 -> does NOT call onSessionInvalid; renders Access Denied alert
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Forbidden resource' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      render(
+        <MemoryRouter initialEntries={['/pages/udash']}>
+          <UserDashboardPage
+            session={session}
+            onSessionInvalid={onSessionInvalid403}
+            onSessionUpdate={vi.fn()}
+            onLogout={vi.fn()}
+          />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert').textContent).toContain('Access Denied (HTTP 403)')
+      })
+      expect(onSessionInvalid403).not.toHaveBeenCalled()
+    })
+
+    it('logs out on Admin 401 Unauthorized, but preserves session on Admin 403 Forbidden', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      const onAdminInvalid401 = vi.fn()
+      const onAdminInvalid403 = vi.fn()
+      const adminSession = {
+        token: 'admin.jwt.token',
+        role: 'Admin',
+        username: 'admin1',
+      }
+
+      // Case A: Admin 401 -> calls onSessionInvalid
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({ message: 'Invalid admin token' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/pages/adash']}>
+          <AdminDashboardPage
+            session={adminSession}
+            systemStatus={{ isMaintenanceMode: false }}
+            onSessionInvalid={onAdminInvalid401}
+          />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(onAdminInvalid401).toHaveBeenCalledTimes(1)
+      })
+      unmount()
+
+      // Case B: Admin 403 -> does NOT call onSessionInvalid
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({ message: 'Access denied to admin resource' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      render(
+        <MemoryRouter initialEntries={['/pages/adash']}>
+          <AdminDashboardPage
+            session={adminSession}
+            systemStatus={{ isMaintenanceMode: false }}
+            onSessionInvalid={onAdminInvalid403}
+          />
+        </MemoryRouter>,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert').textContent).toContain('Access denied to admin resource')
+      })
+      expect(onAdminInvalid403).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('5. Dynamic Project Detail SEO Fallback', () => {
+    it('derives indexable SEO metadata dynamically for newly added projects instead of falling back to 404 notFound', () => {
+      const futureProject = {
+        id: 'dsc-client-portal',
+        slug: 'client-web-platform',
+        name: 'Client Web Platform',
+        projectType: 'Website',
+        shortDescription: 'Custom enterprise web platform built by Dark Skull Corporation.',
+        publisher: 'Client Organization',
+      }
+
+      const seo = buildProjectSeoConfig(futureProject, SEO_ROUTES)
+      expect(seo.indexable).toBe(true)
+      expect(seo.robots).toBe('index, follow')
+      expect(seo.canonical).toBe('https://dscweb.me/projects/client-web-platform')
+      expect(seo.title).toBe('Client Web Platform — Website | Dark Skull Corporation')
+      expect(seo).not.toBe(SEO_ROUTES.notFound)
     })
   })
 })

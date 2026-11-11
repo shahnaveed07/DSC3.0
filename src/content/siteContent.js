@@ -2,6 +2,7 @@ export {
   PORTFOLIO_CATEGORIES,
   PORTFOLIO_TYPE_FILTERS,
   PROJECT_TYPES,
+  buildProjectSeoConfig,
   getAllProjects,
   getFeaturedProjects,
   getProjectBySlug,
@@ -21,12 +22,6 @@ export {
   serviceBlueprints,
   studioServiceCategories,
 } from './servicesData'
-
-export {
-  ORDER_LIFECYCLE_STATUSES,
-  SERVICE_PLATFORM_TARGETS,
-  buildServiceOrderUrl,
-} from '../utils/serviceOrders'
 
 
 export const primaryNavItems = [
@@ -90,7 +85,6 @@ export const pageLabels = [
   { label: 'Website Development', paths: ['/services/websites'] },
   { label: 'Android App Development', paths: ['/services/android-applications'] },
   { label: 'Game Development', paths: ['/services/game-development'] },
-  { label: 'Service Order Request', paths: ['/services/request', '/pages/service-order', '/pages/service-order.html'] },
   { label: 'Our Team', paths: ['/team'] },
   { label: 'About', paths: ['/about', '/pages/about', '/pages/about.html'] },
   { label: 'Contact', paths: ['/contact', '/pages/contact', '/pages/contact.html'] },
@@ -171,64 +165,6 @@ export const studioProductCategories = [
   },
 ]
 
-export const inProductionStreams = [
-  {
-    id: 'android-applications',
-    label: 'Stream 01',
-    badge: 'Android Applications',
-    title: 'Android Applications',
-    description:
-      'Production Android applications published and maintained by Dark Skull Corporation.',
-    verifiedReleases: [
-      {
-        name: 'QR Scanner | Generator',
-        type: 'Android Utility Application',
-        status: 'In Production — Google Play',
-        summary:
-          'High-speed autofocus camera barcode/QR scanner and offline custom QR code generator for Android devices.',
-        externalHref: 'https://play.google.com/store/apps/details?id=com.dsc.qrscanner',
-        externalLabel: 'View on Google Play ↗',
-        internalTo: '/pages/apps',
-        internalLabel: 'View App Details',
-      },
-    ],
-  },
-  {
-    id: 'websites',
-    label: 'Stream 02',
-    badge: 'Websites',
-    title: 'Websites',
-    description:
-      'Production websites and web platforms deployed by Dark Skull Corporation.',
-    verifiedReleases: [],
-    emptyMessage:
-      'No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase.',
-  },
-  {
-    id: 'games',
-    label: 'Stream 03',
-    badge: 'Games',
-    title: 'Games',
-    description:
-      'Production games and interactive experiences released by Dark Skull Corporation.',
-    verifiedReleases: [
-      {
-        name: 'Mind Matrix',
-        type: 'Mobile Logic & Puzzle Game',
-        status: 'In Production — Google Play',
-        summary:
-          'Cognitive puzzle game with progressive logic, memory sequence recall, pattern recognition, and reaction drills playable offline.',
-        externalHref: 'https://play.google.com/store/apps/details?id=com.dsc.mindmatrix',
-        externalLabel: 'View on Google Play ↗',
-        internalTo: '/pages/apps',
-        internalLabel: 'View Game Details',
-      },
-    ],
-  },
-]
-
-
-
 /**
  * Centralized Social Media & Official External Links Configuration.
  * Do not invent URLs or use fake "#" destinations for unconfigured platforms.
@@ -269,88 +205,6 @@ export const socialLinksConfig = [
     label: 'Founder Portfolio',
     category: 'Leadership',
     url: 'https://naveedmushtaq.tech/',
-  },
-]
-
-export const productCategories = [
-  {
-    id: 'android-applications',
-    categoryLabel: 'Category 1',
-    badge: 'Mobile Software',
-    title: 'Android Applications',
-    description:
-      'Official Android applications and mobile games developed and published by Dark Skull Corporation with a focus on usability, offline reliability, and user privacy.',
-    highlights: [
-      'QR Scanner | Generator — High-speed camera barcode & offline QR utility',
-      'Mind Matrix — Cognitive logic, memory & pattern recognition mobile game',
-      'Scoped device permissions with zero background telemetry',
-    ],
-    imageWebp: '/images/dsclogo.webp',
-    imageFallback: '/images/dsclogo.png',
-    imageAlt: 'Dark Skull Corporation Android Applications',
-    action: {
-      label: 'Explore Android Applications',
-      to: '/pages/apps',
-    },
-  },
-  {
-    id: 'websites',
-    categoryLabel: 'Category 2',
-    badge: 'Web Development',
-    title: 'Websites',
-    description:
-      'Custom responsive websites designed and developed by Dark Skull Corporation for individuals, startups, businesses, and companies on request.',
-    highlights: [
-      'Responsive web architecture for desktop, tablet, and mobile browsers',
-      'Custom website design and development available on request',
-      'Direct collaboration with Founder & Lead Developer Naveed Mushtaq',
-    ],
-    imageWebp: '/images/dsclogo2.webp',
-    imageFallback: '/images/dsclogo2.png',
-    imageAlt: 'Dark Skull Corporation Websites',
-    action: {
-      label: 'Explore Websites',
-      to: '/pages/websites',
-    },
-  },
-]
-
-export const homeHighlights = [
-  {
-    eyebrow: 'Android Development',
-    title: 'Android Application Development',
-    body: 'Designing and developing Android applications with intuitive interfaces, practical everyday features, and dependable performance.',
-  },
-  {
-    eyebrow: 'Interactive Experiences',
-    title: 'Game Development',
-    body: 'Creating engaging games and cognitive experiences with thoughtful gameplay, polished interfaces, and offline-ready responsiveness.',
-  },
-  {
-    eyebrow: 'Client Projects',
-    title: 'Custom Website Development',
-    body: 'Building responsive, modern websites for individuals, startups, businesses, and companies on request.',
-  },
-]
-
-export const featuredApps = [
-  {
-    type: 'Android Utility',
-    title: 'QR Scanner | Generator',
-    description: 'High-speed camera detection for barcodes and custom offline QR code generation published on Google Play.',
-    primaryAction: {
-      label: 'Open Play Store',
-      href: 'https://play.google.com/store/apps/details?id=com.dsc.qrscanner',
-    },
-  },
-  {
-    type: 'Puzzle Game',
-    title: 'Mind Matrix',
-    description: 'Handcrafted brain-training puzzle challenges focusing on pattern recognition, reaction timing, and cognitive drills.',
-    primaryAction: {
-      label: 'Open Play Store',
-      href: 'https://play.google.com/store/apps/details?id=com.dsc.mindmatrix',
-    },
   },
 ]
 

@@ -3,8 +3,8 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SiteLayout } from './components/layout/SiteLayout'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useRemoteResource } from './hooks/useRemoteResource'
-import { checkOwnerAccess, getSystemStatus, pingBackend } from './services/dscApi'
-import { clearStoredSession, loadStoredSession } from './utils/auth'
+import { checkOwnerAccess, getSystemStatus, isAuthError, pingBackend } from './services/dscApi'
+import { clearStoredSession, loadStoredSession, touchStoredSession } from './utils/auth'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
@@ -30,7 +30,6 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })))
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage').then((m) => ({ default: m.ServiceDetailPage })))
-const ServiceOrderRequestPage = lazy(() => import('./pages/ServiceOrderRequestPage').then((m) => ({ default: m.ServiceOrderRequestPage })))
 const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage').then((m) => ({ default: m.ServicesOverviewPage })))
 const StatusPage = lazy(() => import('./pages/StatusPage').then((m) => ({ default: m.StatusPage })))
 const StudioProductsPage = lazy(() => import('./pages/StudioProductsPage').then((m) => ({ default: m.StudioProductsPage })))
@@ -87,7 +86,7 @@ function RoleGate({ session, role, children, allowMustChange = false }) {
   return children
 }
 
-function OwnerGate({ session, children }) {
+function OwnerGate({ session, onSessionInvalid, children }) {
   const [ownerState, setOwnerState] = useState('checking')
 
   useEffect(() => {
@@ -96,13 +95,18 @@ function OwnerGate({ session, children }) {
       .then((isOwner) => {
         if (active) setOwnerState(isOwner ? 'owner' : 'denied')
       })
-      .catch(() => {
-        if (active) setOwnerState('denied')
+      .catch((issue) => {
+        if (!active) return
+        if (isAuthError(issue)) {
+          onSessionInvalid?.()
+        } else {
+          setOwnerState('denied')
+        }
       })
     return () => {
       active = false
     }
-  }, [session?.token])
+  }, [session?.token, onSessionInvalid])
 
   if (ownerState === 'checking') {
     return (
@@ -136,6 +140,7 @@ export default function App() {
 
   useEffect(() => {
     // Keep backend alive on Render every 2 minutes while page is active
+    // Note: Background API polling intentionally does NOT refresh user session activity.
     const timer = setInterval(() => {
       if (!document.hidden) {
         pingBackend()
@@ -143,6 +148,36 @@ export default function App() {
     }, 2 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!session?.token) return undefined
+
+    function handleUserActivity() {
+      const refreshed = touchStoredSession()
+      if (!refreshed) {
+        setSession(null)
+      }
+    }
+
+    const events = ['pointerdown', 'keydown', 'touchstart']
+    for (const eventName of events) {
+      window.addEventListener(eventName, handleUserActivity, { passive: true })
+    }
+
+    const expiryWatch = setInterval(() => {
+      const valid = loadStoredSession()
+      if (!valid) {
+        setSession(null)
+      }
+    }, 60 * 1000)
+
+    return () => {
+      for (const eventName of events) {
+        window.removeEventListener(eventName, handleUserActivity)
+      }
+      clearInterval(expiryWatch)
+    }
+  }, [session?.token])
 
   function handleRetryStatus() {
     setStatusRevision((v) => v + 1)
@@ -185,18 +220,6 @@ export default function App() {
               <Route path="/projects/:slug" element={<ProjectDetailPage />} />
 
               <Route path="/services" element={<ServicesOverviewPage />} />
-              <Route
-                path="/services/request"
-                element={<ServiceOrderRequestPage session={session} />}
-              />
-              <Route
-                path="/pages/service-order"
-                element={<ServiceOrderRequestPage session={session} />}
-              />
-              <Route
-                path="/pages/service-order.html"
-                element={<Navigate replace to="/services/request" />}
-              />
               <Route
                 path="/services/websites"
                 element={<ServiceDetailPage serviceSlug="websites" />}
@@ -413,7 +436,7 @@ export default function App() {
                 path="/pages/ownerdb"
                 element={
                   <RoleGate role="Admin" session={session}>
-                    <OwnerGate session={session}>
+                    <OwnerGate onSessionInvalid={handleLogout} session={session}>
                       <AdminWorkspacePage onSessionInvalid={handleLogout} session={session} />
                     </OwnerGate>
                   </RoleGate>

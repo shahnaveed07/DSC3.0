@@ -1,4 +1,8 @@
-# DSCWeb Audit
+# DSCWeb Audit (Historical Baseline)
+
+> **Historical Document Notice (`DSC3.0` Stabilization Pass):**  
+> This file is preserved as a historical baseline snapshot from the initial September 2026 static/React migration.  
+> `DSC3.0` now uses a single unified dark Software Studio theme (`src/styles/app.css`), canonical project data (`src/content/projectsData.js`), activity-throttled session management (`src/utils/auth.js`), and strict `HTTP 401` vs. `HTTP 403` error handling (`src/services/dscApi.js`). See [`README.md`](../README.md) and [`docs/API_ENDPOINT_MAP.md`](./API_ENDPOINT_MAP.md) for current documentation.
 
 Date: September 3, 2026
 

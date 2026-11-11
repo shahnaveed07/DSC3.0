@@ -11,6 +11,7 @@ import {
   forceUserPasswordReset,
   getAdminSnapshot,
   isAuthError,
+  isForbiddenError,
   mapAdminUsers,
   mapPendingOrders,
   mapSettingsRecord,
@@ -343,8 +344,18 @@ export function AdminDashboardPage({ session, systemStatus, onSessionInvalid }) 
 
         {/* Feedback message */}
         {message ? (
-          <div className={`alert-box mb-20 ${messageType === 'error' ? 'alert-danger' : 'alert-success'}`}>
+          <div className={`alert-box mb-20 ${messageType === 'error' ? 'alert-danger' : 'alert-success'}`} role="alert">
             <p className={`mb-0 ${messageType === 'error' ? 'text-danger' : 'text-success'}`}>{message}</p>
+          </div>
+        ) : null}
+
+        {error && !isAuthError(error) ? (
+          <div className="alert-box mb-20 alert-danger" role="alert">
+            <p className="mb-0 text-danger">
+              {isForbiddenError(error)
+                ? extractApiMessage(error.payload, 'Access denied: You do not have permission to view this resource.')
+                : extractApiMessage(error.payload, error.message || 'Unable to load admin snapshot.')}
+            </p>
           </div>
         ) : null}
 

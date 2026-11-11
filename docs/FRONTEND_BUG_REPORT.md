@@ -1,6 +1,10 @@
 # DSCWeb Frontend Audit & Defect Resolution Report
 
-**Repository:** `https://github.com/shahnaveed07/DSCWeb_React.git`  
+> **Historical Document Notice (`DSC3.0` Stabilization Pass):**  
+> This document records the historical audit of `DSCWeb_React` prior to the `DSC3.0` Software Studio phased upgrades and repository stabilization pass.  
+> For the current `DSC3.0` architecture, route table, session management (`10h` throttled idle timeout + strict JWT `exp`), `HTTP 401` vs. `HTTP 403` separation, and verified vs. unverified backend API contracts on `https://dscauth.onrender.com`, refer to [`README.md`](../README.md) and [`docs/API_ENDPOINT_MAP.md`](./API_ENDPOINT_MAP.md).
+
+**Repository:** `https://github.com/shahnaveed07/DSC3.0` (formerly `DSCWeb_React`)  
 **Target Environment:** Production (`https://dscweb.me`), Backend API (`https://dscauth.onrender.com`)  
 **Audit Date:** October 2026  
 **Auditor:** Senior Software Engineer (AI Studio Build Engine)

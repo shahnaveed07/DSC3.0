@@ -6,7 +6,6 @@ import {
   DEPLOYMENT_OPTIONS,
   QUOTATION_MODEL_STATEMENT,
   buildServiceInquiryUrl,
-  buildServiceOrderUrl,
   getScopeTemplateById,
   serviceBlueprints,
   studioServiceCategories,
@@ -42,11 +41,6 @@ export function ServiceDetailPage({ serviceSlug }) {
     scopeId: activeScopeTemplate?.id,
     deploymentOption: activeDeploymentOption.id,
   })
-  const serviceOrderUrl = buildServiceOrderUrl({
-    serviceSlug,
-    scopeId: activeScopeTemplate?.id,
-    deploymentOption: activeDeploymentOption.id,
-  })
 
   const siblingServices = studioServiceCategories.filter((s) => s.slug !== serviceSlug)
 
@@ -62,8 +56,8 @@ export function ServiceDetailPage({ serviceSlug }) {
           { label: blueprint.title },
         ]}
         actions={[
-          { label: 'Start Service Order Request', to: serviceOrderUrl, variant: 'primary' },
-          { label: 'Request a Custom Quotation', to: inquiryUrl, variant: 'secondary' },
+          { label: 'Request a Custom Quotation', to: inquiryUrl, variant: 'primary' },
+          { label: 'All Services', to: '/services', variant: 'secondary' },
         ]}
       />
 
@@ -326,20 +320,13 @@ export function ServiceDetailPage({ serviceSlug }) {
 
             <div className="studio-quotation-summary-actions">
               <NavLink
-                to={serviceOrderUrl}
-                className="button button-primary button-lg"
-                data-testid="start-service-order-cta"
-              >
-                Start Service Order Request
-              </NavLink>
-              <NavLink
                 to={inquiryUrl}
-                className="button button-secondary button-lg"
+                className="button button-primary button-lg"
                 data-testid="proceed-quotation-cta"
               >
-                Submit Project Requirements for Quotation
+                Request a Custom Quotation
               </NavLink>
-              <NavLink to="/services" className="button button-ghost">
+              <NavLink to="/services" className="button button-secondary">
                 Compare All Services
               </NavLink>
             </div>

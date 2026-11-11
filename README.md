@@ -1,135 +1,118 @@
-# DSCWeb_React
+# DSC3.0 — Dark Skull Corporation Software Studio
 
-Production-grade React application for **Dark Skull Corporation** (`https://dscweb.me/`).
+Official web platform and client/admin portal for **Dark Skull Corporation (DSC)** (`https://dscweb.me`).
 
-This modern React single-page application replaces the legacy monolithic website. It preserves the existing authentication, role verification, order processing, and administrative system contracts while providing a resilient, responsive, accessible, and maintainable user experience.
-
----
-
-## 1. Project Purpose & Scope
-
-- **Official Brand:** Dark Skull Corporation (DSC) — Independent Software Development Studio
+- **Repository:** `https://github.com/shahnaveed07/DSC3.0`
+- **Production Domain:** `https://dscweb.me`
+- **Production Backend API:** `https://dscauth.onrender.com`
 - **Founder & Lead Developer:** Naveed Mushtaq (`https://naveedmushtaq.tech/`)
-- **Primary Focus:** Android Application Development & Game Development (with Custom Website Development available on request)
-- **Primary Domain:** `https://dscweb.me/`
-- **Application Capabilities:**
-  - Public studio portal: Home, Android Apps & Games (`QR Scanner | Generator`, `Mind Matrix`), Products Catalog, Download Center, About Studio, Contact & Website Project Inquiries, Status, Privacy Policy, Terms of Service.
-  - Client Portal: Secure login, HWID validation, subscription status, license key display, authenticated software package downloads, and password management.
-  - Public Free Panel: Live telemetry, used vs. available slot monitoring, dynamic test credentials, and public package download.
-  - Product Catalog & Checkout: Tier selection, multi-duration pricing calculations, UPI QR payment flow, and image proof verification.
-  - Administration: Admin authentication, user management, pending order processing (approval/rejection), account creation, administrative password rotation, and real-time maintenance mode control.
-  - OwnerDB Workspace: Table-level record management for `users`, `settings`, `freeSettings`, `freeusers`, `panelUpdates`, `keys`, `orders`, and `admins` with search, pagination, bulk deletion, and controlled modal editors.
 
 ---
 
-## 2. Production & Development Commands
+## 1. Architecture & Technology Stack
+
+- **Frontend Framework:** React 19 (JavaScript / JSX) + Vite 8 + React Router 7
+- **Styling & Theme System:** Single unified dark editorial Software Studio theme (`src/styles/app.css`, `#070a10` deep slate canvas, `#10b981` emerald primary accent, `Plus Jakarta Sans` + `Inter` + `JetBrains Mono`)
+- **Package Manager:** Standardized on `npm` (`package-lock.json` tracked)
+- **Testing & Linting:** Vitest + React Testing Library (`jsdom`) + Oxlint
+
+---
+
+## 2. Software Studio Structure vs. Legacy Software Licensing
+
+`DSC3.0` preserves all legacy desktop software panel and administrative workflows while organizing public pages around Dark Skull Corporation's Software Studio architecture:
+
+1. **Software Studio Portfolio (`/products` & `/projects/:slug`)**:
+   - **In Production (`/products/in-production`)**: Live applications, websites, and games deployed in production.
+   - **Own Products (`/products/own-products`)**: Proprietary software owned and developed by Dark Skull Corporation (`QR Scanner | Generator` and `Mind Matrix`).
+   - **Built by DSC (`/products/built-by-dsc`)**: Client and partner projects developed by DSC.
+   - Canonical project data lives in `src/content/projectsData.js` and is shared across `HomePage`, `StudioProductsPage`, `InProductionPage`, `OwnProductsPage`, `BuiltByDscPage`, `ProjectDetailPage`, `AppsPage`, and `DownloadsPage`.
+2. **Quotation-Based Development Services (`/services`)**:
+   - **Website Development (`/services/websites`)**
+   - **Android Application Development (`/services/android-applications`)**
+   - **Game Development (`/services/game-development`)**
+   - Each service page provides scope templates and deployment preferences (**With Deployment** or **Without Deployment**) that prefill project inquiries on `/contact`.
+3. **Preserved Legacy Software Panel & Licensing Workflows**:
+   - **Software Panel Catalog (`/pages/products`, `/pages/catalog`)**, **Free Panel (`/pages/freepanel`)**, **Checkout (`/pages/checkout`)**, **Client Dashboard (`/pages/udash`, `/dashboard`)**, **Admin Dashboard (`/pages/adash`)**, **OwnerDB (`/pages/ownerdb`)**, and **Key Generator (`/pages/generatekey`)** remain intact.
+   - On the **Client Dashboard (`UserDashboardPage`)**, **Existing Software Orders & Panel Subscriptions** (populated from `GET /api/auth/my-order`) are kept strictly separate from **DSC Service Project Orders** (`My Orders` tab), which displays an honest status notice until DSC's Service Order backend is connected.
+
+---
+
+## 3. Complete Application Route Table
+
+### Public Software Studio Routes
+| Route | Component | Description |
+| :--- | :--- | :--- |
+| `/` | `HomePage` | Software Studio hero, disciplines, canonical featured releases, and studio highlights |
+| `/products` | `StudioProductsPage` | Products & Portfolio overview across the 3 classifications |
+| `/products/in-production` | `InProductionPage` | Live releases filterable by All, Android Applications, Websites, and Games |
+| `/products/own-products` | `OwnProductsPage` | Proprietary DSC products (`QR Scanner | Generator`, `Mind Matrix`) |
+| `/products/built-by-dsc` | `BuiltByDscPage` | Client & commissioned projects directory |
+| `/projects/:slug` | `ProjectDetailPage` | Canonical project detail view with dynamic SEO metadata |
+| `/services` | `ServicesOverviewPage` | Quotation-based development services overview |
+| `/services/websites` | `ServiceDetailPage` | Website Development scope templates & deployment options |
+| `/services/android-applications` | `ServiceDetailPage` | Android Application Development scope templates & deployment options |
+| `/services/game-development` | `ServiceDetailPage` | Game Development scope templates & deployment options |
+| `/team` | `TeamPage` | Founder & Lead Developer profile (`Naveed Mushtaq`) and studio structure |
+| `/about`, `/pages/about` | `AboutPage` | Company overview, mission, and engineering standards |
+| `/contact`, `/pages/contact` | `ContactPage` | Direct contact channels and prefilled service/quotation inquiry builder |
+
+### Preserved Legacy Public & Store Routes
+| Route | Component | Description |
+| :--- | :--- | :--- |
+| `/pages/apps` | `AppsPage` | Android Applications & Games showcase |
+| `/pages/websites` | `WebsitesPage` | Custom Websites category page |
+| `/pages/products`, `/pages/catalog` | `ProductsPage` / `LegacyProductsCatalogPage` | Desktop software panel catalog & licensing tiers |
+| `/pages/downloads` | `DownloadsPage` | Official Android app and software download center |
+| `/pages/freepanel` | `FreePanelPage` | Live Free Panel slot availability and evaluation credentials |
+| `/pages/checkout` | `CheckoutPage` | Software panel checkout and payment proof submission |
+| `/pages/status` | `StatusPage` | Real-time backend health and maintenance telemetry |
+| `/pages/privacy-policy` | `PrivacyPolicyPage` | Privacy Policy, Android permissions, and cookie disclosures |
+| `/pages/terms` | `TermsPage` | Terms of Service and licensing rules |
+
+### Authentication, User & Admin Routes
+| Route | Access | Component | Description |
+| :--- | :--- | :--- | :--- |
+| `/login`, `/pages/ulogin` | Public | `UserLoginPage` | Client portal sign-in (`POST /api/auth/login`) |
+| `/register`, `/pages/register` | Public | `UserRegisterPage` | Client account registration (`POST /api/auth/register` — *Pending Backend Confirmation*) |
+| `/forgot-password`, `/pages/forgot-password` | Public | `ForgotPasswordPage` | Password recovery & reset (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password` — *Pending Backend Confirmation*) |
+| `/dashboard`, `/pages/udash` | `User` | `UserDashboardPage` | Client dashboard (Overview / Existing Software Licenses, My Orders, Profile, Account Security) |
+| `/pages/change` | `User` | `ChangePasswordPage` | User password update (`POST /api/auth/change-password`) |
+| `/pages/alogin` | Public | `AdminLoginPage` | Administrator sign-in (`POST /api/admin/login`) |
+| `/pages/adash` | `Admin` | `AdminDashboardPage` | Admin control center, order approval queue, and user management |
+| `/pages/generatekey` | `Admin` | `GenerateKeyPage` | License key generator (`POST /api/admin/generate`) |
+| `/pages/ownerdb` | `Admin` + `Owner` | `AdminWorkspacePage` | Owner database manager verified via `GET /api/admin/owner/probe` |
+
+---
+
+## 4. Session Management & HTTP 401 / 403 Semantics
+
+- **Storage Key:** `dscweb.current-session` (`src/utils/auth.js`)
+- **Activity-Based Idle Timeout:** `10 hours` (`SESSION_TIMEOUT_MS`). Meaningful user interaction (`pointerdown`, `keydown`, `touchstart`) refreshes `lastActivityAt` with a 60-second write throttle (`ACTIVITY_THROTTLE_MS`). Background keep-alive polling (`pingBackend()`) never counts as user activity.
+- **Strict JWT Expiration:** The JWT `exp` claim is checked on every session load and activity refresh and is never extended by client-side activity.
+- **HTTP 401 vs. HTTP 403:**
+  - `HTTP 401 Unauthorized` (`isAuthError(err) === true`): Session is invalid or expired; the client clears `localStorage` and redirects to login.
+  - `HTTP 403 Forbidden` (`isForbiddenError(err) === true`): Authenticated user/admin lacks permission for a specific resource (e.g., a standard Admin probing `/api/admin/owner/probe`); the active session is preserved and an access-denied message is displayed.
+
+---
+
+## 5. Local Development & Verification
 
 ```bash
-# Install dependencies
-npm install
+# 1. Install dependencies (uses tracked package-lock.json)
+npm ci
 
-# Start local development server (port 3000)
+# 2. Start Vite development server (port 3000)
 npm run dev
 
-# Run code linter
+# 3. Run static analysis linter (Oxlint)
 npm run lint
 
-# Build production bundle (outputs to /dist)
-npm run build
+# 4. Run unit & integration test suite (Vitest)
+npm run test -- --run
 
-# Preview production build locally
-npm run preview
+# 5. Build production bundle (also verifiesprerendered route heads)
+npm run build
 ```
 
----
-
-## 3. Deployment Configuration
-
-### Cloudflare Workers & Pages (Primary Production Host)
-
-This repository is configured for deployment on **Cloudflare Workers** (with Static Assets) and **Cloudflare Pages**:
-
-- **Configuration:** `wrangler.jsonc` (assets directory `./dist`, `not_found_handling: "single-page-application"`).
-- **Framework preset:** `Vite`
-- **Build command:** `npm run build`
-- **Build output directory:** `dist`
-- **Root directory:** *(leave blank / repository root)*
-- **Package Manager:** Automatically detected via `bun.lock` (`bun install --frozen-lockfile`)
-- **Single Page Application Routing & Redirects:**
-  - Configured via `public/_redirects` (copied to `dist/_redirects`).
-  - Contains HTTP 301 rules redirecting legacy `.html` URLs to canonical clean routes.
-  - SPA not-found handling is governed natively by `assets.not_found_handling = "single-page-application"` in `wrangler.jsonc` (avoiding recursive redirect loops in Cloudflare asset handling).
-
-### Netlify & Vercel Compatibility
-
-This project also maintains full compatibility with Netlify and Vercel:
-
-- **Netlify:** Configured via `netlify.toml` (`publish = "dist"`, `command = "npm run build"`, and `/* /index.html 200`).
-- **Vercel:** Configured via `vercel.json` (`rewrites` and static asset exemptions).
-
----
-
-## 4. Environment Variables
-
-Define the following environment variables in `.env` (or via the Netlify dashboard under **Site configuration > Environment variables**):
-
-| Variable | Description | Default / Example |
-| :--- | :--- | :--- |
-| `VITE_API_BASE_URL` | Base URL for the DSC backend API | `https://dscauth.onrender.com` |
-
----
-
-## 5. Route Architecture & Role-Based Access Control
-
-All legacy `.html` URLs are redirected to their modern canonical SPA routes:
-
-| Canonical Route | Legacy Alias | Access Level | Description |
-| :--- | :--- | :--- | :--- |
-| `/` | `/index.html` | Public | Home showcase, services, principles, and direct links |
-| `/pages/apps` | `/pages/apps.html` | Public | Desktop and mobile application catalog |
-| `/pages/products` | `/pages/products.html` | Public | Software panel tiers, pricing, and purchase actions |
-| `/pages/downloads` | `/pages/downloads.html` | Public | Verified binaries, public packages, and free tools |
-| `/pages/about` | `/pages/about.html` | Public | Company identity, principles, and engineering focus |
-| `/pages/contact` | `/pages/contact.html` | Public | Support channels (Discord, Email, GitHub, Portfolio) |
-| `/pages/status` | `/pages/status.html` | Public | System status, maintenance alerts, and service notices |
-| `/pages/privacy-policy` | `/pages/privacy-policy.html`, `/pages/policy.html` | Public | Privacy policy and data handling information |
-| `/pages/terms` | `/pages/terms.html` | Public | Terms of service and platform agreements |
-| `/pages/freepanel` | `/pages/freepanel.html` | Public | Live slot tracker, test credentials, and download |
-| `/pages/checkout` | `/pages/checkout.html` | Public | Tier checkout, UPI QR code, payment proof upload |
-| `/pages/ulogin` | `/pages/Ulogin.html` | Public (Guest) | Client portal login with loading barrier |
-| `/pages/alogin` | `/pages/Alogin.html` | Public (Guest) | Admin login with loading barrier |
-| `/pages/udash` | `/pages/Udash.html` | User Only | Client dashboard: license key, copy, secure download |
-| `/pages/change` | `/pages/change.html` | User Only | Client password change |
-| `/pages/adash` | `/pages/Adash.html` | Admin Only | Management overview: users, pending orders, maintenance toggle |
-| `/pages/generatekey` | `/pages/generateKey.html` | Admin Only | License key generation authority |
-| `/pages/ownerdb` | `/pages/OwnerDB.html` | Owner Only | Controlled database management workspace |
-
----
-
-## 6. External API Dependencies & Production Requirements
-
-The frontend integrates directly with the backend API:
-- `GET /api/admin/system-status` — Maintenance flag and announcement data.
-- `GET /api/public/free-panel` — Free slot counts and dynamic credentials.
-- `POST /api/auth/login` — Client authentication (`HWID: WEB-CLIENT`).
-- `POST /api/admin/login` — Administrator authentication.
-- `GET /api/auth/my-order` — User order and subscription details.
-- `GET /api/auth/download?plan={plan}` — Authenticated secure download link retrieval.
-- `POST /api/auth/checkout` — Order submission with base64 proof.
-- `POST /api/auth/change-password` — User password update.
-- `GET /api/admin/users`, `GET /api/admin/orders/pending`, `GET /api/admin/settings/all` — Admin snapshot.
-- `POST /api/admin/orders/{action}/{id}` — Order approval / rejection.
-- `POST /api/admin/generate` — License key generation.
-- `POST /api/admin/maintenance/toggle` — Global maintenance toggle.
-- `GET /api/admin/owner/probe` — Owner privilege validation.
-- Database endpoints: `/api/admin/keys`, `/api/admin/manage/admins`, `/api/admin/orders/all`, `/api/admin/free-users`, `/api/auth/panel-updates`.
-
----
-
-## 7. Security & Release Verification
-
-1. **No Embedded Secrets:** All credentials, tokens, and customer data are stored exclusively in client memory / session storage with automatic expiration and logout on 401/403.
-2. **Error Boundary:** Top-level React `ErrorBoundary` prevents white-screen crashes and provides safe recovery routes.
-3. **Double Submission Protection:** All authentication and payment forms lock input fields and disable submit buttons during in-flight network requests.
-4. **Maintenance Exemption:** Admin authentication routes remain reachable during maintenance mode to ensure administrators can authenticate and toggle maintenance off.
-5. **Theme Consistency:** Native Light and Dark themes conform to WCAG 2.1 AA/AAA contrast guidelines without color flash on initial load.
+See [`docs/API_ENDPOINT_MAP.md`](./docs/API_ENDPOINT_MAP.md) for the complete list of verified production backend routes and unverified account endpoints pending backend confirmation.
