@@ -309,6 +309,30 @@ export function submitCheckout(order) {
   })
 }
 
+export function submitServiceOrder(token, orderPayload) {
+  return request('/api/auth/service-orders', {
+    method: 'POST',
+    token,
+    body: orderPayload,
+  })
+}
+
+export function respondToServiceOrderQuotation(token, orderId, action, customerNotes = '') {
+  return request(
+    `/api/auth/service-orders/${encodeURIComponent(orderId)}/quotation-response`,
+    {
+      method: 'POST',
+      token,
+      body: {
+        action,
+        Action: action,
+        customerNotes,
+        CustomerNotes: customerNotes,
+      },
+    },
+  )
+}
+
 export function getSecureDownload(token, plan) {
   return request(`/api/auth/download?plan=${encodeURIComponent(plan)}`, {
     token,

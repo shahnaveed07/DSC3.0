@@ -30,6 +30,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })))
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })))
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage').then((m) => ({ default: m.ServiceDetailPage })))
+const ServiceOrderRequestPage = lazy(() => import('./pages/ServiceOrderRequestPage').then((m) => ({ default: m.ServiceOrderRequestPage })))
 const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage').then((m) => ({ default: m.ServicesOverviewPage })))
 const StatusPage = lazy(() => import('./pages/StatusPage').then((m) => ({ default: m.StatusPage })))
 const StudioProductsPage = lazy(() => import('./pages/StudioProductsPage').then((m) => ({ default: m.StudioProductsPage })))
@@ -184,6 +185,18 @@ export default function App() {
               <Route path="/projects/:slug" element={<ProjectDetailPage />} />
 
               <Route path="/services" element={<ServicesOverviewPage />} />
+              <Route
+                path="/services/request"
+                element={<ServiceOrderRequestPage session={session} />}
+              />
+              <Route
+                path="/pages/service-order"
+                element={<ServiceOrderRequestPage session={session} />}
+              />
+              <Route
+                path="/pages/service-order.html"
+                element={<Navigate replace to="/services/request" />}
+              />
               <Route
                 path="/services/websites"
                 element={<ServiceDetailPage serviceSlug="websites" />}

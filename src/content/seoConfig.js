@@ -412,6 +412,17 @@ export const SEO_ROUTES = {
     indexable: false,
     ogType: 'website',
   },
+  serviceOrderRequest: {
+    key: 'serviceOrderRequest',
+    routePath: '/services/request',
+    title: 'Service Order & Quotation Request | Dark Skull Corporation',
+    description:
+      'Submit your custom Website Development, Android Application Development, or Game Development project requirements for a tailored DSC studio quotation.',
+    canonical: 'https://dscweb.me/services/request',
+    robots: 'noindex, nofollow',
+    indexable: false,
+    ogType: 'website',
+  },
   ulogin: {
     key: 'ulogin',
     routePath: '/pages/ulogin',

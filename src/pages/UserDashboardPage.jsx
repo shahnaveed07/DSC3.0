@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useSearchParams } from 'react-router-dom'
 import { useRemoteResource } from '../hooks/useRemoteResource'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
@@ -11,6 +11,7 @@ import {
   getCurrentOrder,
   getSecureDownload,
   isAuthError,
+  respondToServiceOrderQuotation,
   updateUserProfile,
 } from '../services/dscApi'
 import { updateStoredSession } from '../utils/auth'
@@ -19,6 +20,10 @@ import {
   formatDateTime,
   normalizeUserOrdersPayload,
 } from '../utils/format'
+import {
+  applyCustomerQuotationAction,
+  updateUserServiceOrderQuotation,
+} from '../utils/serviceOrders'
 
 const DASHBOARD_TABS = [
   { id: 'overview', label: 'Overview' },
@@ -34,12 +39,25 @@ export function UserDashboardPage({
   onLogout,
 }) {
   usePageMeta(SEO_ROUTES.udash)
-  const [activeTab, setActiveTab] = useState('overview')
-  const [selectedOrderId, setSelectedOrderId] = useState(null)
+  const [searchParams] = useSearchParams()
+  const initialTabParam = searchParams.get('tab')
+  const initialOrderParam = searchParams.get('order')
+
+  const [activeTab, setActiveTab] = useState(() =>
+    DASHBOARD_TABS.some((t) => t.id === initialTabParam) ? initialTabParam : 'overview',
+  )
+  const [selectedOrderId, setSelectedOrderId] = useState(initialOrderParam || null)
   const [copiedKey, setCopiedKey] = useState(false)
   const [downloadError, setDownloadError] = useState('')
   const [downloadLoading, setDownloadLoading] = useState(false)
   const [reloadCount, setReloadCount] = useState(0)
+
+  // Quotation response state
+  const [quotationNotes, setQuotationNotes] = useState('')
+  const [quotationActionLoading, setQuotationActionLoading] = useState(false)
+  const [quotationActionError, setQuotationActionError] = useState('')
+  const [quotationActionMessage, setQuotationActionMessage] = useState('')
+  const [orderOverrides, setOrderOverrides] = useState({})
 
   // Profile tab state
   const [profileForm, setProfileForm] = useState({
@@ -93,6 +111,8 @@ export function UserDashboardPage({
       (rawStatus ||
         data.plan ||
         data.Plan ||
+        data.serviceType ||
+        data.ServiceType ||
         data.key ||
         data.Key ||
         data.orderId ||
@@ -100,18 +120,51 @@ export function UserDashboardPage({
         Array.isArray(data.orders) ||
         Array.isArray(data.Orders)),
   )
-  const isNoOrder = is404NoOrder || (!fatalError && !hasSingleOrderFields)
+  const isNoRemoteOrder = is404NoOrder || (!fatalError && !hasSingleOrderFields)
 
-  const orderSummary = normalizeUserOrdersPayload(data, session, isNoOrder || Boolean(fatalError))
-  const { orders, totalOrders, activeOrders, completedOrders, recentActivity } = orderSummary
+  const baseOrderSummary = normalizeUserOrdersPayload(
+    data,
+    session,
+    isNoRemoteOrder || Boolean(fatalError),
+  )
+
+  const orders = baseOrderSummary.orders.map((ord) => {
+    const override = orderOverrides[ord.id] || orderOverrides[ord.reference]
+    if (!override) return ord
+    const lower = String(override.status || '').toLowerCase()
+    return {
+      ...ord,
+      ...override,
+      isCompleted: lower === 'completed' || lower === 'approved',
+      isRejected:
+        lower === 'rejected' ||
+        lower === 'cancelled' ||
+        lower === 'canceled' ||
+        lower === 'cancelled / rejected' ||
+        lower === 'quotation declined',
+    }
+  })
+
+  const totalOrders = orders.length
+  const completedOrders = orders.filter((o) => o.isCompleted).length
+  const activeOrders = orders.filter(
+    (o) => !o.isCompleted && !o.isRejected && o.status.toLowerCase() !== 'expired',
+  ).length
+  const recentActivity = orders.slice(0, 5)
   const primaryOrder = orders[0] || null
+  const isNoOrder = isNoRemoteOrder && orders.length === 0
 
   const liveStatus = isNoOrder
     ? 'NO ACTIVE ORDERS'
     : rawStatus || primaryOrder?.currentStatus || 'Pending'
   const normalizedStatus = liveStatus.toLowerCase()
-  const isApproved = !isNoOrder && (normalizedStatus === 'approved' || normalizedStatus === 'completed')
-  const isRejected = !isNoOrder && normalizedStatus === 'rejected'
+  const isApproved =
+    !isNoOrder && (normalizedStatus === 'approved' || normalizedStatus === 'completed')
+  const isRejected =
+    !isNoOrder &&
+    (normalizedStatus === 'rejected' ||
+      normalizedStatus === 'cancelled / rejected' ||
+      normalizedStatus === 'cancelled')
   const isPending = !isNoOrder && !fatalError && !isApproved && !isRejected
 
   const livePlan =
@@ -155,7 +208,9 @@ export function UserDashboardPage({
   )
 
   const selectedOrder =
-    orders.find((item) => item.id === selectedOrderId || item.reference === selectedOrderId) ||
+    orders.find(
+      (item) => item.id === selectedOrderId || item.reference === selectedOrderId,
+    ) ||
     orders[0] ||
     null
 
@@ -172,7 +227,8 @@ export function UserDashboardPage({
     setDownloadError('')
 
     try {
-      const downloadPlan = livePlan.toLowerCase() === 'aimassist' ? 'aimbot' : livePlan.toLowerCase()
+      const downloadPlan =
+        livePlan.toLowerCase() === 'aimassist' ? 'aimbot' : livePlan.toLowerCase()
       const payload = await getSecureDownload(session.token, downloadPlan)
       const downloadUrl = payload?.url ?? payload?.Url
 
@@ -200,6 +256,78 @@ export function UserDashboardPage({
       )
     } finally {
       setDownloadLoading(false)
+    }
+  }
+
+  async function handleQuotationResponse(action) {
+    if (!selectedOrder || quotationActionLoading) return
+    setQuotationActionError('')
+    setQuotationActionMessage('')
+
+    let transitioned
+    try {
+      transitioned = applyCustomerQuotationAction(
+        selectedOrder,
+        action,
+        quotationNotes,
+      )
+    } catch (validationError) {
+      setQuotationActionError(validationError.message)
+      return
+    }
+
+    setQuotationActionLoading(true)
+    try {
+      try {
+        await respondToServiceOrderQuotation(
+          session.token,
+          selectedOrder.id,
+          action,
+          quotationNotes,
+        )
+      } catch (apiError) {
+        if (isAuthError(apiError)) {
+          onSessionInvalid()
+          return
+        }
+        if (apiError instanceof ApiError && apiError.status === 400) {
+          throw apiError
+        }
+      }
+
+      updateUserServiceOrderQuotation(
+        session.username,
+        selectedOrder.id,
+        action,
+        quotationNotes,
+      )
+
+      setOrderOverrides((prev) => ({
+        ...prev,
+        [selectedOrder.id]: transitioned,
+        [selectedOrder.reference]: transitioned,
+      }))
+
+      if (action === 'approve') {
+        setQuotationActionMessage(
+          'Quotation approved. Your order is now marked as Approved for DSC engineering execution.',
+        )
+      } else if (action === 'request_changes') {
+        setQuotationActionMessage(
+          'Your revision and clarification notes have been submitted for DSC scope review.',
+        )
+      } else if (action === 'decline') {
+        setQuotationActionMessage(
+          'This service order / quotation has been cancelled at your request.',
+        )
+      }
+      setQuotationNotes('')
+    } catch (err) {
+      setQuotationActionError(
+        err?.message || 'Unable to submit quotation response. Please try again.',
+      )
+    } finally {
+      setQuotationActionLoading(false)
     }
   }
 
@@ -323,6 +451,23 @@ export function UserDashboardPage({
         ? '❌'
         : '⏳'
 
+  const canApproveQuotation = Boolean(
+    selectedOrder &&
+      !selectedOrder.isCompleted &&
+      !selectedOrder.isRejected &&
+      (selectedOrder.quotation?.hasIssuedQuotation ||
+        ['quotation sent', 'awaiting customer approval'].includes(
+          String(selectedOrder.currentStatus || '').toLowerCase(),
+        ) ||
+        ['quotation sent', 'awaiting customer approval'].includes(
+          String(selectedOrder.quotationStatus || '').toLowerCase(),
+        )),
+  )
+
+  const canModifyOrCancelOrder = Boolean(
+    selectedOrder && !selectedOrder.isCompleted && !selectedOrder.isRejected,
+  )
+
   return (
     <div className="center-wrap">
       <section className="panel">
@@ -337,8 +482,8 @@ export function UserDashboardPage({
             </p>
           </div>
           <div className="flex gap-10 flex-wrap">
-            <NavLink to="/services" className="button button-primary button-sm">
-              Explore Services
+            <NavLink to="/services/request" className="button button-primary button-sm">
+              Submit Project Requirements
             </NavLink>
             {!isFreePlan ? (
               <NavLink to="/pages/change" className="button button-secondary button-sm">
@@ -412,7 +557,7 @@ export function UserDashboardPage({
                 <div>
                   <strong>⚠️ Order Pending Review</strong>
                   <p className="mt-4 text-sm text-main">
-                    Your order is currently awaiting admin verification. Access keys and downloads will be enabled once approved.
+                    Your order is currently awaiting verification or scope review. Updates will appear here and in My Orders.
                   </p>
                 </div>
               </div>
@@ -436,7 +581,7 @@ export function UserDashboardPage({
               <div className="form-error mb-24">
                 <strong>❌ Order Not Approved</strong>
                 <p className="mt-4 text-sm text-main">
-                  Your order could not be verified. Please contact support on Discord or submit a valid payment proof.
+                  Your order could not be verified or was cancelled. Please contact support on Discord or submit a new request.
                 </p>
               </div>
             ) : null}
@@ -547,7 +692,41 @@ export function UserDashboardPage({
             </div>
 
             {/* Download Section */}
-            {!isNoOrder && isApproved ? (
+            {!isNoOrder && isApproved && orderKey ? (
+              <div className="card mb-24">
+                <span className="micro-label">SOFTWARE DOWNLOAD</span>
+                <h3 className="my-8 text-lg font-bold">Verified Panel Package</h3>
+                <p className="text-muted text-sm mb-18">
+                  Your account is approved. Fetch your secure binary build for {livePlan.toUpperCase()} directly.
+                </p>
+
+                {downloadError ? (
+                  <div className="form-error mb-14">
+                    {downloadError}
+                  </div>
+                ) : null}
+
+                <button
+                  id="downloadPanelBtn"
+                  className={`button button-primary button-lg btn-download ${downloadLoading ? 'is-loading' : ''}`}
+                  disabled={downloadLoading}
+                  onClick={handleDownload}
+                  type="button"
+                >
+                  {downloadLoading ? (
+                    <span className="button-loading-content">
+                      <span className="spinner-inline" aria-hidden="true" />
+                      <span>Retrieving Package...</span>
+                    </span>
+                  ) : (
+                    <>
+                      <span aria-hidden="true">📥 </span>
+                      <span>Download {livePlan.toUpperCase()} Panel</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : !isNoOrder && isApproved && !primaryOrder?.isServiceOrder ? (
               <div className="card mb-24">
                 <span className="micro-label">SOFTWARE DOWNLOAD</span>
                 <h3 className="my-8 text-lg font-bold">Verified Panel Package</h3>
@@ -588,7 +767,7 @@ export function UserDashboardPage({
               <div className="flex items-center justify-between flex-wrap gap-10 mb-14">
                 <div>
                   <span className="micro-label">RECENT ORDER ACTIVITY</span>
-                  <h3 className="my-4 text-lg font-bold">Your Latest Orders & Updates</h3>
+                  <h3 className="my-4 text-lg font-bold">Your Latest Orders &amp; Quotations</h3>
                 </div>
                 {orders.length > 0 ? (
                   <button
@@ -604,11 +783,11 @@ export function UserDashboardPage({
               {recentActivity.length === 0 ? (
                 <div className="dashboard-empty-box">
                   <p className="text-muted m-0">
-                    You do not have any recorded orders yet. Explore DSC software development services or the software panel catalog to get started.
+                    You do not have any recorded orders yet. Submit a software development project requirement for a custom quotation or browse the software panel catalog.
                   </p>
                   <div className="flex gap-10 flex-wrap mt-14">
-                    <NavLink to="/services" className="button button-primary button-sm">
-                      Request a Project Quote
+                    <NavLink to="/services/request" className="button button-primary button-sm">
+                      Submit Project Requirements
                     </NavLink>
                     <NavLink to="/pages/catalog" className="button button-secondary button-sm">
                       Browse Software Catalog
@@ -621,7 +800,11 @@ export function UserDashboardPage({
                     <div key={order.id} className="dashboard-order-row">
                       <div>
                         <div className="flex items-center gap-10 flex-wrap">
-                          <strong className="text-main">{order.serviceType}</strong>
+                          <strong className="text-main">
+                            {order.projectTitle && order.projectTitle !== order.serviceType
+                              ? `${order.projectTitle} (${order.serviceType})`
+                              : order.serviceType}
+                          </strong>
                           <span className="badge">{order.reference}</span>
                         </div>
                         <p className="text-xs text-muted m-0 mt-4">
@@ -664,22 +847,22 @@ export function UserDashboardPage({
         ) : null}
 
         {/* ================================================================= */}
-        {/* TAB 2: MY ORDERS                                                  */}
+        {/* TAB 2: MY ORDERS & QUOTATION WORKFLOW                             */}
         {/* ================================================================= */}
         {activeTab === 'orders' ? (
           <div className="dashboard-tab-panel" data-testid="dashboard-orders-panel">
             <div className="flex items-center justify-between flex-wrap gap-12 mb-18">
               <div>
-                <span className="micro-label">MY ORDERS</span>
-                <h2 className="my-4 text-xl font-bold">Order History & Status Tracking</h2>
+                <span className="micro-label">MY ORDERS &amp; QUOTATIONS</span>
+                <h2 className="my-4 text-xl font-bold">Order History &amp; Quotation Tracking</h2>
                 <p className="text-muted text-sm m-0">
-                  Displaying orders exclusively associated with account{' '}
+                  Displaying orders and custom quotations exclusively associated with account{' '}
                   <strong>{String(session?.username || '').toUpperCase()}</strong>.
                 </p>
               </div>
               <div className="flex gap-10 flex-wrap">
-                <NavLink to="/contact?service=websites" className="button button-primary button-sm">
-                  New Service Inquiry
+                <NavLink to="/services/request" className="button button-primary button-sm">
+                  + New Service Order Request
                 </NavLink>
                 <NavLink to="/pages/checkout" className="button button-secondary button-sm">
                   Panel Checkout
@@ -691,11 +874,11 @@ export function UserDashboardPage({
               <div className="card dashboard-empty-box">
                 <h3 className="m-0 mb-8 text-lg">No Orders Recorded for Your Account</h3>
                 <p className="text-muted m-0">
-                  When you submit a service requirement or software panel order, its reference ID, quotation status, and real-time updates will appear here.
+                  When you submit a service requirement or software panel order, its reference ID, quotation breakdown, and real-time lifecycle updates will appear here.
                 </p>
                 <div className="flex gap-10 flex-wrap mt-16">
-                  <NavLink to="/services" className="button button-primary button-sm">
-                    Browse Development Services
+                  <NavLink to="/services/request" className="button button-primary button-sm">
+                    Submit Project Requirements
                   </NavLink>
                   <NavLink to="/pages/catalog" className="button button-secondary button-sm">
                     Open Software Catalog
@@ -712,10 +895,16 @@ export function UserDashboardPage({
                         key={order.id}
                         type="button"
                         className={`dashboard-order-item-btn ${isSelected ? 'is-selected' : ''}`}
-                        onClick={() => setSelectedOrderId(order.id)}
+                        onClick={() => {
+                          setSelectedOrderId(order.id)
+                          setQuotationActionError('')
+                          setQuotationActionMessage('')
+                        }}
                       >
                         <div className="flex items-center justify-between gap-10 w-full">
-                          <span className="font-bold text-main">{order.serviceType}</span>
+                          <span className="font-bold text-main">
+                            {order.projectTitle || order.serviceType}
+                          </span>
                           <span
                             className={`badge ${
                               order.isCompleted
@@ -741,8 +930,10 @@ export function UserDashboardPage({
                   <div className="card dashboard-order-detail" data-testid="order-detail-card">
                     <div className="flex items-center justify-between flex-wrap gap-10 mb-16">
                       <div>
-                        <span className="micro-label">ORDER DETAILS</span>
-                        <h3 className="my-4 text-lg font-bold">{selectedOrder.serviceType}</h3>
+                        <span className="micro-label">ORDER &amp; QUOTATION DETAILS</span>
+                        <h3 className="my-4 text-lg font-bold">
+                          {selectedOrder.projectTitle || selectedOrder.serviceType}
+                        </h3>
                       </div>
                       <span
                         className={`badge ${
@@ -794,12 +985,194 @@ export function UserDashboardPage({
                       </div>
                     </dl>
 
-                    {selectedOrder.notes ? (
-                      <div className="mt-16 pt-16 border-t">
-                        <span className="micro-label">PROJECT / ORDER NOTES</span>
-                        <p className="text-sm text-muted mt-6 m-0">{selectedOrder.notes}</p>
+                    {/* Quotation Breakdown & Customer Response Section */}
+                    <div
+                      className="quotation-detail-panel mt-20"
+                      data-testid="order-quotation-section"
+                    >
+                      <div className="flex items-center justify-between flex-wrap gap-10 mb-12">
+                        <div>
+                          <span className="micro-label">STUDIO QUOTATION &amp; SCOPE</span>
+                          <h4 className="m-0 mt-4 text-base font-bold">
+                            Quotation Breakdown &amp; Customer Actions
+                          </h4>
+                        </div>
+                        <span
+                          className="badge primary"
+                          data-testid="quotation-customer-response-status"
+                        >
+                          {selectedOrder.quotation?.customerResponseStatus ||
+                            selectedOrder.quotationStatus}
+                        </span>
                       </div>
-                    ) : null}
+
+                      <dl className="order-detail-dl">
+                        <div className="order-detail-pair">
+                          <dt>Proposed Scope</dt>
+                          <dd data-testid="quotation-proposed-scope">
+                            {selectedOrder.quotation?.proposedScope ||
+                              selectedOrder.scopeTemplate ||
+                              'Custom Project Scope'}
+                          </dd>
+                        </div>
+                        <div className="order-detail-pair">
+                          <dt>Quoted Amount / Currency</dt>
+                          <dd data-testid="quotation-amount">
+                            {selectedOrder.quotation?.quotedAmount
+                              ? `${selectedOrder.quotation.currency} ${selectedOrder.quotation.quotedAmount}`
+                              : 'Pending DSC Scope Evaluation'}
+                          </dd>
+                        </div>
+                        <div className="order-detail-pair">
+                          <dt>Estimated Timeline</dt>
+                          <dd data-testid="quotation-timeline">
+                            {selectedOrder.quotation?.estimatedTimeline ||
+                              selectedOrder.preferredTimeline ||
+                              'To be confirmed upon review'}
+                          </dd>
+                        </div>
+                        <div className="order-detail-pair">
+                          <dt>Deployment Option Included</dt>
+                          <dd data-testid="quotation-deployment">
+                            {selectedOrder.quotation?.deploymentPreference ||
+                              selectedOrder.deploymentPreference ||
+                              'With Deployment'}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <div className="mt-14">
+                        <span className="micro-label">QUOTATION SUMMARY</span>
+                        <p
+                          className="text-sm text-muted mt-4 m-0"
+                          data-testid="quotation-summary-text"
+                        >
+                          {selectedOrder.quotation?.summary ||
+                            'DSC is evaluating your submitted project scope and requirements. A custom quotation will be posted here once scope review is complete.'}
+                        </p>
+                      </div>
+
+                      {selectedOrder.quotation?.adminNotes ? (
+                        <div className="mt-12">
+                          <span className="micro-label">ADMIN / STUDIO NOTES</span>
+                          <p
+                            className="text-sm text-muted mt-4 m-0"
+                            data-testid="quotation-admin-notes"
+                          >
+                            {selectedOrder.quotation.adminNotes}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {selectedOrder.quotation?.customerNotes ? (
+                        <div className="mt-12">
+                          <span className="micro-label">YOUR SUBMITTED NOTES</span>
+                          <p
+                            className="text-sm text-main mt-4 m-0"
+                            data-testid="quotation-customer-notes-display"
+                          >
+                            {selectedOrder.quotation.customerNotes}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {/* Submitted Brief Summary for Service Orders */}
+                      {selectedOrder.projectDescription || selectedOrder.keyFeatures ? (
+                        <div className="mt-16 pt-16 border-t">
+                          <span className="micro-label">SUBMITTED PROJECT BRIEF</span>
+                          {selectedOrder.targetPlatform ? (
+                            <p className="text-xs text-muted mt-4 m-0">
+                              <strong>Target Platform:</strong> {selectedOrder.targetPlatform}
+                            </p>
+                          ) : null}
+                          {selectedOrder.projectDescription ? (
+                            <p className="text-sm text-muted mt-6 m-0">
+                              {selectedOrder.projectDescription}
+                            </p>
+                          ) : null}
+                          {selectedOrder.keyFeatures ? (
+                            <p className="text-xs text-muted mt-6 m-0">
+                              <strong>Key Features:</strong> {selectedOrder.keyFeatures}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {/* Customer Quotation Response Controls */}
+                      {canModifyOrCancelOrder ? (
+                        <div
+                          className="mt-16 pt-16 border-t"
+                          data-testid="quotation-customer-actions"
+                        >
+                          <label className="field" htmlFor="quotation-customer-notes">
+                            <span className="micro-label">
+                              NOTES FOR DSC (REQUIRED WHEN REQUESTING CHANGES)
+                            </span>
+                            <textarea
+                              id="quotation-customer-notes"
+                              rows={2}
+                              placeholder="Add optional approval notes, or describe requested scope/quotation adjustments..."
+                              value={quotationNotes}
+                              disabled={quotationActionLoading}
+                              onChange={(e) => {
+                                setQuotationNotes(e.target.value)
+                                if (quotationActionError) setQuotationActionError('')
+                              }}
+                            />
+                          </label>
+
+                          {quotationActionError ? (
+                            <p className="form-error mt-10 mb-10" role="alert">
+                              {quotationActionError}
+                            </p>
+                          ) : null}
+
+                          {quotationActionMessage ? (
+                            <div className="status-banner mt-10 mb-10" role="status">
+                              {quotationActionMessage}
+                            </div>
+                          ) : null}
+
+                          <div className="flex gap-10 flex-wrap mt-12">
+                            {canApproveQuotation ? (
+                              <button
+                                type="button"
+                                className="button button-primary button-sm"
+                                data-testid="approve-quotation-btn"
+                                disabled={quotationActionLoading}
+                                onClick={() => handleQuotationResponse('approve')}
+                              >
+                                Approve Quotation ✓
+                              </button>
+                            ) : null}
+
+                            <button
+                              type="button"
+                              className="button button-secondary button-sm"
+                              data-testid="request-changes-quotation-btn"
+                              disabled={quotationActionLoading}
+                              onClick={() => handleQuotationResponse('request_changes')}
+                            >
+                              Request Changes / Clarification
+                            </button>
+
+                            <button
+                              type="button"
+                              className="button button-ghost button-sm text-danger"
+                              data-testid="decline-quotation-btn"
+                              disabled={quotationActionLoading}
+                              onClick={() => handleQuotationResponse('decline')}
+                            >
+                              Cancel / Decline Request
+                            </button>
+                          </div>
+                        </div>
+                      ) : quotationActionMessage ? (
+                        <div className="status-banner mt-14" role="status">
+                          {quotationActionMessage}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -930,7 +1303,7 @@ export function UserDashboardPage({
         {activeTab === 'security' ? (
           <div className="dashboard-tab-panel" data-testid="dashboard-security-panel">
             <div className="card mb-24">
-              <span className="micro-label">PASSWORD & CREDENTIALS</span>
+              <span className="micro-label">PASSWORD &amp; CREDENTIALS</span>
               <h2 className="my-4 text-xl font-bold">Update Account Password</h2>
               <p className="text-muted text-sm mb-20">
                 Change your DSC Client Portal password. Choose a strong password of at least 6 characters.
@@ -1020,7 +1393,7 @@ export function UserDashboardPage({
 
             <div className="card">
               <span className="micro-label">SESSION SECURITY</span>
-              <h3 className="my-4 text-lg font-bold">Active Session & Device Isolation</h3>
+              <h3 className="my-4 text-lg font-bold">Active Session &amp; Device Isolation</h3>
               <p className="text-muted text-sm m-0">
                 Your session token is isolated to your account and verified on every API request. Sign out when using a shared device.
               </p>

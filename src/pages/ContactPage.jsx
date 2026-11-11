@@ -4,6 +4,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
 import {
   QUOTATION_MODEL_STATEMENT,
+  buildServiceOrderUrl,
   contactChannels,
   resolveServicePrefill,
 } from '../content/siteContent'
@@ -21,6 +22,13 @@ export function ContactPage() {
     scopeId: scopeParam,
     deploymentOption: deploymentParam,
   })
+  const formalOrderUrl = prefill
+    ? buildServiceOrderUrl({
+        serviceSlug: prefill.serviceSlug,
+        scopeId: prefill.scopeId,
+        deploymentOption: prefill.deploymentId,
+      })
+    : '/services/request'
 
   const [form, setForm] = useState(() => ({
     name: '',
@@ -145,12 +153,21 @@ ${form.message}
                   <span className="badge primary mb-8">Selected Studio Configuration</span>
                   <h3 className="m-0">{prefill.serviceTitle} — Quotation Request</h3>
                 </div>
-                <NavLink
-                  to={`/services/${prefill.serviceSlug}`}
-                  className="button button-secondary button-sm"
-                >
-                  Modify Scope or Deployment
-                </NavLink>
+                <div className="flex gap-8 flex-wrap">
+                  <NavLink
+                    to={formalOrderUrl}
+                    className="button button-primary button-sm"
+                    data-testid="contact-formal-order-cta"
+                  >
+                    Submit Formal Service Order
+                  </NavLink>
+                  <NavLink
+                    to={`/services/${prefill.serviceSlug}`}
+                    className="button button-secondary button-sm"
+                  >
+                    Modify Scope or Deployment
+                  </NavLink>
+                </div>
               </div>
               <div className="studio-selected-config-strip mt-12">
                 <div className="studio-selected-config-item">

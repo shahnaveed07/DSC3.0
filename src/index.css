@@ -4953,8 +4953,14 @@ a.footer-social-pill:hover {
 }
 
 .dashboard-order-item-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
   width: 100%;
   text-align: left;
+  white-space: normal;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
@@ -5016,4 +5022,13 @@ a.footer-social-pill:hover {
     margin-left: 0;
   }
 }
+
+.quotation-detail-panel {
+  padding: 18px;
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+
 

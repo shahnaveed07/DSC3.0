@@ -28,7 +28,7 @@ export function ServicesOverviewPage() {
           { label: 'Services' },
         ]}
         actions={[
-          { label: 'Request a Custom Quotation', to: '/contact', variant: 'primary' },
+          { label: 'Submit Project Requirements', to: '/services/request', variant: 'primary' },
           { label: 'Explore Our Products', to: '/products', variant: 'secondary' },
         ]}
       />
@@ -52,11 +52,11 @@ export function ServicesOverviewPage() {
             </p>
           </div>
           <div className="studio-quotation-banner-actions">
-            <NavLink to="/contact" className="button button-primary">
-              Submit Project Requirements
+            <NavLink to="/services/request" className="button button-primary" data-testid="overview-start-order-cta">
+              Start Service Order Request
             </NavLink>
-            <NavLink to="/products" className="button button-secondary">
-              Review Studio Portfolio
+            <NavLink to="/contact" className="button button-secondary">
+              General Inquiry
             </NavLink>
           </div>
         </div>

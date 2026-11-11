@@ -22,6 +22,12 @@ export {
   studioServiceCategories,
 } from './servicesData'
 
+export {
+  ORDER_LIFECYCLE_STATUSES,
+  SERVICE_PLATFORM_TARGETS,
+  buildServiceOrderUrl,
+} from '../utils/serviceOrders'
+
 
 export const primaryNavItems = [
   { label: 'Home', to: '/' },
@@ -84,6 +90,7 @@ export const pageLabels = [
   { label: 'Website Development', paths: ['/services/websites'] },
   { label: 'Android App Development', paths: ['/services/android-applications'] },
   { label: 'Game Development', paths: ['/services/game-development'] },
+  { label: 'Service Order Request', paths: ['/services/request', '/pages/service-order', '/pages/service-order.html'] },
   { label: 'Our Team', paths: ['/team'] },
   { label: 'About', paths: ['/about', '/pages/about', '/pages/about.html'] },
   { label: 'Contact', paths: ['/contact', '/pages/contact', '/pages/contact.html'] },

@@ -1,3 +1,8 @@
+import {
+  loadUserServiceOrders,
+  normalizeQuotationObject,
+} from './serviceOrders'
+
 export function formatDateTime(value) {
   if (!value) return 'Not available'
 
@@ -583,7 +588,7 @@ export function normalizeFreePanelResponse(payload) {
 /**
  * Normalizes the authenticated user's order payload from GET /api/auth/my-order
  * (supporting single order objects, { orders: [] } collections, or 404 empty states)
- * into a structured list of user orders and real summary statistics.
+ * alongside user-owned service orders into a structured list and real summary statistics.
  * Never returns dummy orders or fabricated counts.
  */
 export function normalizeUserOrdersPayload(data, session = null, isNoOrder = false) {
@@ -595,40 +600,49 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
     recentActivity: [],
   }
 
-  if (isNoOrder || !data || typeof data !== 'object') {
-    return emptySummary
-  }
-
   const sessionUsername = String(session?.username || '').trim().toLowerCase()
+  const storedServiceOrders = sessionUsername ? loadUserServiceOrders(sessionUsername) : []
 
   let rawList = []
-  if (Array.isArray(data)) {
-    rawList = data
-  } else if (Array.isArray(data.orders)) {
-    rawList = data.orders
-  } else if (Array.isArray(data.Orders)) {
-    rawList = data.Orders
-  } else {
-    const hasMeaningfulOrderField = Boolean(
-      data.status ||
-        data.Status ||
-        data.plan ||
-        data.Plan ||
-        data.serviceType ||
-        data.ServiceType ||
-        data.key ||
-        data.Key ||
-        data.orderId ||
-        data.OrderId ||
-        data.id ||
-        data.Id,
-    )
-    if (hasMeaningfulOrderField) {
-      rawList = [data]
+  if (!isNoOrder && data && typeof data === 'object') {
+    if (Array.isArray(data)) {
+      rawList = data
+    } else if (Array.isArray(data.orders)) {
+      rawList = data.orders
+    } else if (Array.isArray(data.Orders)) {
+      rawList = data.Orders
+    } else {
+      const hasMeaningfulOrderField = Boolean(
+        data.status ||
+          data.Status ||
+          data.plan ||
+          data.Plan ||
+          data.serviceType ||
+          data.ServiceType ||
+          data.projectTitle ||
+          data.ProjectTitle ||
+          data.key ||
+          data.Key ||
+          data.orderId ||
+          data.OrderId ||
+          data.id ||
+          data.Id,
+      )
+      if (hasMeaningfulOrderField) {
+        rawList = [data]
+      }
     }
   }
 
-  const normalizedOrders = rawList
+  // Merge remote orders with user-owned service orders without duplicates
+  const combinedRaw = [...storedServiceOrders, ...rawList]
+  if (combinedRaw.length === 0) {
+    return emptySummary
+  }
+
+  const seenReferences = new Set()
+
+  const normalizedOrders = combinedRaw
     .filter((item) => item && typeof item === 'object' && !Array.isArray(item))
     .filter((item) => {
       // Defense-in-depth ownership check: if an order record explicitly includes a username,
@@ -643,6 +657,8 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
       const rawId = resolveRecordField(item, [
         'orderReference',
         'OrderReference',
+        'reference',
+        'Reference',
         'orderId',
         'OrderId',
         'id',
@@ -660,6 +676,20 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
       ).trim()
       const serviceType =
         rawService || (rawPlan ? `${rawPlan.toUpperCase()} Software Plan` : 'DSC Software Order')
+
+      const projectTitle = String(
+        resolveRecordField(item, ['projectTitle', 'ProjectTitle', 'title', 'Title']) ||
+          serviceType,
+      ).trim()
+
+      const serviceSlug = String(
+        resolveRecordField(item, ['serviceSlug', 'ServiceSlug']) || '',
+      ).trim()
+
+      const targetPlatform = String(
+        resolveRecordField(item, ['targetPlatform', 'TargetPlatform', 'platform', 'Platform']) ||
+          '',
+      ).trim()
 
       const status = String(resolveRecordField(item, ['status', 'Status']) || 'Pending').trim()
       const submittedAt =
@@ -694,27 +724,36 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
       ).trim()
       const isKeyUsed = Boolean(item.isKeyUsed ?? item.IsKeyUsed)
 
+      const scopeTemplate = String(
+        resolveRecordField(item, ['scopeTemplate', 'ScopeTemplate', 'package', 'Package']) ||
+          (rawPlan ? `${rawPlan.toUpperCase()} Plan` : 'Custom Project Scope'),
+      ).trim()
+
+      const deploymentPreference = String(
+        resolveRecordField(item, ['deploymentPreference', 'DeploymentPreference']) ||
+          (rawService ? 'With Deployment' : ''),
+      ).trim()
+
+      const quotation = normalizeQuotationObject(
+        item.quotation ?? item.Quotation,
+        deploymentPreference || 'With Deployment',
+        scopeTemplate,
+      )
+
       const rawQuotationStatus = String(
         resolveRecordField(item, ['quotationStatus', 'QuotationStatus']) || '',
       ).trim()
       const quotationStatus =
         rawQuotationStatus ||
-        (rawService
-          ? status.toLowerCase() === 'approved' || status.toLowerCase() === 'completed'
-            ? 'Approved'
-            : 'Under Scope Review'
-          : key
-            ? 'Direct License Issued'
-            : 'Pending Verification')
-
-      const scopeTemplate = String(
-        resolveRecordField(item, ['scopeTemplate', 'ScopeTemplate', 'package', 'Package']) ||
-          (rawPlan ? `${rawPlan.toUpperCase()} Plan` : 'Custom Scope'),
-      ).trim()
-
-      const deploymentPreference = String(
-        resolveRecordField(item, ['deploymentPreference', 'DeploymentPreference']) || '',
-      ).trim()
+        (quotation.hasIssuedQuotation
+          ? quotation.customerResponseStatus
+          : rawService
+            ? status.toLowerCase() === 'approved' || status.toLowerCase() === 'completed'
+              ? 'Approved'
+              : 'Pending Scope Review'
+            : key
+              ? 'Direct License Issued'
+              : 'Pending Verification')
 
       const lowerStatus = status.toLowerCase()
       const isCompleted = lowerStatus === 'completed' || lowerStatus === 'approved'
@@ -722,24 +761,77 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
         lowerStatus === 'rejected' ||
         lowerStatus === 'cancelled' ||
         lowerStatus === 'canceled' ||
+        lowerStatus === 'cancelled / rejected' ||
         lowerStatus === 'quotation declined'
 
-      const notes = String(
-        resolveRecordField(item, ['notes', 'Notes', 'description', 'Description']) || '',
+      const projectDescription = String(
+        resolveRecordField(item, [
+          'projectDescription',
+          'ProjectDescription',
+          'description',
+          'Description',
+        ]) || '',
       ).trim()
+      const keyFeatures = String(
+        resolveRecordField(item, ['keyFeatures', 'KeyFeatures', 'features', 'Features']) || '',
+      ).trim()
+      const referenceLinks = String(
+        resolveRecordField(item, ['referenceLinks', 'ReferenceLinks']) || '',
+      ).trim()
+      const preferredTimeline = String(
+        resolveRecordField(item, ['preferredTimeline', 'PreferredTimeline', 'timeline']) || '',
+      ).trim()
+      const budgetExpectations = String(
+        resolveRecordField(item, ['budgetExpectations', 'BudgetExpectations']) || '',
+      ).trim()
+      const contactName = String(
+        resolveRecordField(item, ['contactName', 'ContactName']) || '',
+      ).trim()
+      const contactEmail = String(
+        resolveRecordField(item, ['contactEmail', 'ContactEmail']) || '',
+      ).trim()
+      const contactHandle = String(
+        resolveRecordField(item, ['contactHandle', 'ContactHandle', 'discordId', 'DiscordId']) ||
+          '',
+      ).trim()
+
+      const notes = String(
+        resolveRecordField(item, ['notes', 'Notes']) || projectDescription || '',
+      ).trim()
+
+      const isServiceOrder = Boolean(
+        item.isServiceOrder ||
+          rawService ||
+          item.projectDescription ||
+          item.keyFeatures ||
+          quotation.hasIssuedQuotation,
+      )
 
       return {
         id: String(rawId ?? reference),
         reference,
+        isServiceOrder,
+        projectTitle,
+        serviceSlug,
         serviceType,
-        plan: rawPlan || 'Standard',
+        plan: rawPlan || serviceType || 'Standard',
         scopeTemplate,
+        targetPlatform,
         deploymentPreference,
+        projectDescription,
+        keyFeatures,
+        referenceLinks,
+        preferredTimeline,
+        budgetExpectations,
+        contactName,
+        contactEmail,
+        contactHandle,
         submittedAt,
         submissionDate: submittedAt,
         status,
         currentStatus: status,
         quotationStatus,
+        quotation,
         lastUpdate,
         expiry,
         key,
@@ -748,6 +840,13 @@ export function normalizeUserOrdersPayload(data, session = null, isNoOrder = fal
         isRejected,
         notes,
       }
+    })
+    .filter((order) => {
+      if (seenReferences.has(order.reference)) {
+        return false
+      }
+      seenReferences.add(order.reference)
+      return true
     })
 
   let activeOrders = 0
