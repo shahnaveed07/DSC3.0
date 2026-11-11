@@ -25,7 +25,7 @@ The endpoints below are verified against the existing `dscauth` production backe
 | `POST` | `/api/auth/login` | None | `{ username, password, HWID: "WEB-CLIENT" }` | `{ token, plan, expiry, mustChangePassword }` |
 | `GET` | `/api/auth/my-order` | `Bearer <userJwt>` | None | `{ status, plan, key, expiry, isKeyUsed }` or `404` when no software order exists |
 | `POST` | `/api/auth/change-password` | `Bearer <userJwt>` | `{ currentPassword, newPassword }` | `{ message }` |
-| `POST` | `/api/auth/checkout` | None | `{ username, discordId, plan, days, amount, utr, screenshotBase64 }` | `{ message, orderId? }` |
+| `POST` | `/api/auth/checkout` | None | `{ Username, Password, PasswordHash, DiscordId, Plan, Days, Amount, TxnId, utr, PaymentProofBase64, screenshotBase64 }` | `{ message, orderId? }` (Note: Legacy C# `Order` entity binds `PasswordHash` from the client's chosen account password, `TxnId` from the user-entered UPI UTR or `"SS_PROOF_ONLY"` when verified via screenshot alone, and `PaymentProofBase64` as a `data:image/...;base64,...` Data URL; `Password`, `utr`, and `screenshotBase64` aliases are sent in lockstep for contract compatibility.) |
 | `GET` | `/api/auth/download` | `Bearer <userJwt>` | `?plan=<free\|streamer\|sniper\|special\|aimbot\|premium\|customised>` | `{ url }` (Note: frontend maps `aimassist` → `aimbot`) |
 
 ---

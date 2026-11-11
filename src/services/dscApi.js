@@ -17,40 +17,133 @@ export function buildUrl(path) {
 export class ApiError extends Error {
   constructor(message, details = {}) {
     super(message)
-    this.name = 'ApiError'
+    this.name = details.isAborted ? 'AbortError' : 'ApiError'
     this.status = details.status ?? 0
     this.payload = details.payload ?? null
     this.isNetworkError = Boolean(details.isNetworkError)
     this.isCorsError = Boolean(details.isCorsError)
+    this.isAborted = Boolean(details.isAborted)
   }
 }
 
+export function isAbortError(error) {
+  return Boolean(
+    error &&
+      (error.name === 'AbortError' ||
+        error.isAborted === true ||
+        error.code === 'ABORT_ERR' ||
+        error.code === 20),
+  )
+}
+
+function isJsonMimeType(contentType = '') {
+  const normalized = String(contentType || '').toLowerCase()
+  return (
+    normalized.includes('application/json') ||
+    normalized.includes('application/problem+json') ||
+    /\bapplication\/(?:[\w.+-]+\+)?json\b/i.test(normalized)
+  )
+}
+
 async function readPayload(response) {
-  const contentType = String(response.headers?.get('content-type') || '').toLowerCase()
-  if (contentType.includes('application/json')) {
-    try {
-      return await response.json()
-    } catch {
-      return {}
+  if (!response || response.status === 204 || response.status === 205) {
+    return null
+  }
+
+  const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase()
+  const isJson = isJsonMimeType(contentType)
+
+  if (isJson) {
+    if (typeof response.json === 'function') {
+      try {
+        const parsed = await response.json()
+        return parsed ?? null
+      } catch {
+        if (typeof response.text === 'function') {
+          try {
+            const rawFallback = await response.text()
+            if (!rawFallback || !rawFallback.trim()) return null
+          } catch {
+            // Stream already consumed or empty
+          }
+        }
+        return null
+      }
     }
   }
 
-  try {
-    return await response.text()
-  } catch {
-    return ''
+  if (typeof response.text === 'function') {
+    try {
+      const rawText = await response.text()
+      if (!rawText || !rawText.trim()) {
+        return isJson ? null : ''
+      }
+      if (isJson) {
+        try {
+          return JSON.parse(rawText)
+        } catch {
+          return null
+        }
+      }
+      return rawText
+    } catch {
+      return isJson ? null : ''
+    }
   }
+
+  if (typeof response.json === 'function') {
+    try {
+      return await response.json()
+    } catch {
+      return null
+    }
+  }
+
+  return ''
+}
+
+function isUnsafeOrHtmlMessage(text) {
+  const candidate = String(text || '').trim()
+  if (!candidate) return true
+
+  // Guard against HTML gateway error pages (502/503/504, Cloudflare, nginx, full HTML docs)
+  if (
+    /^<!doctype\b/i.test(candidate) ||
+    /<(html|head|body|title|h1|h2|div|p|center|hr|table|script|style)\b/i.test(candidate) ||
+    /\b(502 Bad Gateway|503 Service Temporarily Unavailable|504 Gateway Time-out)\b/i.test(candidate)
+  ) {
+    return true
+  }
+
+  // Guard against raw backend stack traces or internal exception dumps
+  if (
+    /Exception\s*:|NullReferenceException|SqlException|NpgsqlException|DbUpdateException|Stack Trace:|\bat\s+[A-Za-z0-9_.]+\.[A-Za-z0-9_<>]+\(|System\.[A-Za-z0-9_.]+Exception|Microsoft\.AspNetCore|Microsoft\.EntityFrameworkCore/i.test(
+      candidate,
+    )
+  ) {
+    return true
+  }
+
+  return false
 }
 
 export function extractApiMessage(payload, fallbackMessage = 'An unexpected error occurred.') {
   if (!payload) return fallbackMessage
 
-  // ASP.NET Core 8 ValidationProblemDetails / ProblemDetails dictionary
+  // ASP.NET Core 8 ValidationProblemDetails / ProblemDetails dictionary or array
   // e.g. { errors: { Username: ["Username is required"], Password: ["Password is required"] } }
-  if (payload && typeof payload === 'object' && payload.errors && typeof payload.errors === 'object') {
-    const errorStrings = Object.values(payload.errors)
+  if (payload && typeof payload === 'object' && payload.errors) {
+    const rawErrors = Array.isArray(payload.errors)
+      ? payload.errors
+      : typeof payload.errors === 'object'
+        ? Object.values(payload.errors)
+        : []
+
+    const errorStrings = rawErrors
       .flat()
-      .filter((msg) => typeof msg === 'string' && msg.trim())
+      .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+      .filter((msg) => msg && !isUnsafeOrHtmlMessage(msg))
+
     if (errorStrings.length > 0) {
       return errorStrings.join(' ')
     }
@@ -58,28 +151,18 @@ export function extractApiMessage(payload, fallbackMessage = 'An unexpected erro
 
   let candidate = ''
   if (typeof payload === 'string') {
-    candidate = payload
+    candidate = payload.trim()
   } else if (payload && typeof payload === 'object') {
-    if (typeof payload.message === 'string') {
-      candidate = payload.message
-    } else if (typeof payload.detail === 'string') {
-      candidate = payload.detail
-    } else if (typeof payload.error === 'string') {
-      candidate = payload.error
-    } else if (typeof payload.title === 'string') {
-      candidate = payload.title
+    const fields = [payload.message, payload.detail, payload.error, payload.title]
+    for (const field of fields) {
+      if (typeof field === 'string' && field.trim()) {
+        candidate = field.trim()
+        break
+      }
     }
   }
 
-  candidate = candidate.trim()
-
-  // Guard: Never expose raw HTML error pages (e.g. cloud gateway 502s) or backend stack traces
-  if (
-    !candidate ||
-    candidate.startsWith('<!DOCTYPE') ||
-    candidate.startsWith('<html') ||
-    /Exception:|Stack Trace:|SqlException|at System\.|Microsoft\.AspNetCore/i.test(candidate)
-  ) {
+  if (isUnsafeOrHtmlMessage(candidate)) {
     return fallbackMessage
   }
 
@@ -96,7 +179,7 @@ async function request(path, options = {}) {
   } = options
 
   const mergedHeaders = {
-    Accept: 'application/json',
+    Accept: 'application/json, application/problem+json',
     ...authHeader(token),
     ...headers,
   }
@@ -117,10 +200,12 @@ async function request(path, options = {}) {
   try {
     response = await fetch(buildUrl(path), requestInit)
   } catch (networkOrCorsError) {
-    if (networkOrCorsError?.name === 'AbortError') {
-      throw new ApiError('The request timed out. Please try again.', {
-        status: 408,
+    if (isAbortError(networkOrCorsError) || signal?.aborted) {
+      throw new ApiError('The request was cancelled.', {
+        status: 499,
         payload: null,
+        isAborted: true,
+        isNetworkError: false,
       })
     }
 
@@ -189,8 +274,8 @@ export function getFreePanelStatus(signal) {
   return request('/api/public/free-panel', { signal })
 }
 
-export function pingBackend() {
-  return request('/api/public/free-panel').catch(() => {})
+export function pingBackend(signal) {
+  return request('/api/admin/system-status', { signal }).catch(() => null)
 }
 
 export function loginUser(credentials) {
@@ -309,10 +394,48 @@ export function changePassword(token, currentPassword, newPassword) {
   })
 }
 
+/**
+ * Builds a normalized checkout request payload that satisfies both the legacy
+ * C# backend DTO (`Username`, `PasswordHash`, `DiscordId`, `Plan`, `Days`, `Amount`, `TxnId`, `PaymentProofBase64`)
+ * and documented camelCase aliases (`Password`, `utr`, `screenshotBase64`).
+ */
+export function buildCheckoutPayload(order = {}) {
+  const username = String(order.username ?? order.Username ?? '').trim().toLowerCase()
+  const password = String(order.password ?? order.Password ?? order.PasswordHash ?? '')
+  const discordId = String(order.discordId ?? order.DiscordId ?? '').trim() || 'None'
+  const rawPlan = String(order.plan ?? order.Plan ?? '').trim().toLowerCase()
+  const plan = rawPlan === 'aimassist' ? 'aimbot' : rawPlan
+  const days = Number(order.days ?? order.Days) || 30
+  const amount = String(order.amount ?? order.Amount ?? '').trim()
+  const rawTxnId = String(order.txnId ?? order.TxnId ?? order.utr ?? order.UTR ?? '').trim()
+  const resolvedTxnId = rawTxnId || 'SS_PROOF_ONLY'
+  const proofBase64 = String(
+    order.paymentProofBase64 ?? order.PaymentProofBase64 ?? order.screenshotBase64 ?? '',
+  ).trim()
+
+  return {
+    Username: username,
+    Password: password,
+    PasswordHash: password,
+    DiscordId: discordId,
+    Plan: plan,
+    Days: days,
+    Amount: amount,
+    TxnId: resolvedTxnId,
+    utr: resolvedTxnId,
+    PaymentProofBase64: proofBase64,
+    screenshotBase64: proofBase64,
+  }
+}
+
 export function submitCheckout(order) {
+  const payload =
+    order && typeof order === 'object' && ('Username' in order || 'username' in order)
+      ? buildCheckoutPayload(order)
+      : order
   return request('/api/auth/checkout', {
     method: 'POST',
-    body: order,
+    body: payload,
   })
 }
 

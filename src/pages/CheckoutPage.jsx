@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useNavigate, useSearchParams } from 'react-router-dom'
-import { extractApiMessage, submitCheckout } from '../services/dscApi'
+import { buildCheckoutPayload, extractApiMessage, submitCheckout } from '../services/dscApi'
 import { FullScreenLoader } from '../components/ui/FullScreenLoader'
 import { PasswordInput } from '../components/ui/PasswordInput'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { SEO_ROUTES } from '../content/seoConfig'
-
 
 const BASE_PRICES = {
   free: 0,
@@ -30,6 +29,34 @@ const DURATION_MULTIPLIERS = {
 
 const USD_TO_INR = 90
 const ALLOWED_PROOF_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
+const MAX_PROOF_BYTES = 5 * 1024 * 1024
+const TXN_ID_PATTERN = /^[A-Za-z0-9_-]{6,36}$/
+
+function isAllowedProofFile(file) {
+  if (!file) return false
+  const mime = String(file.type || '').toLowerCase()
+  if (ALLOWED_PROOF_TYPES.includes(mime)) return true
+  const name = String(file.name || '').toLowerCase()
+  return /\.(png|jpe?g)$/i.test(name)
+}
+
+function encodeFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const result = String(event.target?.result || '')
+      if (!result.startsWith('data:image/')) {
+        reject(new Error('Failed to encode payment screenshot as an image Data URL.'))
+        return
+      }
+      resolve(result)
+    }
+    reader.onerror = () => {
+      reject(new Error('Unable to read the selected screenshot file. Please try another image.'))
+    }
+    reader.readAsDataURL(file)
+  })
+}
 
 export function CheckoutPage() {
   const [searchParams] = useSearchParams()
@@ -47,16 +74,19 @@ export function CheckoutPage() {
   const [proofFile, setProofFile] = useState(null)
   const [previewSrc, setPreviewSrc] = useState('')
   const [qrLoading, setQrLoading] = useState(true)
+  const [qrError, setQrError] = useState(false)
+  const [qrRetryCount, setQrRetryCount] = useState(0)
   const [form, setForm] = useState({
     username: '',
     password: '',
     discordId: '',
+    txnId: '',
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const isValidPanel = panel && BASE_PRICES[panel] !== undefined
+  const isValidPanel = Boolean(panel && BASE_PRICES[panel] !== undefined)
   const basePriceUSD = isValidPanel ? BASE_PRICES[panel] : 0
   const durationConfig = DURATION_MULTIPLIERS[days] || { multiplier: 1, label: `${days} Days` }
   const totalUsd = basePriceUSD * durationConfig.multiplier
@@ -70,43 +100,68 @@ export function CheckoutPage() {
   }, [panel, totalInr])
 
   const qrCodeUrl = useMemo(() => {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`
+    const base = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`
+    return qrRetryCount > 0 ? `${base}&retry=${qrRetryCount}` : base
+  }, [upiUrl, qrRetryCount])
+
+  useEffect(() => {
+    setQrLoading(true)
+    setQrError(false)
   }, [upiUrl])
+
+  function handleRetryQr() {
+    setQrError(false)
+    setQrLoading(true)
+    setQrRetryCount((count) => count + 1)
+  }
 
   function handleFileChange(event) {
     const file = event.target.files?.[0] || null
-    if (file) {
-      if (!ALLOWED_PROOF_TYPES.includes(file.type.toLowerCase())) {
-        setError('Please upload a valid image file (PNG, JPG, JPEG).')
-        setProofFile(null)
-        setPreviewSrc('')
-        return
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image is too large! Max allowed size is 5MB.')
-        setProofFile(null)
-        setPreviewSrc('')
-        return
-      }
-      setError('')
-      setProofFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => setPreviewSrc(e.target?.result || '')
-      reader.readAsDataURL(file)
-    } else {
+    if (!file) {
       setProofFile(null)
       setPreviewSrc('')
+      return
     }
+
+    if (!isAllowedProofFile(file)) {
+      setError('Please upload a valid image file (PNG, JPG, JPEG).')
+      setProofFile(null)
+      setPreviewSrc('')
+      return
+    }
+
+    if (file.size > MAX_PROOF_BYTES) {
+      setError('Image is too large! Max allowed size is 5MB.')
+      setProofFile(null)
+      setPreviewSrc('')
+      return
+    }
+
+    setError('')
+    setProofFile(file)
+    encodeFileAsDataUrl(file)
+      .then((dataUrl) => {
+        setPreviewSrc(dataUrl)
+      })
+      .catch((readErr) => {
+        setError(readErr.message || 'Unable to read screenshot file.')
+        setProofFile(null)
+        setPreviewSrc('')
+      })
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
+    if (loading || success) return
+
     setError('')
     setSuccess('')
 
     const username = form.username.trim().toLowerCase()
     const password = form.password
     const discordId = form.discordId.trim() || 'None'
+    const rawTxnInput = form.txnId
+    const trimmedTxnId = rawTxnInput.trim()
 
     if (!username || !password) {
       setError('Username and password are required.')
@@ -119,8 +174,23 @@ export function CheckoutPage() {
     }
 
     if (days < 3) {
-      setError('1-day trials are provided via the live Free Panel or community testing. Paid orders require a minimum of 3 days.')
+      setError(
+        '1-day trials are provided via the live Free Panel or community testing. Paid orders require a minimum of 3 days.',
+      )
       return
+    }
+
+    if (requiresProof && rawTxnInput.length > 0) {
+      if (
+        !trimmedTxnId ||
+        trimmedTxnId.toUpperCase() === 'SS_PROOF_ONLY' ||
+        !TXN_ID_PATTERN.test(trimmedTxnId)
+      ) {
+        setError(
+          'Transaction ID / UTR must be 6 to 36 alphanumeric characters (or leave blank to verify via screenshot only).',
+        )
+        return
+      }
     }
 
     let base64String = ''
@@ -129,23 +199,31 @@ export function CheckoutPage() {
         setError('Screenshot proof is required.')
         return
       }
-      base64String = previewSrc
+      try {
+        base64String = previewSrc || (await encodeFileAsDataUrl(proofFile))
+        if (!previewSrc && base64String) {
+          setPreviewSrc(base64String)
+        }
+      } catch (readErr) {
+        setError(readErr.message || 'Unable to process payment proof screenshot.')
+        return
+      }
     }
 
     setLoading(true)
 
     try {
       const normalizedPlan = panel === 'aimassist' ? 'aimbot' : panel
-      const orderData = {
-        Username: username,
-        PasswordHash: password,
-        DiscordId: discordId,
-        Plan: normalizedPlan,
-        Days: days,
-        Amount: priceDisplayText,
-        TxnId: 'SS_PROOF_ONLY',
-        PaymentProofBase64: base64String,
-      }
+      const orderData = buildCheckoutPayload({
+        username,
+        password,
+        discordId,
+        plan: normalizedPlan,
+        days,
+        amount: priceDisplayText,
+        txnId: trimmedTxnId || 'SS_PROOF_ONLY',
+        paymentProofBase64: base64String,
+      })
 
       await submitCheckout(orderData)
       setSuccess('Order placed successfully. Track it from the login dashboard.')
@@ -201,7 +279,7 @@ export function CheckoutPage() {
           Selected: <strong id="displayPanelName" className="text-primary">{panel.toUpperCase()} PANEL</strong>
         </p>
 
-        <form id="checkoutForm" onSubmit={handleSubmit}>
+        <form id="checkoutForm" onSubmit={handleSubmit} noValidate>
           <div className="checkout-grid mt-20">
             {/* Left Column: Plan, Duration, Pricing & Payment Info */}
             <div className="checkout-col">
@@ -249,18 +327,41 @@ export function CheckoutPage() {
                   </a>
 
                   <div className="payment-qr-container">
-                    {qrLoading ? (
+                    {qrLoading && !qrError ? (
                       <div id="qrLoading" className="qr-placeholder">
                         <span className="text-xs text-muted">Generating QR...</span>
                       </div>
                     ) : null}
+
+                    {qrError ? (
+                      <div id="qrErrorBox" className="qr-error-box" role="alert">
+                        <p className="text-xs text-danger m-0">
+                          Unable to load the UPI QR code image. You can still pay via the UPI button above or retry loading the QR code.
+                        </p>
+                        <button
+                          type="button"
+                          className="button button-secondary button-sm mt-10"
+                          onClick={handleRetryQr}
+                        >
+                          Retry QR Code
+                        </button>
+                      </div>
+                    ) : null}
+
                     <img
                       id="qrImage"
                       alt="UPI QR Code"
                       src={qrCodeUrl}
-                      onLoad={() => setQrLoading(false)}
-                      className={`qr-image ${qrLoading ? 'hidden' : ''}`}
-                      style={{ display: qrLoading ? 'none' : 'block' }}
+                      onLoad={() => {
+                        setQrLoading(false)
+                        setQrError(false)
+                      }}
+                      onError={() => {
+                        setQrLoading(false)
+                        setQrError(true)
+                      }}
+                      className={`qr-image ${qrLoading || qrError ? 'hidden' : ''}`}
+                      style={{ display: qrLoading || qrError ? 'none' : 'block' }}
                     />
                   </div>
                 </div>
@@ -309,39 +410,53 @@ export function CheckoutPage() {
                 </label>
 
                 {requiresProof ? (
-                  <div id="paymentProofGroup" className="mt-16">
-                    <label className="field" htmlFor="paymentProofImg">
-                      <span className="micro-label">UPLOAD PAYMENT PROOF SCREENSHOT</span>
+                  <>
+                    <label className="field" htmlFor="paymentTxnId">
+                      <span className="micro-label">UPI TRANSACTION ID / UTR (OPTIONAL WITH SCREENSHOT)</span>
                       <input
-                        id="paymentProofImg"
-                        type="file"
-                        className="custom-file-input"
-                        accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                        onChange={handleFileChange}
+                        id="paymentTxnId"
+                        type="text"
+                        placeholder="e.g. 12-digit UPI UTR reference"
+                        value={form.txnId}
+                        onChange={(e) => setForm((c) => ({ ...c, txnId: e.target.value }))}
+                        autoComplete="off"
                       />
                     </label>
 
-                    {previewSrc ? (
-                      <div id="imagePreviewBox" className="image-preview-container">
-                        <img
-                          id="imagePreview"
-                          alt="Screenshot Preview"
-                          src={previewSrc}
+                    <div id="paymentProofGroup" className="mt-16">
+                      <label className="field" htmlFor="paymentProofImg">
+                        <span className="micro-label">UPLOAD PAYMENT PROOF SCREENSHOT</span>
+                        <input
+                          id="paymentProofImg"
+                          type="file"
+                          className="custom-file-input"
+                          accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                          onChange={handleFileChange}
                         />
-                      </div>
-                    ) : null}
-                  </div>
+                      </label>
+
+                      {previewSrc ? (
+                        <div id="imagePreviewBox" className="image-preview-container">
+                          <img
+                            id="imagePreview"
+                            alt="Screenshot Preview"
+                            src={previewSrc}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
                 ) : null}
               </div>
 
               {error ? (
-                <div className="form-error">
+                <div className="form-error" role="alert">
                   {error}
                 </div>
               ) : null}
 
               {success ? (
-                <div className="form-success">
+                <div className="form-success" role="status">
                   {success}
                 </div>
               ) : null}
@@ -349,7 +464,7 @@ export function CheckoutPage() {
               <button
                 type="submit"
                 className={`button button-primary button-lg w-100 ${loading ? 'is-loading' : ''}`}
-                disabled={loading}
+                disabled={loading || Boolean(success)}
               >
                 {loading ? (
                   <span className="button-loading-content">

@@ -1,9 +1,8 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SiteLayout } from './components/layout/SiteLayout'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
-import { useRemoteResource } from './hooks/useRemoteResource'
-import { checkOwnerAccess, getSystemStatus, isAuthError, pingBackend } from './services/dscApi'
+import { checkOwnerAccess, getSystemStatus, isAbortError, isAuthError } from './services/dscApi'
 import { clearStoredSession, loadStoredSession, touchStoredSession } from './utils/auth'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -39,6 +38,8 @@ const UserDashboardPage = lazy(() => import('./pages/UserDashboardPage').then((m
 const UserLoginPage = lazy(() => import('./pages/UserLoginPage').then((m) => ({ default: m.UserLoginPage })))
 const UserRegisterPage = lazy(() => import('./pages/UserRegisterPage').then((m) => ({ default: m.UserRegisterPage })))
 const WebsitesPage = lazy(() => import('./pages/WebsitesPage').then((m) => ({ default: m.WebsitesPage })))
+
+const STATUS_POLL_INTERVAL_MS = 2 * 60 * 1000
 
 function RouteLoadingFallback() {
   return (
@@ -90,8 +91,16 @@ function OwnerGate({ session, onSessionInvalid, children }) {
   const [ownerState, setOwnerState] = useState('checking')
 
   useEffect(() => {
+    const token = session?.role === 'Admin' ? session?.token : null
+    if (!token) {
+      setOwnerState('denied')
+      return undefined
+    }
+
     let active = true
-    checkOwnerAccess(session?.token)
+    setOwnerState('checking')
+
+    checkOwnerAccess(token)
       .then((isOwner) => {
         if (active) setOwnerState(isOwner ? 'owner' : 'denied')
       })
@@ -106,7 +115,7 @@ function OwnerGate({ session, onSessionInvalid, children }) {
     return () => {
       active = false
     }
-  }, [session?.token, onSessionInvalid])
+  }, [session?.role, session?.token, onSessionInvalid])
 
   if (ownerState === 'checking') {
     return (
@@ -132,21 +141,60 @@ function OwnerGate({ session, onSessionInvalid, children }) {
 export default function App() {
   const [session, setSession] = useState(() => loadStoredSession())
   const [statusRevision, setStatusRevision] = useState(0)
-
-  const { data: systemStatus } = useRemoteResource(
-    getSystemStatus,
-    [statusRevision],
-  )
+  const [systemStatus, setSystemStatus] = useState(null)
+  const [systemStatusState, setSystemStatusState] = useState('loading')
+  const [statusLastCheckedAt, setStatusLastCheckedAt] = useState(null)
 
   useEffect(() => {
-    // Keep backend alive on Render every 2 minutes while page is active
+    const controller = new AbortController()
+    let active = true
+
+    setSystemStatusState((prev) => (prev === 'available' ? 'available' : 'loading'))
+
+    Promise.resolve(getSystemStatus(controller.signal))
+      .then((result) => {
+        if (!active) return
+        if (result && typeof result === 'object') {
+          setSystemStatus(result)
+          setSystemStatusState('available')
+        } else {
+          setSystemStatusState('unavailable')
+        }
+        setStatusLastCheckedAt(new Date().toISOString())
+      })
+      .catch((err) => {
+        if (!active || isAbortError(err)) return
+        // Do not falsely report the entire website as in maintenance or offline on backend failure
+        setSystemStatusState('unavailable')
+        setStatusLastCheckedAt(new Date().toISOString())
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [statusRevision])
+
+  useEffect(() => {
+    // Poll system status at a 2-minute interval while the tab is visible
     // Note: Background API polling intentionally does NOT refresh user session activity.
     const timer = setInterval(() => {
       if (!document.hidden) {
-        pingBackend()
+        setStatusRevision((v) => v + 1)
       }
-    }, 2 * 60 * 1000)
-    return () => clearInterval(timer)
+    }, STATUS_POLL_INTERVAL_MS)
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        setStatusRevision((v) => v + 1)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -179,9 +227,9 @@ export default function App() {
     }
   }, [session?.token])
 
-  function handleRetryStatus() {
+  const handleRetryStatus = useCallback(() => {
     setStatusRevision((v) => v + 1)
-  }
+  }, [])
 
   function handleSessionChange(nextSession) {
     setSession(nextSession)
@@ -197,7 +245,17 @@ export default function App() {
       <MaintenanceGate onRetry={handleRetryStatus} systemStatus={systemStatus}>
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
-            <Route path="/pages/status" element={<StatusPage />} />
+            <Route
+              path="/pages/status"
+              element={
+                <StatusPage
+                  lastCheckedAt={statusLastCheckedAt}
+                  onRetry={handleRetryStatus}
+                  systemStatus={systemStatus}
+                  systemStatusState={systemStatusState}
+                />
+              }
+            />
             <Route path="/pages/status.html" element={<Navigate replace to="/pages/status" />} />
 
             <Route

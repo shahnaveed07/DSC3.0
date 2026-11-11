@@ -21,26 +21,26 @@ describe('Component Render Tests', () => {
     expect(screen.getByRole('link', { name: /Return Home/i })).toBeTruthy()
   })
 
-  it('renders StatusPage default notice when no query param is present', () => {
+  it('renders StatusPage live telemetry check state when no query param is present', () => {
     render(
       <MemoryRouter initialEntries={['/pages/status']}>
         <StatusPage />
       </MemoryRouter>
     )
 
-    expect(screen.getByText(/We are Working on New Updates/i)).toBeTruthy()
-    expect(screen.getByText(/Notice/i)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Try Again/i })).toBeTruthy()
+    expect(screen.getByTestId('overall-status-badge')).toBeTruthy()
+    expect(screen.getByText(/Core System & Authentication API/i)).toBeTruthy()
+    expect(screen.getByRole('button', { name: /(Checking Status|Retry Status Check)/i })).toBeTruthy()
   })
 
-  it('renders StatusPage maintenance state when ?type=maintenance is supplied', () => {
+  it('renders StatusPage maintenance context notice when ?type=maintenance is supplied', () => {
     render(
       <MemoryRouter initialEntries={['/pages/status?type=maintenance']}>
         <StatusPage />
       </MemoryRouter>
     )
 
-    expect(screen.getByText(/System Maintenance/i)).toBeTruthy()
+    expect(screen.getByText(/System Maintenance:/i)).toBeTruthy()
     expect(screen.getByText(/We'll be back shortly/i)).toBeTruthy()
   })
 

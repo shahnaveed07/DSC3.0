@@ -195,4 +195,104 @@ describe('API Service Contracts & HTTP 401 / 403 Semantics', () => {
       status: 401,
     })
   })
+
+  it('parses application/problem+json responses, handles empty 204/empty bodies, and sanitizes HTML gateway errors', async () => {
+    const { getSystemStatus, loginUser } = await import('../services/dscApi')
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+    // 1. application/problem+json with ProblemDetails detail & errors
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
+          title: 'Bad Request',
+          status: 400,
+          detail: 'Username contains unsupported characters.',
+        }),
+        {
+          status: 400,
+          headers: { 'content-type': 'application/problem+json; charset=utf-8' },
+        },
+      ),
+    )
+
+    await expect(loginUser({ username: 'bad!user', password: 'password123' })).rejects.toMatchObject({
+      status: 400,
+      message: 'Username contains unsupported characters.',
+    })
+
+    // 2. HTML 502 Bad Gateway response on a 400/502 error is sanitized
+    fetchSpy.mockResolvedValueOnce(
+      new Response('<!DOCTYPE html><html><head><title>502 Bad Gateway</title></head><body><h1>502 Bad Gateway</h1></body></html>', {
+        status: 502,
+        headers: { 'content-type': 'text/html' },
+      }),
+    )
+
+    await expect(getSystemStatus()).rejects.toMatchObject({
+      status: 502,
+      message: 'The server encountered an internal error. Please try again shortly.',
+    })
+
+    // 3. Empty 204 No Content response resolves cleanly to null without throwing JSON SyntaxError
+    fetchSpy.mockResolvedValueOnce(
+      new Response(null, {
+        status: 204,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+
+    await expect(getSystemStatus()).resolves.toBeNull()
+  })
+
+  it('marks aborted requests with isAborted=true and isAbortError=true, distinct from network failures', async () => {
+    const { getSystemStatus, isAbortError } = await import('../services/dscApi')
+    const abortErr = new DOMException('The operation was aborted.', 'AbortError')
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(abortErr)
+
+    const controller = new AbortController()
+    controller.abort()
+
+    let caughtError = null
+    try {
+      await getSystemStatus(controller.signal)
+    } catch (err) {
+      caughtError = err
+    }
+
+    expect(caughtError).toBeInstanceOf(ApiError)
+    expect(isAbortError(caughtError)).toBe(true)
+    expect(caughtError.isAborted).toBe(true)
+    expect(caughtError.isNetworkError).toBe(false)
+    expect(caughtError.name).toBe('AbortError')
+  })
+
+  it('normalizes checkout DTO fields and aimassist -> aimbot via buildCheckoutPayload', async () => {
+    const { buildCheckoutPayload } = await import('../services/dscApi')
+
+    const payload = buildCheckoutPayload({
+      username: '  ProGamer99 ',
+      password: 'MySecretPassword',
+      discordId: '  progamer#1234 ',
+      plan: 'aimassist',
+      days: 30,
+      amount: 'USD 4 (360 INR)',
+      txnId: '412398765432',
+      paymentProofBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==',
+    })
+
+    expect(payload).toEqual({
+      Username: 'progamer99',
+      Password: 'MySecretPassword',
+      PasswordHash: 'MySecretPassword',
+      DiscordId: 'progamer#1234',
+      Plan: 'aimbot',
+      Days: 30,
+      Amount: 'USD 4 (360 INR)',
+      TxnId: '412398765432',
+      utr: '412398765432',
+      PaymentProofBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==',
+      screenshotBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==',
+    })
+  })
 })

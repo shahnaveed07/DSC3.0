@@ -16,26 +16,41 @@ export function SiteHeader({ session, systemStatus, onLogout, compact = false, w
   const [menuOpen, setMenuOpen] = useState(false)
   const [desktopDropdown, setDesktopDropdown] = useState(null)
   const [openSubmenus, setOpenSubmenus] = useState({ Products: true, Services: true })
-  const [verifiedOwner, setVerifiedOwner] = useState(false)
+  const [verifiedOwnerToken, setVerifiedOwnerToken] = useState(null)
 
-  const isOwner = Boolean(session?.isOwner || verifiedOwner)
+  const isOwner = Boolean(
+    session?.role === 'Admin' &&
+      session?.token &&
+      (session.isOwner || verifiedOwnerToken === session.token),
+  )
 
-  // Check and keep owner permission updated for admin sessions
+  // Check and keep owner permission updated for admin sessions; reset immediately on logout/role/token change
   useEffect(() => {
-    let active = true
-    if (session?.role === 'Admin' && session?.token && !session?.isOwner) {
-      checkOwnerAccess(session.token)
-        .then((ownerRes) => {
-          if (active) setVerifiedOwner(Boolean(ownerRes))
-        })
-        .catch(() => {
-          if (active) setVerifiedOwner(false)
-        })
+    const token = session?.role === 'Admin' ? session?.token : null
+    if (!token || session?.isOwner) {
+      setVerifiedOwnerToken(null)
+      return undefined
     }
+
+    let active = true
+    setVerifiedOwnerToken(null)
+
+    checkOwnerAccess(token)
+      .then((ownerRes) => {
+        if (active) {
+          setVerifiedOwnerToken(ownerRes ? token : null)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setVerifiedOwnerToken(null)
+        }
+      })
+
     return () => {
       active = false
     }
-  }, [session])
+  }, [session?.role, session?.token, session?.isOwner])
 
   const normalizedPath = useMemo(() => {
     const raw = location.pathname.toLowerCase().replace(/\.html$/i, '').replace(/\/+$/, '')

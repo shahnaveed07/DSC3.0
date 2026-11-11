@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { isAbortError } from '../services/dscApi'
 
 export function useRemoteResource(loader, deps = [], options = {}) {
   const { enabled = true, initialData = null } = options
@@ -29,7 +30,7 @@ export function useRemoteResource(loader, deps = [], options = {}) {
         setError(null)
       })
       .catch((nextError) => {
-        if (!active || nextError?.name === 'AbortError') return
+        if (!active || isAbortError(nextError)) return
         setData(initialDataRef.current)
         setError(nextError)
       })
