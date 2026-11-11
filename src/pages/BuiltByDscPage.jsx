@@ -1,137 +1,97 @@
 import { useState } from 'react'
-import { usePageMeta } from '../hooks/usePageMeta'
-import { SEO_ROUTES } from '../content/seoConfig'
 import {
   PORTFOLIO_CATEGORIES,
   PORTFOLIO_TYPE_FILTERS,
   getProjectsByCategory,
-} from '../content/projectsData'
+} from '../content/siteContent'
+import { SEO_ROUTES } from '../content/seoConfig'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import { ProjectCard } from '../components/ui/ProjectCard'
 import {
-  ProjectCard,
   StudioCtaBanner,
-  StudioEmptyState,
-  StudioPageContainer,
+  StudioEmptyStateCard,
   StudioPageHeader,
-  StudioSectionHeader,
 } from '../components/ui/StudioComponents'
 
 export function BuiltByDscPage() {
-  usePageMeta(SEO_ROUTES.builtByDsc)
-  const [selectedFilter, setSelectedFilter] = useState('all')
+  usePageMetadata(SEO_ROUTES.builtByDsc)
+  const [activeFilter, setActiveFilter] = useState('all')
 
-  const matchingProjects = getProjectsByCategory(
-    PORTFOLIO_CATEGORIES.BUILT_BY_DSC,
-    selectedFilter,
-  )
+  const filteredProjects = getProjectsByCategory(PORTFOLIO_CATEGORIES.BUILT_BY_DSC, activeFilter)
   const activeFilterObj =
-    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === selectedFilter) || PORTFOLIO_TYPE_FILTERS[0]
+    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === activeFilter) || PORTFOLIO_TYPE_FILTERS[0]
 
   return (
-    <StudioPageContainer>
+    <div className="page-stack">
       <StudioPageHeader
-        eyebrow="Products · Classification C"
+        eyebrow="PRODUCTS · BUILT BY DSC"
         title="Built by DSC"
-        description="Websites, Android applications, and games developed by Dark Skull Corporation for clients, partner organizations, and commissioned projects."
-        breadcrumbs={[
-          { label: 'Home', to: '/' },
-          { label: 'Products', to: '/products' },
-          { label: 'Built by DSC' },
-        ]}
+        subtitle="Custom websites, Android applications, and games engineered by Dark Skull Corporation for external clients and partner organizations."
         actions={[
           { label: 'Explore Studio Services', to: '/services', variant: 'primary' },
-          { label: 'Back to Products', to: '/products', variant: 'secondary' },
+          { label: 'Request Project Consultation', to: '/contact', variant: 'secondary' },
         ]}
       />
 
-      {/* Project Type Filter Controls */}
-      <div
-        className="category-filter-bar mt-24"
-        role="group"
-        aria-label="Filter Built by DSC client projects by category"
-      >
-        {PORTFOLIO_TYPE_FILTERS.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            className={`button ${selectedFilter === filter.id ? 'button-primary' : 'button-secondary'} button-sm category-filter-btn`}
-            aria-pressed={selectedFilter === filter.id}
-            onClick={() => setSelectedFilter(filter.id)}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+      <section className="studio-section" aria-label="Built by DSC Portfolio">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">CLIENT &amp; PARTNER DELIVERIES</div>
+            <h2>Client Project Showcase</h2>
+          </div>
 
-      {/* Client Projects Grid or Honest Empty State */}
-      <section className="studio-section mt-36" aria-live="polite">
-        {matchingProjects.length > 0 ? (
-          <div className="studio-two-col-grid">
-            {matchingProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} showFullDescription />
+          <div
+            className="portfolio-filter-bar"
+            role="group"
+            aria-label="Filter Built by DSC projects by type"
+          >
+            {PORTFOLIO_TYPE_FILTERS.map((filter) => {
+              const isActive = activeFilter === filter.id
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className={`portfolio-filter-btn${isActive ? ' active' : ''}`}
+                  aria-pressed={isActive}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {filteredProjects.length > 0 ? (
+          <div className="portfolio-projects-grid">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         ) : (
-          <StudioEmptyState
-            badge={`CLIENT PORTFOLIO · ${activeFilterObj.label.toUpperCase()}`}
+          <StudioEmptyStateCard
+            categoryLabel={`CLIENT PORTFOLIO · ${activeFilterObj.label.toUpperCase()}`}
+            badge="Verified Showcase Policy"
             title="No Approved Client Showcase Entries Listed Yet"
-            description="Verified client projects, websites, applications, and games built by Dark Skull Corporation will be published in this directory only when verified project details and client showcase approvals are finalized."
-            note="Dark Skull Corporation does not publish unverified client names, fabricated case studies, or placeholder screenshots."
-            actions={[
-              { label: 'Explore Development Services', to: '/services', variant: 'primary' },
-              { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
-              { label: 'Back to Products Overview', to: '/products', variant: 'ghost' },
+            description="Dark Skull Corporation publishes client websites, Android applications, and games in this directory only after formal client showcase approval is granted."
+            highlights={[
+              'Website Development — Custom business websites, portfolios, and web platforms',
+              'Android Application Development — Tailored mobile utilities and business apps',
+              'Game Development — Interactive mobile games and puzzle experiences',
             ]}
+            primaryAction={{ label: 'Explore Development Services', to: '/services' }}
+            secondaryAction={{ label: 'Start a Project Inquiry', to: '/contact' }}
           />
         )}
       </section>
 
-      {/* Structural Overview of Client & Commissioned Work */}
-      <section className="seo-section mt-36">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="Client Deliveries"
-            title="Commissioned Software & Client Projects"
-            description="Built by DSC highlights software, websites, and interactive applications engineered by Dark Skull Corporation on behalf of external clients and collaborators."
-          />
-
-          <div className="card-grid columns-3 mt-24">
-            <article className="info-card">
-              <span className="card-badge">CUSTOM WEBSITES</span>
-              <h3>Client Web Platforms</h3>
-              <p className="text-muted text-sm m-0">
-                Responsive websites and custom web interfaces engineered to meet client branding, accessibility, and performance goals.
-              </p>
-            </article>
-
-            <article className="info-card">
-              <span className="card-badge">MOBILE APPLICATIONS</span>
-              <h3>Custom Android Software</h3>
-              <p className="text-muted text-sm m-0">
-                Tailored Android applications developed for client workflows, customer engagement, or specialized device utility.
-              </p>
-            </article>
-
-            <article className="info-card">
-              <span className="card-badge">INTERACTIVE PROJECTS</span>
-              <h3>Commissioned Games</h3>
-              <p className="text-muted text-sm m-0">
-                Custom interactive experiences and mobile games built according to partner specifications and gameplay requirements.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
       <StudioCtaBanner
-        eyebrow="Work With Dark Skull Corporation"
-        title="Planning a Custom Website, Android App, or Game?"
-        description="Review our development service categories or reach out to our team to discuss your project requirements."
-        actions={[
-          { label: 'Website Development', to: '/services/websites', variant: 'primary' },
-          { label: 'Android App Development', to: '/services/android-applications', variant: 'secondary' },
-          { label: 'Game Development', to: '/services/game-development', variant: 'ghost' },
-        ]}
+        eyebrow="START YOUR PROJECT"
+        title="Ready to Build a Custom Website, Android App, or Game?"
+        description="Contact Dark Skull Corporation with your project scope and timeline to receive a custom quotation."
+        primaryAction={{ label: 'Contact DSC Studio', to: '/contact' }}
+        secondaryAction={{ label: 'View Own Products', to: '/products/own-products' }}
       />
-    </StudioPageContainer>
+    </div>
   )
 }

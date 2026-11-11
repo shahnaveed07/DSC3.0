@@ -1,134 +1,118 @@
-import { NavLink } from 'react-router-dom'
-import { usePageMeta } from '../hooks/usePageMeta'
+import { Link } from 'react-router-dom'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { getAllProjects } from '../content/projectsData'
+
+const androidApps = [
+  {
+    id: 'qr-scanner',
+    category: 'Android Utility Application',
+    title: 'QR Scanner | Generator',
+    packageId: 'com.dsc.qrscanner',
+    status: 'Available on Google Play',
+    summary:
+      'A fast, privacy-focused QR code and barcode utility for Android. Scan physical codes through your camera viewfinder or decode images from your gallery, and generate custom QR codes for URLs, Wi-Fi networks, contacts, and plain text.',
+    features: [
+      'Real-time camera viewfinder recognition for QR codes and standard barcodes',
+      'Decode QR images directly from saved device screenshots and photos',
+      'Built-in QR code generator for links, Wi-Fi credentials, vCards, and text',
+      'Export and share generated QR graphics in crisp PNG format',
+      'Offline core functionality with zero background tracking',
+    ],
+    permissionsNotice:
+      'Permissions Transparency: Camera access is used strictly when scanning physical codes. Storage access is requested only when exporting or reading QR image files.',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dsc.qrscanner',
+    detailPath: '/projects/qr-scanner-generator',
+  },
+  {
+    id: 'mind-matrix',
+    category: 'Android Puzzle & Brain Game',
+    title: 'Mind Matrix',
+    packageId: 'com.dsc.mindmatrix',
+    status: 'Available on Google Play',
+    summary:
+      'An interactive brain-training and pattern-recognition puzzle game for Android. Challenge your working memory, spatial recall, and cognitive focus across progressively complex matrix grids.',
+    features: [
+      'Progressive difficulty levels that scale with player accuracy and speed',
+      'Pattern-recall, sequence logic, and spatial memory matrix challenges',
+      'Smooth 60 FPS animations with clean dark-mode visuals and tactile feedback',
+      '100% offline playable — enjoy full puzzle sessions anywhere without internet',
+      'Lightweight install size optimized for phones and tablets (Android 7.0+)',
+    ],
+    permissionsNotice:
+      'Permissions Transparency: Mind Matrix requires no camera, microphone, location, or contact permissions and runs completely offline.',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.dsc.mindmatrix',
+    detailPath: '/projects/mind-matrix',
+  },
+]
 
 export function AppsPage() {
-  usePageMeta(SEO_ROUTES.apps)
-  const projects = getAllProjects()
+  usePageMetadata(SEO_ROUTES.apps)
 
   return (
-    <div className="center-wrap">
-      {/* Header */}
-      <section className="page-header-center">
-        <span className="hero-eyebrow">Dark Skull Corporation</span>
+    <div className="page-stack">
+      <section className="hero-block">
+        <div className="eyebrow">PRODUCTS · ANDROID APPLICATIONS</div>
         <h1>Android Applications &amp; Games</h1>
-        <p>
-          Explore official Android applications and mobile games designed and developed by Dark Skull Corporation with a focus on usability, performance, offline capability, and user privacy.
+        <p className="lead">
+          Official Android utilities and interactive puzzle games engineered by Dark Skull
+          Corporation and published on the Google Play Store.
         </p>
+        <div className="hero-actions mt-18">
+          <Link className="button secondary" to="/products/in-production">
+            In Production Portfolio
+          </Link>
+          <Link className="button ghost" to="/services/android-applications">
+            Android Development Services →
+          </Link>
+        </div>
       </section>
 
-      {/* Applications & Games Showcase — Powered by Canonical Project Records */}
-      <div className="apps-list mt-36">
-        {projects.map((project) => (
-          <article key={project.id} className="app-card">
-            <div className="app-card-header">
+      <div className="stack-list">
+        {androidApps.map((app) => (
+          <article className="info-card app-detail-card" key={app.id}>
+            <div className="app-detail-header">
               <div>
-                <span className="badge primary">{project.typeBadge || project.projectType}</span>
-                <h2 className="app-card-title">{project.name}</h2>
+                <div className="card-label">{app.category}</div>
+                <h2>{app.title}</h2>
+                <div className="package-badge">Package ID: {app.packageId}</div>
               </div>
-              <div className="studio-release-actions m-0">
-                <NavLink
-                  className="button button-secondary button-sm"
-                  to={`/projects/${project.slug}`}
-                >
-                  Project Details
-                </NavLink>
-                {project.storeUrl ? (
-                  <a
-                    className="button button-primary button-sm"
-                    href={project.storeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {project.storeLabel || 'Google Play ↗'}
-                  </a>
-                ) : null}
-              </div>
+              <span className="status-pill">{app.status}</span>
             </div>
 
-            {project.shortDescription ? (
-              <p className="app-card-tagline">{project.shortDescription}</p>
-            ) : null}
-            {project.description ? (
-              <p className="app-card-desc">{project.description}</p>
-            ) : null}
+            <p className="app-summary">{app.summary}</p>
 
-            {Array.isArray(project.features) && project.features.length > 0 ? (
-              <div className="app-feature-grid">
-                {project.features.map((feature) => (
-                  <div key={feature} className="app-feature-item">
-                    <span className="app-feature-check" aria-hidden="true">
-                      ✓
-                    </span>
-                    <span>{feature}</span>
-                  </div>
+            <div className="app-features-block">
+              <h3 className="subhead">Key Capabilities &amp; Features</h3>
+              <ul className="feature-list">
+                {app.features.map((feat) => (
+                  <li key={feat}>{feat}</li>
                 ))}
-              </div>
-            ) : null}
+              </ul>
+            </div>
 
-            {project.permissionsNotice ? (
-              <div className="app-notice-box">
-                <strong>Permissions Transparency:</strong> {project.permissionsNotice}
-              </div>
-            ) : null}
+            <div className="permissions-callout">
+              <p>{app.permissionsNotice}</p>
+            </div>
+
+            <div className="card-actions mt-18">
+              <a
+                className="button primary"
+                href={app.playStoreUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Get on Google Play ↗
+              </a>
+              <Link className="button secondary" to={app.detailPath}>
+                View Project Details
+              </Link>
+              <Link className="button ghost" to="/pages/privacy-policy">
+                App Privacy Policy
+              </Link>
+            </div>
           </article>
         ))}
       </div>
-
-      {/* Studio Quality & Privacy Constitution */}
-      <section className="seo-section">
-        <div className="seo-container">
-          <span className="badge good mb-8">Studio Standards</span>
-          <h2>Our App &amp; Game Quality Constitution</h2>
-          <p className="mb-24">
-            We design Android applications, games, and digital products around user respect and long-term reliability:
-          </p>
-
-          <div className="card-grid columns-3">
-            <article className="info-card">
-              <span className="card-badge">PRIVACY FIRST</span>
-              <h3>Scoped Permissions</h3>
-              <p className="text-muted text-sm m-0">
-                Our Android applications and games request only the permissions required for user-invoked features and never harvest personal contacts or background telemetry.
-              </p>
-            </article>
-
-            <article className="info-card">
-              <span className="card-badge">PERFORMANCE</span>
-              <h3>Offline-Ready &amp; Fast</h3>
-              <p className="text-muted text-sm m-0">
-                We build our mobile apps and games for responsive touch feedback, low battery consumption, and reliable offline operation.
-              </p>
-            </article>
-
-            <article className="info-card">
-              <span className="card-badge">CUSTOM PROJECTS</span>
-              <h3>Websites on Request</h3>
-              <p className="text-muted text-sm m-0">
-                Alongside our Android apps and games, Dark Skull Corporation designs and develops custom websites for individuals, startups, and businesses on request.
-              </p>
-            </article>
-          </div>
-
-          <div className="portal-callout-card mt-24">
-            <div className="portal-callout-info">
-              <h3 className="portal-callout-title">Have an App, Game, or Website Project Inquiry?</h3>
-              <p className="portal-callout-desc">
-                Connect with <strong>Naveed Mushtaq </strong> and the Dark Skull Corporation team to discuss custom website development, Android applications, or studio collaborations.
-              </p>
-            </div>
-            <div className="portal-callout-actions">
-              <NavLink to="/pages/contact" className="button button-primary button-sm">
-                Contact Studio
-              </NavLink>
-              <NavLink to="/pages/downloads" className="button button-secondary button-sm">
-                Download Center
-              </NavLink>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

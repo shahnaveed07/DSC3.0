@@ -1,179 +1,131 @@
-import { NavLink } from 'react-router-dom'
-import { usePageMeta } from '../hooks/usePageMeta'
-import { SEO_ROUTES } from '../content/seoConfig'
+import { Link } from 'react-router-dom'
 import { aboutStats } from '../content/siteContent'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import { SEO_ROUTES } from '../content/seoConfig'
 
 const focusAreas = [
   {
+    label: '01 · Mobile Utilities',
     title: 'Android Application Development',
-    tag: 'Primary Focus',
-    desc: 'Designing and developing Android applications with intuitive interfaces, practical everyday utility, scoped permissions, and dependable performance.',
+    body: 'We build practical, everyday Android utilities such as QR Scanner | Generator. Our apps focus on fast startup times, intuitive navigation, offline functionality, and strict permission boundaries.',
   },
   {
-    title: 'Game Development',
-    tag: 'Primary Focus',
-    desc: 'Creating engaging games and interactive experiences such as Mind Matrix with thoughtful gameplay, polished interfaces, and offline-first reliability.',
+    label: '02 · Interactive Entertainment',
+    title: 'Mobile Game Engineering',
+    body: 'We design brain-training and logic puzzle games like Mind Matrix. Our games emphasize progressive difficulty scaling, responsive touch controls, smooth 60 FPS animations, and 100% offline playability.',
   },
   {
+    label: '03 · Bespoke Web Projects',
     title: 'Custom Website Development',
-    tag: 'Available on Request',
-    desc: 'Designing and developing responsive, modern websites for individuals, startups, businesses, and companies tailored to real-world goals.',
+    body: 'Beyond our own mobile releases, we design and build custom, responsive websites for individuals, creators, and businesses on request — engineered for speed, accessibility, and maintainability.',
   },
-]
-
-const studioPrinciples = [
   {
-    number: '01',
+    label: '04 · Engineering Ethics',
     title: 'User-Centered Development',
-    desc: 'Every application, game, and website is designed around intuitive navigation, clear visual hierarchy, and practical usefulness for real users.',
-  },
-  {
-    number: '02',
-    title: 'Quality & Reliability',
-    desc: 'We prioritize clean engineering, responsive performance, and dependable operation across Android devices and modern web browsers.',
-  },
-  {
-    number: '03',
-    title: 'Continuous Improvement',
-    desc: 'We actively refine our published apps, games, and web platforms based on user feedback, usability testing, and ongoing technical updates.',
+    body: 'Every project we ship follows clear principles: request only necessary device permissions, avoid intrusive adware or dark patterns, and provide direct communication channels for user support.',
   },
 ]
 
 export function AboutPage() {
-  usePageMeta(SEO_ROUTES.about)
+  usePageMetadata(SEO_ROUTES.about)
 
   return (
-    <div className="center-wrap">
-      {/* Header */}
-      <section className="page-header-center">
-        <span className="hero-eyebrow">Dark Skull Corporation</span>
-        <h1>Independent Software Studio</h1>
-        <p>
-          Dark Skull Corporation (DSC) is an independent software development studio primarily focused on Android application development and game development. We also offer custom website design and development for individuals, businesses and companies on request. Our goal is to build useful, intuitive and reliable digital experiences.
+    <div className="page-stack">
+      <section className="hero-block">
+        <div className="eyebrow">COMPANY PROFILE</div>
+        <h1>About Dark Skull Corporation</h1>
+        <p className="lead">
+          Founded in 2024 by{' '}
+          <a
+            href="https://naveedmushtaq.tech/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link-inline"
+          >
+            <strong>Naveed Mushtaq — Founder</strong>
+          </a>
+          , Dark Skull Corporation (DSC) is an independent software studio focused on building
+          practical Android applications, engaging mobile puzzle games, and custom websites on
+          request.
         </p>
       </section>
 
-      {/* Stats Strip */}
-      <div className="about-stats-grid mb-32">
-        {aboutStats.map((st) => (
-          <div key={st.label} className="about-stat-item text-center">
-            <span className="micro-label">{st.label}</span>
-            <div className="about-stat-value">{st.value}</div>
+      <div className="stats-strip">
+        {aboutStats.map((stat) => (
+          <div className="stat-box" key={stat.label}>
+            <span className="stat-value">{stat.value}</span>
+            <span className="stat-label">{stat.label}</span>
           </div>
         ))}
       </div>
 
-      {/* Focus Areas */}
-      <div className="focus-grid">
-        {focusAreas.map((area) => (
-          <div key={area.title} className="focus-card">
-            <span className="badge primary mb-8">{area.tag}</span>
-            <h2 className="focus-card-title">{area.title}</h2>
-            <p className="focus-card-desc">{area.desc}</p>
+      <section className="studio-section" aria-label="Development Focus">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">WHAT WE DO</div>
+            <h2>Core Development Focus</h2>
           </div>
-        ))}
-      </div>
+        </div>
+        <div className="grid-cards">
+          {focusAreas.map((item) => (
+            <article className="info-card" key={item.title}>
+              <div className="card-label">{item.label}</div>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      {/* Studio Principles, Development Areas & Founder Section */}
-      <section className="seo-section">
-        <div className="seo-container">
-          <h2>Studio Principles</h2>
-          <div className="principles-grid-about">
-            {studioPrinciples.map((pr) => (
-              <div key={pr.number} className="principle-item-about">
-                <span className="principle-item-num">{pr.number}</span>
-                <h3 className="principle-item-title">{pr.title}</h3>
-                <p className="principle-item-desc">{pr.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Technology & Development Areas Section */}
-          <h2 className="mt-36">Technology Stack &amp; Development Areas</h2>
-          <p>
-            Dark Skull Corporation designs and develops software products across our core areas of focus:
-          </p>
-          <ul className="feature-list">
-            <li>
-              <strong>Android Application Development:</strong> Native Android applications engineered for fast startup, offline capability, and scoped device permissions, published on Google Play (including <em>QR Scanner | Generator</em>).
-            </li>
-            <li>
-              <strong>Game Development:</strong> Interactive mobile puzzle and cognitive games (including <em>Mind Matrix</em>) built with responsive touch controls, progressive challenge design, and smooth offline performance.
-            </li>
-            <li>
-              <strong>Custom Website Development:</strong> Responsive web applications and custom websites built with modern web technologies (React, Vite, HTML, CSS, JavaScript, and REST APIs) for individuals, businesses, and companies on request.
-            </li>
-          </ul>
-
-          {/* Founder & Lead Developer Section */}
-          <h2 className="mt-36">Founder </h2>
-          <div className="portal-callout-card mt-16 mb-16">
-            <div className="portal-callout-info">
-              <span className="badge primary mb-8">Studio Leadership</span>
-              <h3 className="portal-callout-title">Naveed Mushtaq — Founder </h3>
-              <p className="portal-callout-desc">
-                Naveed Mushtaq is the Founder and Lead Developer of Dark Skull Corporation. He established DSC with a vision of building useful software products, Android applications and engaging games, while leading the studio&apos;s development direction and engineering work.
-              </p>
-            </div>
-            <div className="portal-callout-actions">
+      <section className="studio-section" aria-label="Founder and Contact">
+        <div className="studio-grid-2">
+          <article className="info-card">
+            <div className="card-label">LEADERSHIP</div>
+            <h2>Naveed Mushtaq — Founder &amp; Lead Developer</h2>
+            <p>
+              <strong>Naveed Mushtaq</strong> leads product engineering, UI/UX architecture, and
+              application development across Dark Skull Corporation’s published Google Play releases
+              and custom web projects.
+            </p>
+            <div className="card-actions mt-18">
               <a
+                className="button primary"
                 href="https://naveedmushtaq.tech/"
                 target="_blank"
-                rel="noreferrer"
-                className="button button-primary button-sm"
+                rel="noopener noreferrer"
               >
-                Visit Founder Portfolio ↗
+                Visit Developer Portfolio ↗
               </a>
               <a
+                className="button ghost"
                 href="https://github.com/shahnaveed07"
                 target="_blank"
-                rel="noreferrer"
-                className="button button-secondary button-sm"
+                rel="noopener noreferrer"
               >
                 GitHub (@shahnaveed07) ↗
               </a>
             </div>
-          </div>
-          <p>
-            You can explore public repositories, studio releases, and project updates on GitHub at{' '}
-            <a
-              href="https://github.com/shahnaveed07"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary font-semibold"
-            >
-              github.com/shahnaveed07 ↗
-            </a>{' '}
-            or visit{' '}
-            <a
-              href="https://naveedmushtaq.tech/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary font-semibold"
-            >
-              naveedmushtaq.tech ↗
-            </a>{' '}
-            to learn more about <strong>Naveed Mushtaq — Founder &amp; Lead Developer</strong>.
-          </p>
-        </div>
-      </section>
+          </article>
 
-      {/* Call to action */}
-      <section className="about-cta-card">
-        <h2 className="about-cta-title">Explore Our Apps, Games &amp; Services</h2>
-        <p className="about-cta-desc">
-          Browse our Android applications and games, view our product catalog, or contact us to discuss a custom website development project.
-        </p>
-        <div className="about-cta-actions">
-          <NavLink to="/pages/apps" className="button button-primary">
-            Explore Apps &amp; Games
-          </NavLink>
-          <NavLink to="/pages/contact" className="button button-secondary">
-            Request a Website / Contact Us
-          </NavLink>
-          <NavLink to="/pages/products" className="button button-ghost">
-            View Products
-          </NavLink>
+          <article className="info-card">
+            <div className="card-label">EXPLORE DSC</div>
+            <h2>Portfolio &amp; Project Inquiries</h2>
+            <p>
+              Browse our released Android applications and games, review our development services,
+              or contact the studio directly to discuss a custom project.
+            </p>
+            <div className="card-actions mt-18">
+              <Link className="button primary" to="/products">
+                Explore Products
+              </Link>
+              <Link className="button secondary" to="/services">
+                Explore Services
+              </Link>
+              <Link className="button ghost" to="/contact">
+                Contact Us
+              </Link>
+            </div>
+          </article>
         </div>
       </section>
     </div>

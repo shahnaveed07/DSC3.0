@@ -1,146 +1,94 @@
 import { useState } from 'react'
-import { usePageMeta } from '../hooks/usePageMeta'
-import { SEO_ROUTES } from '../content/seoConfig'
 import {
   PORTFOLIO_CATEGORIES,
   PORTFOLIO_TYPE_FILTERS,
   getProjectsByCategory,
-} from '../content/projectsData'
+} from '../content/siteContent'
+import { SEO_ROUTES } from '../content/seoConfig'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import { ProjectCard } from '../components/ui/ProjectCard'
 import {
-  ProjectCard,
   StudioCtaBanner,
-  StudioEmptyState,
-  StudioPageContainer,
+  StudioEmptyStateCard,
   StudioPageHeader,
-  StudioSectionHeader,
 } from '../components/ui/StudioComponents'
 
 export function InProductionPage() {
-  usePageMeta(SEO_ROUTES.inProduction)
-  const [selectedFilter, setSelectedFilter] = useState('all')
+  usePageMetadata(SEO_ROUTES.inProduction)
+  const [activeFilter, setActiveFilter] = useState('all')
 
-  const matchingProjects = getProjectsByCategory(
-    PORTFOLIO_CATEGORIES.IN_PRODUCTION,
-    selectedFilter,
-  )
-  const activeFilterObj =
-    PORTFOLIO_TYPE_FILTERS.find((f) => f.id === selectedFilter) || PORTFOLIO_TYPE_FILTERS[0]
-
-  const websiteProjects = getProjectsByCategory(
-    PORTFOLIO_CATEGORIES.IN_PRODUCTION,
-    'websites',
-  )
+  const filteredProjects = getProjectsByCategory(PORTFOLIO_CATEGORIES.IN_PRODUCTION, activeFilter)
 
   return (
-    <StudioPageContainer>
+    <div className="page-stack">
       <StudioPageHeader
-        eyebrow="Products · Classification A"
+        eyebrow="PRODUCTS · IN PRODUCTION"
         title="In Production"
-        description="Applications, websites, and games developed by Dark Skull Corporation that are released, deployed, or actively available in production."
-        breadcrumbs={[
-          { label: 'Home', to: '/' },
-          { label: 'Products', to: '/products' },
-          { label: 'In Production' },
-        ]}
+        subtitle="Released Android applications, websites, and games actively maintained in production by Dark Skull Corporation."
         actions={[
-          { label: 'All Product Categories', to: '/products', variant: 'secondary' },
-          { label: 'Own Products', to: '/products/own-products', variant: 'ghost' },
+          { label: 'Own Products', to: '/products/own-products', variant: 'secondary' },
+          { label: 'Built by DSC', to: '/products/built-by-dsc', variant: 'ghost' },
         ]}
       />
 
-      {/* Category Filter Controls: All, Android Applications, Websites, Games */}
-      <div
-        className="category-filter-bar mt-24"
-        role="group"
-        aria-label="Filter In Production projects by category"
-      >
-        {PORTFOLIO_TYPE_FILTERS.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            className={`button ${selectedFilter === filter.id ? 'button-primary' : 'button-secondary'} button-sm category-filter-btn`}
-            aria-pressed={selectedFilter === filter.id}
-            onClick={() => setSelectedFilter(filter.id)}
+      <section className="studio-section" aria-label="In Production Portfolio">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">PRODUCTION RELEASES</div>
+            <h2>Active Production Portfolio</h2>
+          </div>
+
+          <div
+            className="portfolio-filter-bar"
+            role="group"
+            aria-label="Filter In Production projects by type"
           >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+            {PORTFOLIO_TYPE_FILTERS.map((filter) => {
+              const isActive = activeFilter === filter.id
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className={`portfolio-filter-btn${isActive ? ' active' : ''}`}
+                  aria-pressed={isActive}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-      {/* Filtered Project Grid or Empty State */}
-      <section className="studio-section mt-36" aria-live="polite">
-        <StudioSectionHeader
-          eyebrow="Production Releases"
-          badge={activeFilterObj.label}
-          title={
-            selectedFilter === 'all'
-              ? 'Active Production Applications, Websites & Games'
-              : `In Production — ${activeFilterObj.label}`
-          }
-          description="Only projects with verified production deployment or official store availability are included in this directory."
-        />
-
-        {matchingProjects.length > 0 ? (
-          <div className="studio-two-col-grid mt-24">
-            {matchingProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                showFullDescription
-                showFeatures
-              />
+        {filteredProjects.length > 0 ? (
+          <div className="portfolio-projects-grid">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         ) : (
-          <div className="mt-24">
-            <StudioEmptyState
-              badge={`${activeFilterObj.label.toUpperCase()} DIRECTORY`}
-              title={`No Additional ${activeFilterObj.label} Listed Yet`}
-              description="No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase."
-              note="Dark Skull Corporation does not list development-only experiments as released production products."
-              actions={[
-                { label: 'Show All In Production', to: '/products/in-production', variant: 'secondary' },
-                { label: 'Website Development Services', to: '/services/websites', variant: 'primary' },
-                { label: 'Contact Studio', to: '/contact', variant: 'ghost' },
-              ]}
-            />
-          </div>
+          <StudioEmptyStateCard
+            categoryLabel="IN PRODUCTION · WEBSITES"
+            badge="Official Domain Active"
+            title="No Additional Websites Listed Yet"
+            description="Aside from the official Dark Skull Corporation platform (dscweb.me), no additional separate public websites are currently listed in this stream."
+            highlights={[
+              'Official Studio Platform: https://dscweb.me',
+              'Custom Website Development available on request for individuals and businesses',
+            ]}
+            primaryAction={{ label: 'Explore Website Services', to: '/services/websites' }}
+            secondaryAction={{ label: 'Show All Production Projects', to: '/products/in-production' }}
+          />
         )}
       </section>
 
-      {/* Websites Production Directory Notice when viewing "All" */}
-      {selectedFilter === 'all' && websiteProjects.length === 0 ? (
-        <section className="studio-stream-section mt-36" aria-labelledby="in-prod-websites-heading">
-          <StudioSectionHeader
-            eyebrow="Production Stream · Websites"
-            badge="Websites"
-            title="Production Websites Directory"
-            description="Public websites and web platforms deployed by Dark Skull Corporation."
-          />
-          <div className="mt-20">
-            <StudioEmptyState
-              badge="WEBSITES DIRECTORY"
-              title="No Additional Websites Listed Yet"
-              description="No separate third-party or additional production website entries are listed in this directory yet. Verified production website deployments will appear here as they are approved for public showcase."
-              actions={[
-                { label: 'Website Development Services', to: '/services/websites', variant: 'primary' },
-                { label: 'Contact Studio', to: '/contact', variant: 'secondary' },
-              ]}
-            />
-          </div>
-        </section>
-      ) : null}
-
       <StudioCtaBanner
-        eyebrow="Explore More Categories"
-        title="Review DSC Own Products or Client Work"
-        description="Navigate across our other product classifications or explore the services we provide for custom applications, websites, and games."
-        actions={[
-          { label: 'Own Products', to: '/products/own-products', variant: 'primary' },
-          { label: 'Built by DSC', to: '/products/built-by-dsc', variant: 'secondary' },
-          { label: 'All Products', to: '/products', variant: 'ghost' },
-        ]}
+        eyebrow="PORTFOLIO NAVIGATION"
+        title="Explore Proprietary Products or Client Work"
+        description="Browse DSC’s internal software products or review our client project showcase."
+        primaryAction={{ label: 'Explore Own Products', to: '/products/own-products' }}
+        secondaryAction={{ label: 'Explore Built by DSC', to: '/products/built-by-dsc' }}
       />
-    </StudioPageContainer>
+    </div>
   )
 }

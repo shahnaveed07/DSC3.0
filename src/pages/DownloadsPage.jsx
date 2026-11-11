@@ -1,53 +1,35 @@
-import { NavLink } from 'react-router-dom'
-import { useRemoteResource } from '../hooks/useRemoteResource'
-import { usePageMeta } from '../hooks/usePageMeta'
+import { Link } from 'react-router-dom'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { getFreePanelStatus } from '../services/dscApi'
 
 export function DownloadsPage({ systemStatus }) {
-  usePageMeta(SEO_ROUTES.downloads)
+  usePageMetadata(SEO_ROUTES.downloads)
 
-  const { data, loading } = useRemoteResource(getFreePanelStatus, [])
-  const freeLink =
-    data?.freeLink || data?.FreeLink || systemStatus?.freeLink || systemStatus?.FreeLink
-  const usedSlots = Number(data?.usedSlots || data?.UsedSlots || 0)
-  const maxSlots = Number(data?.maxSlots || data?.MaxSlots || 20)
-  const slotsAvailable = maxSlots - usedSlots > 0
+  const latestVersion = systemStatus?.latestVersion || '2.0'
+  const freeLink = systemStatus?.freeLink || ''
 
   return (
-    <div className="center-wrap">
-      {/* Header */}
-      <section className="page-header-center">
-        <span className="hero-eyebrow">Dark Skull Corporation</span>
-        <h1>Official Apps, Games &amp; Software Downloads</h1>
-        <p>
-          Access our published Android applications and games on Google Play, as well as verified community and client software releases.
+    <div className="page-stack">
+      <div className="page-header-center">
+        <div className="eyebrow">RELEASE ARCHIVES</div>
+        <h1>Download Center</h1>
+        <p className="lead">
+          Official download links for Dark Skull Corporation Android applications, games, and
+          evaluation builds. Current desktop release version: <strong>v{latestVersion}</strong>.
         </p>
-      </section>
+      </div>
 
-      {/* Downloads Grid */}
-      <div className="downloads-grid mt-36">
-        {/* QR Scanner Mobile */}
+      <div className="downloads-grid">
         <article className="download-card">
-          <div>
-            <div className="download-card-meta">
-              <span className="badge primary">ANDROID APPLICATION</span>
-              <span className="text-muted text-sm">Google Play Verified</span>
-            </div>
-
-            <h2 className="download-card-title">QR Scanner | Generator</h2>
-            <p className="download-card-desc">
-              Instant autofocus barcode detection and offline custom QR code creator for Android devices. Supports Wi-Fi networks, URLs, and contact vCards.
-            </p>
-
-            <div className="download-status-box mt-14 mb-16">
-              <strong>Requirements:</strong> Android 7.0 (Nougat) or newer. Zero external telemetry.
-            </div>
-          </div>
-
-          <div className="download-card-actions">
+          <div className="card-label">ANDROID UTILITY APP</div>
+          <h3>QR Scanner | Generator</h3>
+          <p>
+            Official Google Play release for Android phones and tablets (Android 7.0+). Scan QR
+            codes and barcodes via camera or gallery, and generate custom QR codes offline.
+          </p>
+          <div className="card-actions">
             <a
-              className="button button-primary w-100"
+              className="button primary full-width"
               href="https://play.google.com/store/apps/details?id=com.dsc.qrscanner"
               target="_blank"
               rel="noopener noreferrer"
@@ -57,27 +39,16 @@ export function DownloadsPage({ systemStatus }) {
           </div>
         </article>
 
-        {/* Mind Matrix */}
         <article className="download-card">
-          <div>
-            <div className="download-card-meta">
-              <span className="badge primary">MOBILE GAME</span>
-              <span className="text-muted text-sm">Google Play Verified</span>
-            </div>
-
-            <h2 className="download-card-title">Mind Matrix</h2>
-            <p className="download-card-desc">
-              Progressive cognitive training puzzle game with pattern recognition drills, memory sequences, and reflex challenges.
-            </p>
-
-            <div className="download-status-box mt-14 mb-16">
-              <strong>Requirements:</strong> Android 6.0+ compatible. Fully playable offline.
-            </div>
-          </div>
-
-          <div className="download-card-actions">
+          <div className="card-label">ANDROID PUZZLE GAME</div>
+          <h3>Mind Matrix</h3>
+          <p>
+            Official Google Play release for Android devices. Challenge your memory and cognitive
+            focus with progressive pattern-recognition puzzle grids that work 100% offline.
+          </p>
+          <div className="card-actions">
             <a
-              className="button button-primary w-100"
+              className="button primary full-width"
               href="https://play.google.com/store/apps/details?id=com.dsc.mindmatrix"
               target="_blank"
               rel="noopener noreferrer"
@@ -87,105 +58,69 @@ export function DownloadsPage({ systemStatus }) {
           </div>
         </article>
 
-        {/* Free Panel Package */}
         <article className="download-card">
-          <div>
-            <div className="download-card-meta">
-              <span className="badge primary">COMMUNITY EVALUATION</span>
-              <span className="text-muted text-sm">
-                {loading ? 'Checking slots...' : `${usedSlots} / ${maxSlots} Slots Used`}
-              </span>
-            </div>
-
-            <h2 className="download-card-title">Free Panel Build</h2>
-            <p className="download-card-desc">
-              Public community evaluation release. Check server connectivity, view real-time slot availability, and download the verified evaluation package.
-            </p>
-
-            <div className="download-status-box mt-14 mb-16">
-              <strong>Status:</strong> {slotsAvailable ? 'Slots currently open for evaluation.' : 'Public pool is currently at capacity.'}
-            </div>
-          </div>
-
-          <div className="download-card-actions">
+          <div className="card-label">COMMUNITY EVALUATION</div>
+          <h3>Free Panel Build</h3>
+          <p>
+            Shared evaluation build for Windows 10/11 (64-bit). Check live slot availability and
+            shared test credentials on the Free Panel page before downloading.
+          </p>
+          <div className="card-actions">
             {freeLink ? (
-              <>
-                <a
-                  className="button button-primary w-100"
-                  href={freeLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span aria-hidden="true">📥 </span>Download Free Panel Package
-                </a>
-                <NavLink to="/pages/freepanel" className="button button-secondary w-100">
-                  View Shared Credentials
-                </NavLink>
-              </>
+              <a
+                className="button primary full-width"
+                href={freeLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download Free Build
+              </a>
             ) : (
-              <NavLink to="/pages/freepanel" className="button button-secondary w-100">
-                Check Availability &amp; Credentials
-              </NavLink>
+              <Link className="button secondary full-width" to="/pages/freepanel">
+                Check Free Panel Status
+              </Link>
             )}
           </div>
         </article>
       </div>
 
-      {/* Authenticated Client Downloads Information */}
-      <section className="seo-section">
-        <div className="seo-container">
-          <span className="badge good mb-8">Client Portal</span>
-          <h2>Licensed Product Downloads</h2>
-          <p className="mb-16">
-            Looking for your licensed product build (Streamer, Special, Sniper, Aim Assist)?
-          </p>
-          <div className="portal-callout-card">
-            <div className="portal-callout-info">
-              <p className="portal-callout-desc">
-                Once your order payment is verified by an administrator, your download link and authorization key are automatically unlocked inside your authenticated <strong>Client Dashboard</strong>.
-              </p>
+      <section className="studio-section" aria-label="Compatibility and Client Downloads">
+        <div className="studio-grid-2">
+          <article className="info-card">
+            <div className="card-label">PLATFORM COMPATIBILITY</div>
+            <h2>System Requirements &amp; Setup</h2>
+            <ul className="feature-list mt-12">
+              <li>
+                <strong>Android Applications &amp; Games:</strong> Require Android 7.0 (Nougat) or
+                newer and install directly via the Google Play Store.
+              </li>
+              <li>
+                <strong>Windows Desktop Builds:</strong> Require Windows 10 or Windows 11 (64-bit)
+                with Microsoft .NET Framework 4.8 installed.
+              </li>
+              <li>
+                <strong>Archive Extraction:</strong> Extract desktop <code>.zip</code> archives to a
+                dedicated folder before running the executable.
+              </li>
+            </ul>
+          </article>
+
+          <article className="info-card">
+            <div className="card-label">LICENSED CLIENT BUILDS</div>
+            <h2>Authenticated Dashboard Downloads</h2>
+            <p>
+              Private software panel builds (Streamer, Special, Sniper, Aim Assist, Customised) are
+              delivered through the authenticated User Dashboard after order verification.
+            </p>
+            <div className="card-actions mt-18">
+              <Link className="button primary" to="/pages/ulogin">
+                Client Portal Login
+              </Link>
+              <Link className="button ghost" to="/contact">
+                Support &amp; Help
+              </Link>
             </div>
-            <div className="portal-callout-actions">
-              <NavLink to="/pages/ulogin" className="button button-primary button-sm">
-                Sign In to Client Portal
-              </NavLink>
-              <NavLink to="/pages/catalog" className="button button-secondary button-sm">
-                View Products Catalog
-              </NavLink>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* System Requirements & Compatibility Guide */}
-      <section className="seo-section">
-        <div className="seo-container">
-          <span className="badge primary mb-8">Technical Requirements</span>
-          <h2>Platform Compatibility &amp; Setup Guide</h2>
-
-          <div className="card-grid columns-2 mt-20">
-            <article className="info-card">
-              <span className="card-badge">ANDROID &amp; WINDOWS</span>
-              <h3>Supported Environments</h3>
-              <ul className="feature-list">
-                <li>Android Apps &amp; Games: Android 6.0 / 7.0 or newer via Google Play</li>
-                <li>Windows Releases: Windows 10 or Windows 11 (64-bit)</li>
-                <li>Runtime: Microsoft .NET Framework 4.8 for desktop packages</li>
-                <li>Support: Direct assistance available on our official Discord server</li>
-              </ul>
-            </article>
-
-            <article className="info-card">
-              <span className="card-badge">INSTALLATION NOTICE</span>
-              <h3>Independent Release Verification</h3>
-              <p className="text-muted text-sm m-0">
-                Our Android apps and games are distributed directly through Google Play. For standalone Windows builds distributed through our portal, Windows Defender SmartScreen may display an &ldquo;Unrecognized app&rdquo; prompt.
-              </p>
-              <p className="text-muted text-sm m-0 mt-6">
-                Click <strong>More info</strong> and select <strong>Run anyway</strong>, or reach out on Discord if you need setup assistance.
-              </p>
-            </article>
-          </div>
+          </article>
         </div>
       </section>
     </div>

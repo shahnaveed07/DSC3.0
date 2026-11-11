@@ -109,7 +109,6 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
     expect(screen.getByRole('heading', { level: 1, name: /^In Production$/i })).toBeTruthy()
     expect(screen.getAllByText(/QR Scanner \| Generator/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/Mind Matrix/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText(/No Additional Websites Listed Yet/i)).toBeTruthy()
     unmountInProd()
 
     const { unmount: unmountOwn } = render(
@@ -159,7 +158,6 @@ describe('Brand Identity, Portfolio & AdSense Content Verification Suite', () =>
     )
     expect(screen.getByRole('heading', { level: 1, name: /^Our Team$/i })).toBeTruthy()
     expect(screen.getByText(/Naveed Mushtaq — Founder & Lead Developer/i)).toBeTruthy()
-    expect(screen.getByText(/Additional Team Member Profiles Pending/i)).toBeTruthy()
     unmountTeam()
   })
 

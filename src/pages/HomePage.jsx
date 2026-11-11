@@ -1,219 +1,212 @@
-import { NavLink } from 'react-router-dom'
-import { usePageMeta } from '../hooks/usePageMeta'
+import { Link } from 'react-router-dom'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { SEO_ROUTES } from '../content/seoConfig'
-import { getFeaturedProjects } from '../content/projectsData'
-import { ButtonLink } from '../components/layout/SiteHeader'
 
 export function HomePage({ systemStatus }) {
-  usePageMeta(SEO_ROUTES.home)
-  const featuredProjects = getFeaturedProjects()
+  usePageMetadata(SEO_ROUTES.home)
 
-  const isMaintenance =
-    systemStatus?.isMaintenanceMode === true || systemStatus?.IsMaintenanceMode === true
+  const showHomeDownloadBtn = systemStatus?.showHomeDownloadBtn !== false
 
   return (
-    <div className="home-container">
-      {/* Hero Section */}
-      <section className="home-hero-v2">
-        <div className="home-hero-content">
-          <div className="hero-eyebrow-row">
-            <span className="hero-eyebrow">DARK SKULL CORPORATION</span>
-            <span className="hero-dot">·</span>
-            <span className="hero-subkicker">SOFTWARE STUDIO</span>
-            <span className="hero-dot">·</span>
-            <span className={`status-pill-inline ${isMaintenance ? 'text-warning' : 'text-success'}`}>
-              <span className="status-dot-inline" />
-              {isMaintenance ? 'System Maintenance' : 'Systems Operational'}
-            </span>
-          </div>
-
+    <div className="page-stack">
+      {/* 1. Concise Hero Section */}
+      <section className="hero-card home-hero">
+        <div className="hero-content">
+          <div className="eyebrow">DARK SKULL CORPORATION · SOFTWARE STUDIO</div>
           <h1 className="home-hero-title">
-            Building <span className="text-highlight">Apps, Games</span> &amp; Digital Experiences.
+            Building Practical Android Apps, Interactive Games &amp; Modern{' '}
+            <span className="text-gradient">Digital Experiences</span>
           </h1>
-
-          <p className="home-hero-desc">
-            We create Android applications and engaging games, while also building custom websites for individuals and businesses on request.
+          <p className="home-hero-lead">
+            Dark Skull Corporation (DSC) is an independent software studio founded by{' '}
+            <a
+              href="https://naveedmushtaq.tech/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-inline"
+            >
+              Naveed Mushtaq
+            </a>
+            . We release privacy-conscious Android utilities and offline-ready mobile games on
+            Google Play, and engineer custom websites and applications for clients.
           </p>
-
-          <div className="home-hero-actions">
-            <NavLink to="/pages/apps" className="button button-primary button-lg">
+          <div className="hero-actions">
+            <Link className="button primary" to="/products/in-production">
               Explore Our Apps &amp; Games
-            </NavLink>
-            <NavLink to="/products" className="button button-secondary button-lg">
-              View Our Products
-            </NavLink>
-            <NavLink to="/contact" className="button button-ghost button-lg">
-              Request a Website
-            </NavLink>
-          </div>
-        </div>
-
-        {/* Hero Capability Strip */}
-        <div className="hero-capability-grid">
-          <div className="hero-cap-item">
-            <span className="hero-cap-num">01</span>
-            <div className="hero-cap-text">
-              <strong>Android App Development</strong>
-              <span>Intuitive mobile tools &amp; offline utilities</span>
-            </div>
-          </div>
-          <div className="hero-cap-item">
-            <span className="hero-cap-num">02</span>
-            <div className="hero-cap-text">
-              <strong>Game Development</strong>
-              <span>Mind Matrix puzzle &amp; interactive experiences</span>
-            </div>
-          </div>
-          <div className="hero-cap-item">
-            <span className="hero-cap-num">03</span>
-            <div className="hero-cap-text">
-              <strong>Custom Website Development</strong>
-              <span>Websites for individuals &amp; businesses on request</span>
-            </div>
-          </div>
-          <div className="hero-cap-item">
-            <span className="hero-cap-num">04</span>
-            <div className="hero-cap-text">
-              <strong>Software &amp; Client Portal</strong>
-              <span>Verified releases, products &amp; community access</span>
-            </div>
+            </Link>
+            <Link className="button secondary" to="/services">
+              Explore Studio Services
+            </Link>
+            {showHomeDownloadBtn ? (
+              <Link className="button ghost" to="/pages/downloads">
+                Download Center
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <hr className="home-divider" />
-
-      {/* Studio Focus Cards */}
-      <section className="home-section home-disciplines-section">
-        <div className="section-head-v2">
-          <div className="section-title-wrap">
-            <span className="section-eyebrow">Studio Focus</span>
-            <h2 className="section-title-v2">What We Build</h2>
-          </div>
-          <p className="section-subtitle-v2">
-            Dark Skull Corporation (DSC) is an independent software development studio focused on usability, performance, quality, and practical real-world applications.
-          </p>
-        </div>
-
-        <div className="disciplines-grid">
-          <article className="discipline-card">
-            <div className="discipline-num">01</div>
-            <span className="discipline-category">Primary Focus</span>
-            <h3 className="discipline-title">Android App Development</h3>
-            <p className="discipline-text">
-              Designing and developing Android applications with intuitive interfaces, useful features and dependable performance.
-            </p>
-          </article>
-
-          <article className="discipline-card">
-            <div className="discipline-num">02</div>
-            <span className="discipline-category">Primary Focus</span>
-            <h3 className="discipline-title">Game Development</h3>
-            <p className="discipline-text">
-              Creating engaging games and interactive experiences with thoughtful gameplay, polished interfaces and continuous refinement.
-            </p>
-          </article>
-
-          <article className="discipline-card">
-            <div className="discipline-num">03</div>
-            <span className="discipline-category">On Request</span>
-            <h3 className="discipline-title">Custom Website Development</h3>
-            <p className="discipline-text">
-              Building responsive websites for individuals, startups, businesses and companies on request.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <hr className="home-divider" />
-
-      {/* Featured Projects Showcase */}
+      {/* 2. Featured Android Applications & Games */}
       <section className="home-section">
-        <div className="section-head-v2">
-          <div className="section-title-wrap">
-            <span className="section-eyebrow">Official Portfolio</span>
-            <h2 className="section-title-v2">Featured Apps, Games &amp; Releases</h2>
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">RELEASED ON GOOGLE PLAY</div>
+            <h2>Featured Android Applications &amp; Games</h2>
           </div>
-          <p className="section-subtitle-v2">
-            Published Android applications, mobile games, and studio software available for immediate access.
-          </p>
+          <Link className="button ghost" to="/products/in-production">
+            View Full Portfolio →
+          </Link>
         </div>
 
-        <div className="showcase-grid">
-          {featuredProjects.map((project) => (
-            <article key={project.id} className="showcase-card">
-              <div className="showcase-card-top">
-                <span className="showcase-badge">{project.projectType}</span>
-                <h3 className="showcase-title">{project.name}</h3>
-                <p className="showcase-desc">{project.shortDescription}</p>
-              </div>
-              <div className="showcase-card-bottom">
-                <ButtonLink
-                  action={{
-                    label: project.storeLabel || 'Google Play ↗',
-                    href: project.storeUrl || project.liveUrl,
-                  }}
-                  className="button button-primary"
-                />
-              </div>
-            </article>
-          ))}
-
-          {/* Card 3: Custom Website Development */}
-          <article className="showcase-card">
+        <div className="home-showcase-grid">
+          <article className="info-card showcase-card">
             <div className="showcase-card-top">
-              <span className="showcase-badge">Client Services</span>
-              <h3 className="showcase-title">Custom Website Development</h3>
-              <p className="showcase-desc">
-                Need a modern, responsive website for your personal brand, startup, or company? We accept custom web design and development projects on request.
-              </p>
+              <div className="card-label">ANDROID APPLICATION</div>
+              <span className="status-pill">Available on Google Play</span>
             </div>
-            <div className="showcase-card-bottom">
-              <ButtonLink action={{ label: 'Request a Website', to: '/pages/contact' }} className="button button-secondary" />
+            <h3>QR Scanner | Generator</h3>
+            <p className="showcase-desc">
+              A fast, privacy-focused QR code and barcode utility for Android. Scan physical codes
+              instantly via the device camera or existing gallery images, and generate custom QR
+              codes for URLs, Wi-Fi credentials, contacts, and plain text.
+            </p>
+            <ul className="feature-list">
+              <li>Instant camera viewfinder &amp; gallery image recognition</li>
+              <li>Custom QR code generator with direct image export</li>
+              <li>Strictly scoped permissions with zero background tracking</li>
+            </ul>
+            <div className="card-actions showcase-actions">
+              <a
+                className="button primary"
+                href="https://play.google.com/store/apps/details?id=com.dsc.qrscanner"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Get on Google Play ↗
+              </a>
+              <Link className="button ghost" to="/projects/qr-scanner-generator">
+                Project Details
+              </Link>
             </div>
           </article>
 
-          {/* Card 4: Free Panel */}
-          <article className="showcase-card">
+          <article className="info-card showcase-card">
             <div className="showcase-card-top">
-              <span className="showcase-badge">Public Evaluation</span>
-              <h3 className="showcase-title">Free Panel Build</h3>
-              <p className="showcase-desc">
-                Public community evaluation release from our software catalog. Check live slot availability, view shared credentials, and download the package archive.
-              </p>
+              <div className="card-label">ANDROID PUZZLE GAME</div>
+              <span className="status-pill">Available on Google Play</span>
             </div>
-            <div className="showcase-card-bottom">
-              <ButtonLink action={{ label: 'Access Free Panel', to: '/pages/freepanel' }} className="button button-secondary" />
+            <h3>Mind Matrix</h3>
+            <p className="showcase-desc">
+              An interactive brain-training and pattern-recognition puzzle game for Android. Built
+              to sharpen working memory, spatial recall, and cognitive focus through progressively
+              challenging grid levels.
+            </p>
+            <ul className="feature-list">
+              <li>Progressive difficulty tiers that adapt to player skill</li>
+              <li>Smooth 60 FPS animations with tactile dark-mode visuals</li>
+              <li>100% offline playable with zero paywalls</li>
+            </ul>
+            <div className="card-actions showcase-actions">
+              <a
+                className="button primary"
+                href="https://play.google.com/store/apps/details?id=com.dsc.mindmatrix"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Get on Google Play ↗
+              </a>
+              <Link className="button ghost" to="/projects/mind-matrix">
+                Project Details
+              </Link>
             </div>
           </article>
         </div>
       </section>
 
-      <hr className="home-divider" />
-
-      {/* Split Highlights: About & Contact */}
-      <section className="home-section home-split-grid">
-        <article className="highlight-panel">
-          <span className="section-eyebrow">About Dark Skull Corporation</span>
-          <h2 className="highlight-title">Independent Software Studio</h2>
-          <p className="highlight-desc">
-            Founded and led by <strong>Naveed Mushtaq </strong>, Dark Skull Corporation is an independent software development studio primarily focused on Android application development and game development, with custom website development available on request.
-          </p>
-          <div className="highlight-action">
-            <ButtonLink action={{ label: 'Read About Studio', to: '/pages/about' }} className="button button-secondary" />
+      {/* 3. Clean Overview of Development Services */}
+      <section className="home-section">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">SOFTWARE STUDIO SERVICES</div>
+            <h2>Development Services</h2>
           </div>
-        </article>
+          <Link className="button ghost" to="/services">
+            All Services &amp; Scope Options →
+          </Link>
+        </div>
 
-        <article className="highlight-panel highlight-panel-alt">
-          <span className="section-eyebrow">Project &amp; Support Inquiries</span>
-          <h2 className="highlight-title">Work With Us or Get Help</h2>
-          <p className="highlight-desc">
-            Whether you want to commission a custom website, inquire about our Android apps and games, or need assistance with an existing product order, reach out via our Contact page or Discord community.
+        <div className="home-focus-grid">
+          <article className="info-card focus-card">
+            <div className="focus-card-header">
+              <span className="focus-index">01</span>
+              <span className="card-label">MOBILE ENGINEERING</span>
+            </div>
+            <h3>Android App Development</h3>
+            <p>
+              Native Android utilities and business applications engineered for fast startup,
+              offline reliability, and strict permission boundaries.
+            </p>
+            <div className="card-actions">
+              <Link className="button secondary" to="/services/android-applications">
+                Android Service Scope →
+              </Link>
+            </div>
+          </article>
+
+          <article className="info-card focus-card">
+            <div className="focus-card-header">
+              <span className="focus-index">02</span>
+              <span className="card-label">INTERACTIVE MEDIA</span>
+            </div>
+            <h3>Game Development</h3>
+            <p>
+              2D and 3D puzzle and logic games featuring responsive touch controls, progressive
+              level design, and optimized frame rates across Android devices.
+            </p>
+            <div className="card-actions">
+              <Link className="button secondary" to="/services/game-development">
+                Game Service Scope →
+              </Link>
+            </div>
+          </article>
+
+          <article className="info-card focus-card">
+            <div className="focus-card-header">
+              <span className="focus-index">03</span>
+              <span className="card-label">WEB ARCHITECTURE</span>
+            </div>
+            <h3>Custom Website Development</h3>
+            <p>
+              Responsive business websites, portfolios, and custom web applications available on
+              request with deployment or source-handover options.
+            </p>
+            <div className="card-actions">
+              <Link className="button secondary" to="/services/websites">
+                Website Service Scope →
+              </Link>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* 4. Single Clear Contact / Project Inquiry CTA */}
+      <section className="studio-cta-banner">
+        <div className="studio-cta-content">
+          <div className="eyebrow">START A PROJECT</div>
+          <h2>Have a Website, Android App, or Game Project in Mind?</h2>
+          <p>
+            Share your project scope, target platform, and timeline with Dark Skull Corporation to
+            receive a custom quotation tailored to your requirements.
           </p>
-          <div className="highlight-action">
-            <ButtonLink action={{ label: 'Contact Studio', to: '/pages/contact' }} className="button button-primary" />
-          </div>
-        </article>
+        </div>
+        <div className="studio-cta-actions">
+          <Link className="button primary" to="/contact">
+            Request a Custom Quotation
+          </Link>
+          <Link className="button ghost" to="/about">
+            About Dark Skull Corporation
+          </Link>
+        </div>
       </section>
     </div>
   )

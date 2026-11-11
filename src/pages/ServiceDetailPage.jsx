@@ -1,374 +1,270 @@
 import { useState } from 'react'
-import { Navigate, NavLink } from 'react-router-dom'
-import { usePageMeta } from '../hooks/usePageMeta'
-import { SEO_ROUTES } from '../content/seoConfig'
+import { Link } from 'react-router-dom'
 import {
   DEPLOYMENT_OPTIONS,
   QUOTATION_MODEL_STATEMENT,
   buildServiceInquiryUrl,
-  getScopeTemplateById,
-  serviceBlueprints,
-  studioServiceCategories,
+  getServiceBlueprint,
 } from '../content/siteContent'
-import {
-  StudioCtaBanner,
-  StudioPageContainer,
-  StudioPageHeader,
-  StudioSectionHeader,
-} from '../components/ui/StudioComponents'
+import { SEO_ROUTES } from '../content/seoConfig'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import { StudioPageHeader } from '../components/ui/StudioComponents'
 
 export function ServiceDetailPage({ serviceSlug }) {
-  const blueprint = serviceBlueprints[serviceSlug]
-  const seoRoute = blueprint ? SEO_ROUTES[blueprint.seoKey] : SEO_ROUTES.services
-
-  usePageMeta(seoRoute)
+  const blueprint = getServiceBlueprint(serviceSlug) || getServiceBlueprint('websites')
+  const seoKey = blueprint.seoKey || 'services'
+  usePageMetadata(SEO_ROUTES[seoKey])
 
   const [selectedScopeId, setSelectedScopeId] = useState(
-    () => blueprint?.scopeTemplates?.[0]?.id || 'custom-scope',
+    blueprint.scopeTemplates[0]?.id || '',
   )
   const [selectedDeployment, setSelectedDeployment] = useState('with-deployment')
 
-  if (!blueprint) {
-    return <Navigate replace to="/services" />
-  }
+  const activeScope =
+    blueprint.scopeTemplates.find((tpl) => tpl.id === selectedScopeId) ||
+    blueprint.scopeTemplates[0]
 
-  const activeScopeTemplate =
-    getScopeTemplateById(serviceSlug, selectedScopeId) || blueprint.scopeTemplates[0]
   const activeDeploymentOption =
-    DEPLOYMENT_OPTIONS.find((opt) => opt.id === selectedDeployment) || DEPLOYMENT_OPTIONS[0]
+    DEPLOYMENT_OPTIONS.find((opt) => opt.id === selectedDeployment) ||
+    DEPLOYMENT_OPTIONS[0]
+
   const inquiryUrl = buildServiceInquiryUrl({
-    serviceSlug,
-    scopeId: activeScopeTemplate?.id,
+    serviceSlug: blueprint.slug,
+    scopeId: activeScope?.id,
     deploymentOption: activeDeploymentOption.id,
   })
 
-  const siblingServices = studioServiceCategories.filter((s) => s.slug !== serviceSlug)
-
   return (
-    <StudioPageContainer>
+    <div className="page-stack">
       <StudioPageHeader
         eyebrow={blueprint.eyebrow}
         title={blueprint.title}
-        description={blueprint.subtitle}
-        breadcrumbs={[
-          { label: 'Home', to: '/' },
-          { label: 'Services', to: '/services' },
-          { label: blueprint.title },
-        ]}
+        subtitle={blueprint.subtitle}
         actions={[
-          { label: 'Request a Custom Quotation', to: inquiryUrl, variant: 'primary' },
-          { label: 'All Services', to: '/services', variant: 'secondary' },
+          {
+            label: 'Request Custom Quotation',
+            to: inquiryUrl,
+            variant: 'primary',
+          },
+          {
+            label: 'All Services',
+            to: '/services',
+            variant: 'secondary',
+          },
+          {
+            label: blueprint.relatedPortfolioLabel || 'Explore Portfolio',
+            to: blueprint.relatedPortfolioLink || '/products',
+            variant: 'ghost',
+          },
         ]}
       />
 
-      {/* 1. Service Overview & Introduction */}
-      <section className="seo-section mt-36" aria-labelledby="service-overview-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="01 · Service Overview"
-            title={`${blueprint.title} Overview`}
-            description={blueprint.overview}
-            badge="Quotation-Based Service"
-          />
-        </div>
-      </section>
-
-      {/* 2. What DSC Provides */}
-      <section className="seo-section" aria-labelledby="what-dsc-provides-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="02 · What DSC Provides"
-            title={`Capabilities Covered Under ${blueprint.title}`}
-            description="Dark Skull Corporation provides the following specialized development capabilities within this discipline:"
-            badge={`${blueprint.whatWeProvide.length} Capabilities`}
-          />
-
-          <div className="card-grid columns-3 mt-24">
-            {blueprint.whatWeProvide.map((item, idx) => (
-              <article key={item.title} className="info-card">
-                <span className="card-badge">{`CAPABILITY 0${idx + 1}`}</span>
-                <h3>{item.title}</h3>
-                <p className="text-muted text-sm m-0">{item.description}</p>
-              </article>
-            ))}
+      {/* Section 1: Capabilities & Core Engineering */}
+      <section className="studio-section" aria-label="What We Provide and Engineering Focus">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">CAPABILITIES &amp; DELIVERABLES</div>
+            <h2>Core Engineering &amp; Focus Areas</h2>
           </div>
         </div>
-      </section>
 
-      {/* 3. Scope of Work & Potential Deliverables */}
-      <section className="seo-section" aria-labelledby="service-scope-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="03 · Engineering Focus & Deliverables"
-            title="Core Engineering & Focus Areas"
-            description="Projects within this discipline are structured around three primary engineering pillars and a clear deliverables framework:"
-          />
-
-          <div className="card-grid columns-3 mt-24">
-            {blueprint.scopeAreas.map((area, idx) => (
-              <article key={area.title} className="info-card">
-                <span className="card-badge">{`AREA 0${idx + 1}`}</span>
-                <h3>{area.title}</h3>
-                <p className="text-muted text-sm m-0">{area.description}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="studio-two-col-grid mt-24">
-            <div className="studio-architecture-box">
-              <span className="badge primary mb-8">Potential Scope &amp; Deliverables</span>
-              <h3>Standard Project Deliverables</h3>
-              <p className="text-muted text-sm mb-16">
-                Specific deliverables are aligned with your chosen scope template and project requirements:
-              </p>
-              <ul className="product-features mb-0">
-                {blueprint.deliverablesFramework.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="studio-architecture-box">
-              <span className="badge primary mb-8">Verified Technology Stack</span>
-              <h3>Relevant Technologies &amp; Standards</h3>
-              <p className="text-muted text-sm mb-16">
-                We build using proven, maintainable technologies suited to the target platform:
-              </p>
-              <div className="studio-tech-list">
-                {blueprint.technologies.map((tech) => (
-                  <div key={tech.name} className="studio-tech-item">
-                    <span className="studio-tech-name">{tech.name}</span>
-                    <span className="studio-card-meta-pill">{tech.category}</span>
-                  </div>
-                ))}
+        <div className="studio-grid-3">
+          {blueprint.whatWeProvide.map((item, idx) => (
+            <article key={item.title || idx} className="info-card studio-category-card">
+              <div className="studio-card-top">
+                <span className="card-label">CAPABILITY 0{idx + 1}</span>
               </div>
+              <h3>{item.title}</h3>
+              <p className="studio-card-desc">{item.description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="studio-grid-2 mt-18">
+          <div className="info-card">
+            <div className="card-label">ENGINEERING SCOPE</div>
+            <h3>Key Scope Areas</h3>
+            <ul className="feature-list mt-12">
+              {blueprint.scopeAreas.map((area) => (
+                <li key={area.title}>
+                  <strong>{area.title}:</strong> {area.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="info-card">
+            <div className="card-label">DELIVERABLES &amp; STACK</div>
+            <h3>Deliverables &amp; Technologies</h3>
+            <ul className="feature-list mt-12">
+              {blueprint.deliverablesFramework.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="project-tech-stack mt-16">
+              {blueprint.technologies.map((tech) => {
+                const techName = typeof tech === 'string' ? tech : tech.name
+                return (
+                  <span key={techName} className="tech-chip">
+                    {techName}
+                  </span>
+                )
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* 4. Development Process */}
-      <section className="seo-section" aria-labelledby="development-process-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="04 · Development Process"
-            title={`How We Execute ${blueprint.title} Projects`}
-            description="Every engagement follows a structured four-stage studio workflow from initial requirement scoping to final release or handover:"
-          />
-
-          <div className="studio-process-grid mt-24">
-            {blueprint.developmentProcess.map((stage) => (
-              <article key={stage.step} className="info-card studio-process-card">
-                <span className="card-badge">{`STAGE ${stage.step}`}</span>
-                <h3>{stage.title}</h3>
-                <p className="text-muted text-sm m-0">{stage.description}</p>
-              </article>
-            ))}
+      {/* Section 2: Interactive Project Scope Templates */}
+      <section className="studio-section" aria-label="Project Scope Selection">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">STEP 1 · SELECT PROJECT SCOPE</div>
+            <h2>Project Scope Options</h2>
           </div>
+          <p className="section-subcopy">
+            Choose the scope template closest to your requirements to pre-fill your quotation
+            request.
+          </p>
         </div>
-      </section>
 
-      {/* 5. Flexible Package / Scope Templates (No Fixed Public Prices) */}
-      <section className="seo-section" aria-labelledby="scope-templates-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="05 · Package & Scope Templates"
-            title="Select a Project Scope Template"
-            description="Choose a baseline scope template below or select Custom Project Scope. Templates outline typical inclusions without fixed public prices — every project receives a custom quotation."
-            badge="No Fixed Public Prices"
-          />
-
-          <div className="studio-scope-grid mt-24">
-            {blueprint.scopeTemplates.map((template) => {
-              const isSelected = activeScopeTemplate?.id === template.id
-              return (
-                <article
-                  key={template.id}
-                  className={`studio-scope-card ${isSelected ? 'is-selected' : ''}`}
-                  data-testid={`scope-template-${template.id}`}
-                >
-                  <div>
-                    <div className="studio-scope-card-top">
-                      <span className="badge primary">{template.badge}</span>
-                      <span className="studio-scope-pricing-tag">Custom Quotation</span>
-                    </div>
-
-                    <h3 className="studio-scope-title">{template.name}</h3>
-                    <p className="studio-scope-ideal">
-                      <strong>Ideal for:</strong> {template.idealFor}
-                    </p>
-                    <p className="text-muted text-sm mb-16">{template.summary}</p>
-
-                    <div className="studio-scope-inclusions">
-                      <span className="micro-label">TYPICAL INCLUSIONS</span>
-                      <ul className="product-features mt-8 mb-16">
-                        {template.inclusions.map((inc) => (
-                          <li key={inc}>{inc}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`button w-100 ${isSelected ? 'button-primary' : 'button-secondary'}`}
-                    onClick={() => setSelectedScopeId(template.id)}
-                    aria-pressed={isSelected}
-                  >
-                    {isSelected ? 'Selected Scope Template ✓' : 'Select This Scope Template'}
-                  </button>
-                </article>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Deployment Options Selection (With Deployment vs Without Deployment) */}
-      <section className="seo-section" aria-labelledby="deployment-selection-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="06 · Deployment Options"
-            title="Choose Your Deployment Preference"
-            description={blueprint.deploymentNote}
-            badge="With or Without Deployment"
-          />
-
-          <div className="studio-two-col-grid mt-24">
-            {DEPLOYMENT_OPTIONS.map((option) => {
-              const isSelected = activeDeploymentOption.id === option.id
-              const serviceSpecific = blueprint.deploymentOptions?.[option.id]
-              return (
-                <article
-                  key={option.id}
-                  className={`studio-deployment-card ${isSelected ? 'is-selected' : ''}`}
-                  data-testid={`deployment-option-${option.id}`}
-                >
-                  <div>
-                    <div className="studio-scope-card-top">
-                      <span className="badge primary">{option.badge}</span>
-                      <span className="studio-scope-pricing-tag">{option.label}</span>
-                    </div>
-
-                    <h3 className="studio-scope-title">
-                      {serviceSpecific ? serviceSpecific.title : option.label}
-                    </h3>
-                    <p className="text-muted text-sm mb-16">
-                      {serviceSpecific ? serviceSpecific.description : option.shortSummary}
-                    </p>
-
-                    <span className="micro-label">WHAT THIS OPTION INCLUDES</span>
-                    <ul className="product-features mt-8 mb-20">
-                      {(serviceSpecific ? serviceSpecific.deliverables : option.inclusions).map(
-                        (item) => (
-                          <li key={item}>{item}</li>
-                        ),
-                      )}
-                    </ul>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`button w-100 ${isSelected ? 'button-primary' : 'button-secondary'}`}
-                    onClick={() => setSelectedDeployment(option.id)}
-                    aria-pressed={isSelected}
-                  >
-                    {isSelected
-                      ? `Selected: ${option.label} ✓`
-                      : `Choose ${option.label}`}
-                  </button>
-                </article>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Quotation Model Statement & Interactive Requirements Summary CTA */}
-      <section className="seo-section" aria-labelledby="quotation-cta-heading">
-        <div className="seo-container">
-          <div className="studio-quotation-summary-box" data-testid="service-quotation-summary">
-            <div className="studio-quotation-summary-main">
-              <div className="studio-section-eyebrow-row">
-                <span className="section-eyebrow">07 · Quotation Model &amp; Project Inquiry</span>
-                <span className="badge primary">Quotation-Based Pricing</span>
-              </div>
-              <h2 id="quotation-cta-heading" className="studio-quotation-heading">
-                Request a Custom Quotation for {blueprint.title}
-              </h2>
-              <p className="studio-quotation-statement" data-testid="service-quotation-statement">
-                {QUOTATION_MODEL_STATEMENT}
-              </p>
-
-              <div className="studio-selected-config-strip">
-                <div className="studio-selected-config-item">
-                  <span className="micro-label">SELECTED SERVICE</span>
-                  <strong>{blueprint.title}</strong>
-                </div>
-                <div className="studio-selected-config-item">
-                  <span className="micro-label">SELECTED SCOPE TEMPLATE</span>
-                  <strong data-testid="selected-scope-name">{activeScopeTemplate?.name}</strong>
-                </div>
-                <div className="studio-selected-config-item">
-                  <span className="micro-label">DEPLOYMENT OPTION</span>
-                  <strong data-testid="selected-deployment-label">
-                    {activeDeploymentOption.label}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="studio-quotation-summary-actions">
-              <NavLink
-                to={inquiryUrl}
-                className="button button-primary button-lg"
-                data-testid="proceed-quotation-cta"
+        <div className="service-scope-grid">
+          {blueprint.scopeTemplates.map((template) => {
+            const isSelected = activeScope?.id === template.id
+            const templateItems = template.inclusions || template.deliverables || []
+            return (
+              <article
+                key={template.id}
+                className={`info-card service-scope-card${isSelected ? ' is-selected' : ''}`}
+                data-testid={`scope-template-${template.id}`}
               >
-                Request a Custom Quotation
-              </NavLink>
-              <NavLink to="/services" className="button button-secondary">
-                Compare All Services
-              </NavLink>
+                <div className="studio-card-top">
+                  <span className="card-label">SCOPE TEMPLATE</span>
+                  <span className="status-pill">{template.badge}</span>
+                </div>
+                <h3>{template.name}</h3>
+                <p className="studio-card-desc">{template.summary}</p>
+                <p className="service-ideal-for">
+                  <strong>Ideal For:</strong> {template.idealFor}
+                </p>
+                <ul className="feature-list studio-feature-list">
+                  {templateItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <div className="card-actions studio-card-actions">
+                  <button
+                    type="button"
+                    className={`button ${isSelected ? 'primary' : 'secondary'} full-width`}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedScopeId(template.id)}
+                  >
+                    {isSelected ? 'Selected Scope Template ✓' : 'Select This Scope'}
+                  </button>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Section 3: Interactive Deployment Options */}
+      <section className="studio-section" aria-label="Deployment Options">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">STEP 2 · SELECT DEPLOYMENT MODEL</div>
+            <h2>Deployment Options</h2>
+          </div>
+          <p className="section-subcopy">
+            Choose whether DSC handles deployment and release setup or delivers source packages for
+            self-hosting.
+          </p>
+        </div>
+
+        <div className="studio-grid-2">
+          {DEPLOYMENT_OPTIONS.map((option) => {
+            const isSelected = activeDeploymentOption.id === option.id
+            const details = blueprint.deploymentOptions?.[option.id]
+            const detailItems = details?.inclusions || details?.included || option.inclusions || []
+            return (
+              <article
+                key={option.id}
+                className={`info-card service-deployment-card${isSelected ? ' is-selected' : ''}`}
+                data-testid={`deployment-option-${option.id}`}
+              >
+                <div className="studio-card-top">
+                  <span className="card-label">DEPLOYMENT OPTION</span>
+                  <span className="status-pill">{option.badge}</span>
+                </div>
+                <h3>{details?.headline || option.label}</h3>
+                <p className="studio-card-desc">
+                  {details?.description || option.shortSummary}
+                </p>
+                {detailItems.length > 0 ? (
+                  <ul className="feature-list studio-feature-list">
+                    {detailItems.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <div className="card-actions studio-card-actions">
+                  <button
+                    type="button"
+                    className={`button ${isSelected ? 'primary' : 'secondary'} full-width`}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedDeployment(option.id)}
+                  >
+                    {isSelected ? `Selected: ${option.label} ✓` : `Choose ${option.label}`}
+                  </button>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Section 4: Quotation Summary & Request CTA */}
+      <section className="studio-section" aria-label="Quotation Summary and Request">
+        <div className="service-quotation-summary-box" data-testid="service-quotation-summary">
+          <div className="service-quotation-summary-main">
+            <div className="eyebrow">STEP 3 · CUSTOM QUOTATION MODEL</div>
+            <h2>Request a Custom Quotation for {blueprint.title}</h2>
+            <p className="service-quotation-statement" data-testid="service-quotation-statement">
+              {QUOTATION_MODEL_STATEMENT}
+            </p>
+
+            <div className="service-selection-summary">
+              <div className="service-selection-pill">
+                <span className="selection-pill-label">Service Category</span>
+                <strong data-testid="selected-service-title">{blueprint.title}</strong>
+              </div>
+              <div className="service-selection-pill">
+                <span className="selection-pill-label">Selected Scope</span>
+                <strong data-testid="selected-scope-name">{activeScope?.name}</strong>
+              </div>
+              <div className="service-selection-pill">
+                <span className="selection-pill-label">Deployment Option</span>
+                <strong data-testid="selected-deployment-label">
+                  {activeDeploymentOption.label}
+                </strong>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Cross-links to other DSC services */}
-      <section className="seo-section" aria-labelledby="other-services-heading">
-        <div className="seo-container">
-          <StudioSectionHeader
-            eyebrow="Related Capabilities"
-            title="Other DSC Development Services"
-            description="Explore additional development services provided by Dark Skull Corporation:"
-          />
-          <div className="card-grid columns-2 mt-20">
-            {siblingServices.map((service) => (
-              <article key={service.id} className="info-card studio-sibling-card">
-                <div>
-                  <span className="card-badge">{service.badge}</span>
-                  <h3>{service.title}</h3>
-                  <p className="text-muted text-sm mb-16">{service.description}</p>
-                </div>
-                <NavLink to={service.action.to} className="button button-secondary button-sm">
-                  {service.action.label}
-                </NavLink>
-              </article>
-            ))}
+          <div className="service-quotation-summary-cta">
+            <Link
+              className="button primary full-width"
+              to={inquiryUrl}
+              data-testid="proceed-quotation-cta"
+            >
+              Proceed to Quotation Inquiry →
+            </Link>
+            <Link className="button ghost full-width" to="/pages/ulogin">
+              Have a DSC Account? Sign In
+            </Link>
           </div>
         </div>
       </section>
-
-      <StudioCtaBanner
-        eyebrow="Connect with DSC"
-        title={`Inquire About ${blueprint.title}`}
-        description={QUOTATION_MODEL_STATEMENT}
-        actions={[
-          { label: 'Submit Project Requirements', to: inquiryUrl, variant: 'primary' },
-          { label: 'All Services', to: '/services', variant: 'secondary' },
-          { label: 'Explore Products', to: '/products', variant: 'ghost' },
-        ]}
-      />
-    </StudioPageContainer>
+    </div>
   )
 }

@@ -50,22 +50,25 @@ export function StudioBreadcrumbs({ items = [] }) {
 }
 
 /**
- * Consistent Software Studio page header with eyebrow, H1 title, description, and optional actions.
+ * Consistent Software Studio page header with eyebrow, H1 title, description/subtitle, and optional actions.
  */
 export function StudioPageHeader({
   eyebrow = 'Dark Skull Corporation',
   title,
   description,
+  subtitle,
   actions = [],
   breadcrumbs = [],
 }) {
+  const leadText = description || subtitle
+
   return (
     <header className="studio-page-header">
       <StudioBreadcrumbs items={breadcrumbs} />
       <div className="page-header-center studio-header-box">
         {eyebrow ? <span className="hero-eyebrow">{eyebrow}</span> : null}
         <h1>{title}</h1>
-        {description ? <p>{description}</p> : null}
+        {leadText ? <p>{leadText}</p> : null}
         {Array.isArray(actions) && actions.length > 0 ? (
           <div className="studio-header-actions">
             {actions.map((action, idx) => (
@@ -177,12 +180,24 @@ export function StudioCategoryCard({
  * Honest empty state card when verified portfolio or team entries are not yet populated.
  */
 export function StudioEmptyState({
+  categoryLabel,
   badge = 'STUDIO DIRECTORY',
   title,
   description,
   note,
+  highlights = [],
   actions = [],
+  primaryAction,
+  secondaryAction,
 }) {
+  const resolvedActions =
+    Array.isArray(actions) && actions.length > 0
+      ? actions
+      : [
+          primaryAction ? { ...primaryAction, variant: 'primary' } : null,
+          secondaryAction ? { ...secondaryAction, variant: 'secondary' } : null,
+        ].filter(Boolean)
+
   return (
     <section className="websites-empty-card studio-empty-state" aria-live="polite">
       <div className="websites-empty-icon-wrap">
@@ -192,21 +207,32 @@ export function StudioEmptyState({
             src="/images/dsclogo2.png"
             alt="Dark Skull Corporation"
             className="websites-empty-logo"
-            width="64"
-            height="64"
+            width="56"
+            height="56"
             loading="lazy"
           />
         </picture>
       </div>
 
+      {categoryLabel ? (
+        <div className="card-label mb-8">{categoryLabel}</div>
+      ) : null}
       {badge ? <span className="badge primary mb-10">{badge}</span> : null}
       <h2 className="websites-empty-title">{title}</h2>
       <p className="websites-empty-desc">{description}</p>
       {note ? <p className="studio-empty-note">{note}</p> : null}
 
-      {Array.isArray(actions) && actions.length > 0 ? (
+      {Array.isArray(highlights) && highlights.length > 0 ? (
+        <ul className="feature-list studio-empty-highlights">
+          {highlights.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {resolvedActions.length > 0 ? (
         <div className="websites-empty-actions">
-          {actions.map((act, idx) => (
+          {resolvedActions.map((act, idx) => (
             <ButtonLink
               key={act.label || idx}
               action={act}
@@ -225,18 +251,35 @@ export function StudioEmptyState({
   )
 }
 
+export const StudioEmptyStateCard = StudioEmptyState
+
 /**
  * Consistent Call-To-Action section for the bottom of Software Studio pages.
  */
-export function StudioCtaBanner({ eyebrow = 'Dark Skull Corporation', title, description, actions = [] }) {
+export function StudioCtaBanner({
+  eyebrow = 'Dark Skull Corporation',
+  title,
+  description,
+  actions = [],
+  primaryAction,
+  secondaryAction,
+}) {
+  const resolvedActions =
+    Array.isArray(actions) && actions.length > 0
+      ? actions
+      : [
+          primaryAction ? { ...primaryAction, variant: 'primary' } : null,
+          secondaryAction ? { ...secondaryAction, variant: 'secondary' } : null,
+        ].filter(Boolean)
+
   return (
     <section className="about-cta-card studio-cta-banner">
       {eyebrow ? <span className="section-eyebrow">{eyebrow}</span> : null}
       <h2 className="about-cta-title">{title}</h2>
       <p className="about-cta-desc">{description}</p>
-      {Array.isArray(actions) && actions.length > 0 ? (
+      {resolvedActions.length > 0 ? (
         <div className="about-cta-actions">
-          {actions.map((act, idx) => (
+          {resolvedActions.map((act, idx) => (
             <ButtonLink
               key={act.label || idx}
               action={act}

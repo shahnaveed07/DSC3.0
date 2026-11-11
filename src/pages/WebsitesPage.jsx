@@ -1,55 +1,66 @@
-import { NavLink } from 'react-router-dom'
-import { usePageMeta } from '../hooks/usePageMeta'
+import { Link } from 'react-router-dom'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { SEO_ROUTES } from '../content/seoConfig'
 
 export function WebsitesPage() {
-  usePageMeta(SEO_ROUTES.websites)
+  usePageMetadata(SEO_ROUTES.websites)
 
   return (
-    <div className="center-wrap">
-      {/* Page Header */}
-      <section className="page-header-center">
-        <span className="hero-eyebrow">Dark Skull Corporation · Products</span>
+    <div className="page-stack">
+      <section className="hero-block">
+        <div className="eyebrow">PRODUCTS · WEBSITES</div>
         <h1>Websites</h1>
-        <p>
-          Custom websites designed and developed by Dark Skull Corporation for individuals, startups, businesses, and companies on request.
+        <p className="lead">
+          Explore web platforms and custom website development by Dark Skull Corporation.
         </p>
       </section>
 
-      {/* Clean Portfolio Empty State (Phase 2 Structure) */}
-      <section className="websites-empty-card mt-36" aria-labelledby="websites-portfolio-heading">
-        <div className="websites-empty-brand">
-          <picture>
-            <source srcSet="/images/dsclogo2.webp" type="image/webp" />
-            <img
-              src="/images/dsclogo2.png"
-              alt="Dark Skull Corporation Websites"
-              className="websites-empty-logo"
-              width="64"
-              height="64"
-              loading="lazy"
-            />
-          </picture>
+      <section className="info-card websites-empty-card" aria-label="Websites Directory Status">
+        <div className="websites-empty-header">
+          <div className="card-label">PORTFOLIO STATUS</div>
+          <span className="status-pill">Accepting Custom Projects</span>
         </div>
 
-        <span className="badge primary mb-12">WEBSITE PORTFOLIO</span>
-        <h2 id="websites-portfolio-heading" className="websites-empty-title">
-          Website Portfolio Directory
-        </h2>
-        <p className="websites-empty-desc">
-          Approved public website showcase entries are not yet listed in this directory. Dark Skull Corporation designs and develops responsive, modern websites for individuals, startups, businesses, and companies on request.
+        <h2>Custom Website Development on Request</h2>
+        <p className="websites-empty-lead">
+          We have not listed public client websites in this directory yet. Dark Skull Corporation
+          designs and engineers custom responsive websites and web applications for individuals,
+          creators, and businesses.
         </p>
 
-        <div className="websites-empty-actions">
-          <NavLink to="/pages/contact" className="button button-primary">
-            Request a Website
-          </NavLink>
-          <NavLink to="/pages/products" className="button button-secondary">
-            Back to Products
-          </NavLink>
-          <NavLink to="/pages/apps" className="button button-ghost">
-            Android Applications
-          </NavLink>
+        <div className="websites-capabilities-grid">
+          <div className="website-capability-item">
+            <h3>Business &amp; Brand Websites</h3>
+            <p>
+              Clean, fast-loading company websites and landing pages engineered for desktop,
+              tablet, and mobile viewports.
+            </p>
+          </div>
+
+          <div className="website-capability-item">
+            <h3>Personal &amp; Creator Portfolios</h3>
+            <p>
+              Custom portfolio sites and showcase platforms tailored to highlight your work and
+              services.
+            </p>
+          </div>
+
+          <div className="website-capability-item">
+            <h3>Web Applications &amp; Portals</h3>
+            <p>
+              Modern React applications, client dashboards, and API-connected web tools built for
+              long-term maintainability.
+            </p>
+          </div>
+        </div>
+
+        <div className="card-actions mt-24">
+          <Link className="button primary" to="/services/websites">
+            Explore Website Services
+          </Link>
+          <Link className="button secondary" to="/contact">
+            Request a Custom Quotation
+          </Link>
         </div>
       </section>
     </div>
